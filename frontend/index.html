@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aikira Terminal</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/aikira-theme.css">
+    <link rel="stylesheet" href="css/terminal.css">
+    <link rel="stylesheet" href="css/digital-effects.css">
+    <link rel="stylesheet" href="css/governance-grid.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+    <div class="aikira-container">
+        <!-- Header Section - More Compact -->
+        <header class="aikira-header">
+            <div class="logo-container">
+                <img src="assets/images/aikira-core.png" alt="Aikira Core" class="core-logo">
+                <h1 class="terminal-title">AIKIRA TERMINAL</h1>
+            </div>
+            <div class="status-bar">
+                <div class="status-item" id="constitutional-alignment">
+                    <div class="status-label">Constitutional Alignment</div>
+                    <div class="status-value">Initializing...</div>
+                </div>
+                <div class="status-item" id="proposal-evaluation">
+                    <div class="status-label">Proposal Evaluation</div>
+                    <div class="status-value">Ready</div>
+                </div>
+                <div class="status-item" id="voice-authentication">
+                    <div class="status-label">Voice Authentication</div>
+                    <div class="status-value">Standby</div>
+                </div>
+                <div class="status-item" id="consensus-index">
+                    <div class="status-label">Consensus Index</div>
+                    <div class="status-value">98.7%</div>
+                </div>
+                <div class="status-item" id="governance-notices">
+                    <div class="status-label">Governance Notices</div>
+                    <div class="status-value">0</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Terminal Area -->
+        <main class="terminal-container">
+            <!-- Digital World Background -->
+            <div class="digital-world-bg">
+                <canvas id="background-canvas"></canvas>
+            </div>
+
+            <!-- Core Hexagonal Display - Removed -->
+            <div class="alternate-response-area">
+                <div class="response-area" id="aikira-response">
+                    <div class="startup-message" id="startup-message">Initializing Constitutional Parameters...</div>
+                    <div class="response-text" id="response-text"></div>
+                </div>
+                <div class="sound-visualization">
+                    <canvas id="voice-waveform"></canvas>
+                </div>
+            </div>
+
+            <!-- User Input Area -->
+            <div class="user-input-container">
+                <div class="input-methods">
+                    <button class="voice-input-btn" id="voice-input-btn">
+                        <div class="mic-icon"></div>
+                        <span>Voice Input</span>
+                    </button>
+                    <div class="text-input-area">
+                        <textarea id="proposal-text" placeholder="Enter your governance proposal here..."></textarea>
+                        <button id="submit-proposal" class="submit-btn">Submit Proposal</button>
+                    </div>
+                </div>
+                <div class="input-status" id="input-status">Ready for input</div>
+            </div>
+        </main>
+
+        <!-- Status Panels -->
+        <aside class="governance-panels">
+            <div class="panel" id="evaluation-panel">
+                <h3 class="panel-title">Proposal Evaluation</h3>
+                <div class="panel-content">
+                    <div class="evaluation-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Fairness Index:</span>
+                            <div class="metric-bar">
+                                <div class="metric-value" style="width: 80%"></div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Value Alignment:</span>
+                            <div class="metric-bar">
+                                <div class="metric-value" style="width: 75%"></div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Protection Score:</span>
+                            <div class="metric-bar">
+                                <div class="metric-value" style="width: 90%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel" id="consensus-panel">
+                <h3 class="panel-title">Consensus Visualization</h3>
+                <div class="panel-content">
+                    <canvas id="consensus-graph"></canvas>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="startup-sound" src="assets/audio/startup.mp3" preload="auto"></audio>
+    <audio id="proposal-submit-sound" src="assets/audio/proposal-submit.mp3" preload="auto"></audio>
+    <audio id="governance-alert-sound" src="assets/audio/governance-alert.mp3" preload="auto"></audio>
+    <audio id="deliberation-sound" src="assets/audio/deliberation.mp3" preload="auto"></audio>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/terminal.js"></script>
+    <script src="js/digital-effects.js"></script>
+    <script src="js/constitutional-core.js"></script>
+    <script src="js/audio-processor.js"></script>
+    <script src="js/governance-elements.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/api-client.js"></script>
+</body>
+</html>

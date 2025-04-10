@@ -1,0 +1,317 @@
+/* Animations for Aikira Terminal */
+
+/* Pulse Animation */
+@keyframes pulse {
+    0% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+    100% { opacity: 0.7; transform: scale(1); }
+}
+
+/* Glow Animation */
+@keyframes glow {
+    0% { box-shadow: 0 0 5px rgba(216, 181, 255, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(216, 181, 255, 0.6); }
+    100% { box-shadow: 0 0 5px rgba(216, 181, 255, 0.3); }
+}
+
+/* Data Flow Animation */
+@keyframes dataFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Text Fade In */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Text Fade Out */
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Float Animation */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Typing Cursor */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Recalibration Effect */
+@keyframes recalibrate {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(3px); }
+    40% { transform: translateX(-3px); }
+    60% { transform: translateX(2px); }
+    80% { transform: translateX(-2px); }
+    100% { transform: translateX(0); }
+}
+
+/* Rotate Animation */
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Particle Flow */
+@keyframes particleFlow {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(-100px) translateX(50px); opacity: 0; }
+}
+
+/* Wave Animation */
+@keyframes wave {
+    0% { transform: translateX(0) translateY(0); }
+    25% { transform: translateX(5px) translateY(-5px); }
+    50% { transform: translateX(10px) translateY(0); }
+    75% { transform: translateX(5px) translateY(5px); }
+    100% { transform: translateX(0) translateY(0); }
+}
+
+/* Color Cycle */
+@keyframes colorCycle {
+    0% { color: var(--soft-pink); }
+    33% { color: var(--lavender-purple); }
+    66% { color: var(--pastel-turquoise); }
+    100% { color: var(--soft-pink); }
+}
+
+/* Border Glow */
+@keyframes borderGlow {
+    0% { border-color: var(--soft-pink); }
+    33% { border-color: var(--lavender-purple); }
+    66% { border-color: var(--pastel-turquoise); }
+    100% { border-color: var(--soft-pink); }
+}
+
+/* Shake Animation */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Slide In From Top */
+@keyframes slideInFromTop {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Slide In From Bottom */
+@keyframes slideInFromBottom {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Slide In From Left */
+@keyframes slideInFromLeft {
+    from { transform: translateX(-50px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Slide In From Right */
+@keyframes slideInFromRight {
+    from { transform: translateX(50px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Zoom In */
+@keyframes zoomIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Zoom Out */
+@keyframes zoomOut {
+    from { transform: scale(1); opacity: 1; }
+    to { transform: scale(0.5); opacity: 0; }
+}
+
+/* Apply animations to elements */
+
+/* Startup Sequence */
+.startup-message {
+    animation: pulse 2s infinite;
+}
+
+/* Hexagonal Display Glow */
+.hexagonal-display {
+    animation: glow 4s infinite;
+}
+
+/* Constitutional Glow */
+.constitutional-glow {
+    background: linear-gradient(
+        90deg, 
+        rgba(255, 214, 236, 0.1), 
+        rgba(216, 181, 255, 0.1), 
+        rgba(169, 238, 230, 0.1), 
+        rgba(255, 214, 236, 0.1)
+    );
+    background-size: 300% 100%;
+    animation: dataFlow 10s ease infinite;
+}
+
+/* Core Principles Animations */
+.principle {
+    position: relative;
+    display: inline-block;
+}
+
+.principle::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(
+        90deg, 
+        transparent, 
+        currentColor, 
+        transparent
+    );
+    opacity: 0.5;
+    transform-origin: center;
+    animation: dataFlow 4s ease infinite;
+}
+
+.primary-directive {
+    animation: colorCycle 15s ease infinite;
+}
+
+/* Voice Input Button */
+.voice-input-btn {
+    transition: all 0.3s ease;
+}
+
+.voice-input-btn:hover .mic-icon {
+    animation: pulse 1.5s infinite;
+}
+
+.voice-input-btn.active {
+    background: rgba(255, 158, 229, 0.2);
+    animation: borderGlow 4s infinite;
+}
+
+.voice-input-btn.active .mic-icon {
+    animation: pulse 0.8s infinite;
+}
+
+/* Submit Button */
+.submit-btn:hover {
+    animation: float 2s ease infinite;
+}
+
+/* Status Value Animation */
+.status-value {
+    transition: all 0.3s ease;
+}
+
+/* Metric Bars Animation */
+.metric-value {
+    transition: width 1s ease-in-out;
+    background-size: 200% 100%;
+    background-image: linear-gradient(
+        90deg,
+        var(--accent-turquoise),
+        var(--accent-purple),
+        var(--accent-pink),
+        var(--accent-purple),
+        var(--accent-turquoise)
+    );
+    animation: dataFlow 5s ease infinite;
+}
+
+/* Animation for active panels */
+.panel.active {
+    animation: glow 2s infinite;
+}
+
+/* Animation for page load */
+.aikira-header {
+    animation: slideInFromTop 1s ease-out forwards;
+}
+
+.terminal-container {
+    animation: fadeIn 1.5s ease-out forwards;
+}
+
+.governance-panels {
+    animation: slideInFromRight 1s ease-out forwards;
+}
+
+/* Processing state animations */
+.processing .response-area {
+    animation: pulse 1.5s infinite;
+}
+
+/* Voice waveform container */
+.sound-visualization {
+    position: relative;
+    overflow: hidden;
+}
+
+.sound-visualization::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--accent-purple),
+        transparent
+    );
+    animation: dataFlow 3s linear infinite;
+}
+
+.sound-visualization::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--accent-turquoise),
+        transparent
+    );
+    animation: dataFlow 3s linear reverse infinite;
+}
+
+/* Floating data particles */
+.data-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: var(--soft-pink);
+    opacity: 0;
+    animation: particleFlow 6s ease-in-out infinite;
+}
+
+.data-particle:nth-child(odd) {
+    background-color: var(--lavender-purple);
+    animation-delay: 1s;
+}
+
+.data-particle:nth-child(3n) {
+    background-color: var(--pastel-turquoise);
+    animation-delay: 2s;
+}

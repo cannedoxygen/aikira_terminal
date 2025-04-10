@@ -1,0 +1,483 @@
+/* Governance Grid CSS for Aikira Terminal */
+
+/* Panel Container Styling */
+.governance-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Individual Panel Styling */
+.panel {
+    background-color: var(--medium-bg);
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px solid var(--trans-light);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.panel-title {
+    background-color: var(--light-bg);
+    padding: 15px;
+    font-family: var(--display-font);
+    color: var(--soft-pink);
+    letter-spacing: 1px;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--trans-light);
+}
+
+.panel-title .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--accent-turquoise);
+}
+
+.panel-title .status-indicator.warning {
+    background-color: #FFD166;
+}
+
+.panel-title .status-indicator.critical {
+    background-color: #FF6B6B;
+}
+
+.panel-content {
+    padding: 15px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Governance Grid Layout */
+.governance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.grid-cell {
+    background-color: var(--trans-medium);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.grid-cell:hover {
+    background-color: var(--trans-light);
+    transform: translateY(-2px);
+}
+
+.cell-value {
+    font-size: 24px;
+    font-family: var(--display-font);
+    margin-bottom: 5px;
+    background: linear-gradient(90deg, var(--soft-pink), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.cell-label {
+    font-size: 12px;
+    color: var(--soft-white);
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Evaluation Metrics */
+.evaluation-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.metric {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.metric-label {
+    font-size: 14px;
+    color: var(--lavender-purple);
+}
+
+.metric-value-text {
+    font-size: 12px;
+    color: var(--soft-white);
+    opacity: 0.8;
+}
+
+.metric-bar {
+    height: 8px;
+    background-color: var(--trans-medium);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.metric-value {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent-turquoise), var(--accent-purple));
+    width: 0%; /* Initialize at 0, will be set via JS */
+    transition: width 1s ease-in-out;
+}
+
+/* Governance Notices */
+.governance-notifications {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+}
+
+.governance-notification {
+    background-color: var(--light-bg);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border-left: 3px solid var(--accent-turquoise);
+    position: relative;
+    animation: slideInFromRight 0.3s ease-out forwards;
+}
+
+.governance-notification.info {
+    border-left-color: var(--accent-turquoise);
+}
+
+.governance-notification.warning {
+    border-left-color: #FFD166;
+}
+
+.governance-notification.critical {
+    border-left-color: #FF6B6B;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.notification-title {
+    font-weight: bold;
+    color: var(--soft-white);
+}
+
+.notification-timestamp {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.notification-message {
+    font-size: 14px;
+    color: var(--soft-white);
+    opacity: 0.9;
+}
+
+.notification-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.notification-close:hover {
+    opacity: 1;
+}
+
+/* Consensus Visualization - Hide Diamond/Triangle shapes */
+.consensus-triangle {
+    display: none;
+}
+
+.triangle-outline {
+    display: none;
+}
+
+.triangle-segments {
+    display: none;
+}
+
+/* Provide an alternative consensus visualization */
+.consensus-visualization {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    padding: 20px;
+}
+
+.consensus-value {
+    font-size: 28px;
+    font-family: var(--display-font);
+    color: var(--soft-pink);
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Add a circular progress indicator instead */
+.consensus-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--accent-purple) 0%, 
+        var(--accent-turquoise) 50%, 
+        var(--accent-pink) 100%
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin: 20px auto;
+}
+
+.consensus-circle::before {
+    content: '';
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: var(--medium-bg);
+}
+
+.consensus-circle-text {
+    position: relative;
+    z-index: 1;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--soft-white);
+}
+
+/* Timeline Visualization */
+.timeline {
+    margin: 20px 0;
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent-purple), var(--accent-turquoise));
+}
+
+.timeline-event {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -24px;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--accent-purple);
+    border: 2px solid var(--medium-bg);
+}
+
+.timeline-content {
+    background-color: var(--trans-medium);
+    border-radius: 10px;
+    padding: 10px 15px;
+}
+
+.timeline-timestamp {
+    font-size: 12px;
+    color: var(--accent-turquoise);
+    margin-bottom: 5px;
+}
+
+.timeline-title {
+    font-size: 14px;
+    color: var(--soft-white);
+    margin-bottom: 5px;
+}
+
+.timeline-description {
+    font-size: 13px;
+    color: var(--soft-white);
+    opacity: 0.8;
+}
+
+/* Constitutional Parameters */
+.constitutional-parameters {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.parameter-group {
+    border-bottom: 1px solid var(--trans-light);
+    padding-bottom: 15px;
+}
+
+.parameter-group-title {
+    font-size: 14px;
+    color: var(--soft-pink);
+    margin-bottom: 10px;
+}
+
+.parameter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.parameter-name {
+    font-size: 13px;
+    color: var(--soft-white);
+}
+
+.parameter-value {
+    font-size: 13px;
+    color: var(--lavender-purple);
+    background-color: var(--trans-medium);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* Distribution Graph */
+.distribution-graph {
+    height: 150px;
+    margin: 15px 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.distribution-bar {
+    flex: 1;
+    background: linear-gradient(to top, var(--accent-turquoise), var(--accent-purple));
+    border-radius: 3px 3px 0 0;
+    transition: height 1s ease-in-out;
+}
+
+.distribution-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+.distribution-label {
+    font-size: 11px;
+    color: var(--soft-white);
+    opacity: 0.7;
+    text-align: center;
+    flex: 1;
+}
+
+/* Historical Trends */
+.trend-graph {
+    height: 100px;
+    margin: 15px 0;
+    position: relative;
+}
+
+.trend-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: var(--accent-purple);
+    stroke-width: 2;
+}
+
+.trend-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    fill: url(#trendGradient);
+    opacity: 0.2;
+}
+
+.trend-point {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background-color: var(--accent-turquoise);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Animations */
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .governance-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .consensus-triangle {
+        width: 150px;
+        height: 130px;
+    }
+    
+    .trend-graph {
+        height: 80px;
+    }
+}

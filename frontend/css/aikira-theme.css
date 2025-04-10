@@ -1,0 +1,504 @@
+/* Aikira Terminal - Theme CSS
+ * Defines the unique pastel color scheme and visual identity for Aikira Terminal
+ */
+
+ :root {
+    /* Primary Pastel Palette */
+    --soft-pink: #FFD6EC;
+    --lavender-purple: #D8B5FF;
+    --pastel-turquoise: #A9EEE6;
+    --soft-white: #FFFFFF;
+
+    /* Background Colors */
+    --dark-bg: #12151a;
+    --medium-bg: #1c2029;
+    --light-bg: #272b36;
+
+    /* Accent Colors (More Vibrant) */
+    --accent-pink: #ff9ee5;
+    --accent-purple: #b38aff;
+    --accent-turquoise: #7adbcf;
+
+    /* Transparency Values */
+    --trans-light: rgba(255, 255, 255, 0.1);
+    --trans-medium: rgba(255, 255, 255, 0.05);
+    --trans-dark: rgba(0, 0, 0, 0.3);
+
+    /* Fonts */
+    --display-font: 'Aikira Display', sans-serif;
+    --text-font: 'Governance Text', sans-serif;
+
+    /* Status Colors */
+    --status-green: #7DF9AA;
+    --status-yellow: #FFD166;
+    --status-red: #FF6B6B;
+
+    /* Gradients */
+    --gradient-pink-purple: linear-gradient(135deg, var(--soft-pink), var(--lavender-purple));
+    --gradient-purple-turquoise: linear-gradient(135deg, var(--lavender-purple), var(--pastel-turquoise));
+    --gradient-turquoise-pink: linear-gradient(135deg, var(--pastel-turquoise), var(--soft-pink));
+    --gradient-tri-color: linear-gradient(135deg, var(--soft-pink), var(--lavender-purple), var(--pastel-turquoise));
+
+    /* Shadows */
+    --shadow-soft: 0 5px 15px rgba(0, 0, 0, 0.2);
+    --shadow-glow-pink: 0 0 15px rgba(255, 214, 236, 0.5);
+    --shadow-glow-purple: 0 0 15px rgba(216, 181, 255, 0.5);
+    --shadow-glow-turquoise: 0 0 15px rgba(169, 238, 230, 0.5);
+
+    /* Border Radius */
+    --radius-small: 5px;
+    --radius-medium: 10px;
+    --radius-large: 15px;
+}
+
+/* Typography */
+body {
+    font-family: var(--text-font);
+    color: var(--soft-white);
+    line-height: 1.5;
+    font-size: 16px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--display-font);
+    font-weight: normal;
+    margin-bottom: 0.5em;
+    color: var(--soft-pink);
+}
+
+h1 {
+    font-size: 28px;
+    letter-spacing: 2px;
+    text-shadow: var(--shadow-glow-pink);
+}
+
+h2 {
+    font-size: 24px;
+    color: var(--lavender-purple);
+    letter-spacing: 1.5px;
+}
+
+h3 {
+    font-size: 20px;
+    color: var(--pastel-turquoise);
+    letter-spacing: 1px;
+}
+
+/* Links */
+a {
+    color: var(--accent-turquoise);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+a:hover {
+    color: var(--accent-pink);
+    text-shadow: var(--shadow-glow-pink);
+}
+
+/* Buttons */
+button, .button {
+    background-color: transparent;
+    border: 2px solid var(--lavender-purple);
+    color: var(--soft-white);
+    padding: 8px 16px;
+    border-radius: var(--radius-medium);
+    font-family: var(--text-font);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+button:hover, .button:hover {
+    background-color: rgba(216, 181, 255, 0.1);
+    box-shadow: var(--shadow-glow-purple);
+    transform: translateY(-2px);
+}
+
+button:active, .button:active {
+    transform: translateY(1px);
+}
+
+button.primary, .button.primary {
+    background: var(--gradient-purple-turquoise);
+    border: none;
+    color: var(--soft-white);
+    box-shadow: var(--shadow-soft);
+}
+
+button.primary:hover, .button.primary:hover {
+    opacity: 0.9;
+    box-shadow: var(--shadow-glow-turquoise);
+}
+
+button:disabled, .button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Form Elements */
+input, textarea, select {
+    background-color: var(--trans-medium);
+    border: 1px solid var(--trans-light);
+    border-radius: var(--radius-small);
+    color: var(--soft-white);
+    padding: 8px 12px;
+    font-family: var(--text-font);
+    font-size: 14px;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--lavender-purple);
+    box-shadow: var(--shadow-glow-purple);
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--trans-medium);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--trans-light);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--accent-purple);
+}
+
+/* Cards */
+.aikira-card {
+    background-color: var(--medium-bg);
+    border-radius: var(--radius-medium);
+    padding: 15px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--trans-light);
+    transition: all 0.3s ease;
+}
+
+.aikira-card:hover {
+    box-shadow: var(--shadow-glow-purple);
+    transform: translateY(-2px);
+}
+
+.aikira-card-header {
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--trans-light);
+    margin-bottom: 10px;
+}
+
+.aikira-card-footer {
+    padding-top: 10px;
+    border-top: 1px solid var(--trans-light);
+    margin-top: 10px;
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-indicator.active {
+    background-color: var(--status-green);
+    box-shadow: 0 0 8px var(--status-green);
+}
+
+.status-indicator.warning {
+    background-color: var(--status-yellow);
+    box-shadow: 0 0 8px var(--status-yellow);
+}
+
+.status-indicator.critical {
+    background-color: var(--status-red);
+    box-shadow: 0 0 8px var(--status-red);
+}
+
+.status-indicator.idle {
+    background-color: var(--lavender-purple);
+    box-shadow: 0 0 8px var(--lavender-purple);
+}
+
+/* Badges */
+.aikira-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    background-color: var(--trans-medium);
+    margin-left: 5px;
+}
+
+.aikira-badge.primary {
+    background-color: rgba(216, 181, 255, 0.2);
+    color: var(--lavender-purple);
+}
+
+.aikira-badge.secondary {
+    background-color: rgba(169, 238, 230, 0.2);
+    color: var(--pastel-turquoise);
+}
+
+.aikira-badge.accent {
+    background-color: rgba(255, 214, 236, 0.2);
+    color: var(--soft-pink);
+}
+
+/* Dividers */
+.aikira-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--trans-light), transparent);
+    margin: 15px 0;
+}
+
+.aikira-divider.vertical {
+    width: 1px;
+    height: auto;
+    background: linear-gradient(180deg, transparent, var(--trans-light), transparent);
+    margin: 0 15px;
+}
+
+/* Progress Bars */
+.aikira-progress {
+    height: 8px;
+    background-color: var(--trans-medium);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.aikira-progress-bar {
+    height: 100%;
+    background: var(--gradient-purple-turquoise);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+/* Tooltips */
+.aikira-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.aikira-tooltip .tooltip-text {
+    visibility: hidden;
+    background-color: var(--light-bg);
+    color: var(--soft-white);
+    text-align: center;
+    padding: 5px 10px;
+    border-radius: var(--radius-small);
+    position: absolute;
+    z-index: 100;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--trans-light);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.aikira-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Lists */
+ul.aikira-list {
+    list-style: none;
+    padding-left: 20px;
+}
+
+ul.aikira-list li {
+    position: relative;
+    margin-bottom: 8px;
+}
+
+ul.aikira-list li::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 8px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--lavender-purple);
+}
+
+/* Tables */
+.aikira-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+.aikira-table th {
+    text-align: left;
+    padding: 10px;
+    background-color: var(--trans-medium);
+    color: var(--pastel-turquoise);
+    font-weight: normal;
+    letter-spacing: 1px;
+}
+
+.aikira-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--trans-light);
+}
+
+.aikira-table tr:hover {
+    background-color: var(--trans-medium);
+}
+
+/* Alerts */
+.aikira-alert {
+    padding: 15px;
+    border-radius: var(--radius-medium);
+    margin: 15px 0;
+    border-left: 4px solid var(--accent-purple);
+    background-color: rgba(216, 181, 255, 0.1);
+}
+
+.aikira-alert.info {
+    border-left-color: var(--pastel-turquoise);
+    background-color: rgba(169, 238, 230, 0.1);
+}
+
+.aikira-alert.warning {
+    border-left-color: var(--status-yellow);
+    background-color: rgba(255, 209, 102, 0.1);
+}
+
+.aikira-alert.error {
+    border-left-color: var(--status-red);
+    background-color: rgba(255, 107, 107, 0.1);
+}
+
+/* Loaders */
+.aikira-loader {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--trans-light);
+    border-top: 2px solid var(--accent-purple);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Text Effects */
+.text-gradient {
+    background: var(--gradient-tri-color);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+}
+
+.text-glow {
+    text-shadow: 0 0 5px currentColor;
+}
+
+.text-fade {
+    opacity: 0.7;
+}
+
+/* Selection */
+::selection {
+    background-color: rgba(216, 181, 255, 0.3);
+    color: var(--soft-white);
+}
+
+/* Focus Outline */
+:focus {
+    outline: 2px solid var(--lavender-purple);
+    outline-offset: 2px;
+}
+
+/* Container Style */
+.container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Common Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Responsive Design Basics */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+    
+    h1 {
+        font-size: 24px;
+    }
+    
+    h2 {
+        font-size: 20px;
+    }
+    
+    h3 {
+        font-size: 18px;
+    }
+    
+    .container {
+        padding: 15px;
+    }
+}
+
+/* Apply theme transitions */
+* {
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}

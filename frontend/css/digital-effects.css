@@ -1,0 +1,353 @@
+/* Digital Effects CSS for Aikira Terminal */
+
+/* Digital Grid Background */
+.digital-world-bg {
+    opacity: 0.5;
+    background-image: 
+        linear-gradient(rgba(169, 238, 230, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(216, 181, 255, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+}
+
+/* Hexagonal Clip Path and Effects */
+.hexagonal-display {
+    position: relative;
+    overflow: hidden;
+}
+
+.hexagonal-display::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #FFD6EC, #D8B5FF, #A9EEE6, #FFD6EC);
+    background-size: 400% 400%;
+    animation: borderGlow 10s ease infinite;
+    z-index: -1;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+/* Constitutional Glow Effect */
+.constitutional-glow {
+    background: radial-gradient(
+        circle at center,
+        rgba(216, 181, 255, 0.3) 0%,
+        rgba(169, 238, 230, 0.2) 30%,
+        rgba(255, 214, 236, 0.1) 70%,
+        transparent 100%
+    );
+    box-shadow: 
+        0 0 20px rgba(216, 181, 255, 0.3),
+        0 0 40px rgba(169, 238, 230, 0.2),
+        0 0 60px rgba(255, 214, 236, 0.1);
+    filter: blur(10px);
+}
+
+/* Data Flow Lines */
+.data-flow-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-purple), transparent);
+    animation: dataFlowHorizontal 4s linear infinite;
+}
+
+.data-flow-line:nth-child(odd) {
+    background: linear-gradient(90deg, transparent, var(--accent-turquoise), transparent);
+    animation-duration: 5s;
+}
+
+.data-flow-line:nth-child(3n) {
+    background: linear-gradient(90deg, transparent, var(--accent-pink), transparent);
+    animation-duration: 6s;
+}
+
+.data-flow-vertical {
+    position: absolute;
+    width: 1px;
+    background: linear-gradient(transparent, var(--accent-purple), transparent);
+    animation: dataFlowVertical 6s linear infinite;
+}
+
+/* Blinking Cursor */
+.blinking-cursor {
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background-color: var(--soft-pink);
+    margin-left: 5px;
+    animation: blink 1s infinite;
+    vertical-align: middle;
+}
+
+/* Digital Terminal Effects */
+.terminal-text {
+    font-family: var(--text-font);
+    color: var(--soft-white);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    line-height: 1.5;
+}
+
+.terminal-text::selection {
+    background-color: rgba(216, 181, 255, 0.5);
+    color: var(--soft-white);
+}
+
+/* Code Blocks in Terminal */
+.code-block {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-left: 3px solid var(--accent-turquoise);
+    padding: 10px;
+    margin: 10px 0;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    border-radius: 0 5px 5px 0;
+    overflow-x: auto;
+}
+
+/* Data Scan Lines Effect */
+.scan-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.05) 0px,
+        rgba(0, 0, 0, 0.05) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    opacity: 0.5;
+    z-index: 2;
+}
+
+/* Digital Noise */
+.digital-noise {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+    opacity: 0.1;
+    z-index: 1;
+}
+
+/* Notification Pulse Effect */
+.notification-pulse {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--accent-pink);
+    box-shadow: 0 0 10px var(--accent-pink);
+    animation: pulse 2s infinite;
+}
+
+/* Data Processing Indicator */
+.data-processing {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.data-processing .dot {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: var(--soft-white);
+    margin: 0 2px;
+    opacity: 0.7;
+}
+
+.data-processing .dot:nth-child(1) {
+    animation: pulse 1s infinite;
+}
+
+.data-processing .dot:nth-child(2) {
+    animation: pulse 1s infinite 0.2s;
+}
+
+.data-processing .dot:nth-child(3) {
+    animation: pulse 1s infinite 0.4s;
+}
+
+/* Recalibration Effects */
+.recalibrating {
+    animation: recalibrate 0.5s ease;
+}
+
+.recalibrating .constitutional-glow {
+    animation: colorCycle 1s ease;
+}
+
+/* Voice Authentication Visualizer */
+.voice-auth-visualizer {
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+}
+
+.voice-auth-bar {
+    width: 3px;
+    height: 100%;
+    background-color: var(--accent-turquoise);
+    border-radius: 1.5px;
+    animation: waveAnimation 1s infinite;
+}
+
+.voice-auth-bar:nth-child(2) { animation-delay: 0.1s; }
+.voice-auth-bar:nth-child(3) { animation-delay: 0.2s; }
+.voice-auth-bar:nth-child(4) { animation-delay: 0.3s; }
+.voice-auth-bar:nth-child(5) { animation-delay: 0.4s; }
+
+/* Digital Badge */
+.digital-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    background-color: var(--trans-medium);
+    border: 1px solid var(--trans-light);
+    color: var(--accent-turquoise);
+    margin-right: 8px;
+}
+
+.badge-approved {
+    color: #A9EEE6;
+    border-color: rgba(169, 238, 230, 0.5);
+}
+
+.badge-pending {
+    color: #FFD6EC;
+    border-color: rgba(255, 214, 236, 0.5);
+}
+
+.badge-rejected {
+    color: #FF6B6B;
+    border-color: rgba(255, 107, 107, 0.5);
+}
+
+/* Data Highlight Effect */
+.data-highlight {
+    background: linear-gradient(90deg, 
+        rgba(169, 238, 230, 0) 0%, 
+        rgba(169, 238, 230, 0.2) 50%, 
+        rgba(169, 238, 230, 0) 100%);
+    background-size: 200% 100%;
+    animation: dataFlow 2s linear infinite;
+    padding: 2px 0;
+}
+
+/* Data Matrix Effect */
+.data-matrix {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    opacity: 0.05;
+    z-index: 0;
+}
+
+.matrix-column {
+    position: absolute;
+    top: -100px;
+    font-family: monospace;
+    font-size: 14px;
+    color: var(--accent-turquoise);
+    text-shadow: 0 0 5px var(--accent-turquoise);
+    animation: matrixRain 20s linear infinite;
+}
+
+/* Keyframes for Digital Effects */
+@keyframes dataFlowHorizontal {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes dataFlowVertical {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+}
+
+@keyframes waveAnimation {
+    0%, 100% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+}
+
+@keyframes matrixRain {
+    0% { top: -100px; }
+    100% { top: 100%; }
+}
+
+/* Add digital noise to the page when active */
+.noise-active {
+    position: relative;
+}
+
+.noise-active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+    opacity: 0.1;
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* Digital glitch effect during recalibration */
+.glitch-text {
+    position: relative;
+    display: inline-block;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.8;
+}
+
+.glitch-text::before {
+    color: var(--accent-pink);
+    z-index: -1;
+    animation: glitch-effect 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+
+.glitch-text::after {
+    color: var(--accent-turquoise);
+    z-index: -2;
+    animation: glitch-effect 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) reverse infinite;
+}
+
+@keyframes glitch-effect {
+    0% { transform: translate(0); }
+    20% { transform: translate(-3px, 3px); }
+    40% { transform: translate(-3px, -3px); }
+    60% { transform: translate(3px, 3px); }
+    80% { transform: translate(3px, -3px); }
+    100% { transform: translate(0); }
+}
