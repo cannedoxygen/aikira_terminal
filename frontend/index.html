@@ -4,41 +4,573 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aikira Terminal</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/aikira-theme.css">
-    <link rel="stylesheet" href="css/terminal.css">
-    <link rel="stylesheet" href="css/digital-effects.css">
-    <link rel="stylesheet" href="css/governance-grid.css">
-    <link rel="stylesheet" href="css/animations.css">
+    <!-- Animated Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <style>
+        /* Font faces */
+        @font-face {
+            font-family: 'Aikira Display';
+            src: url('assets/fonts/aikira-display.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Governance Text';
+            src: url('assets/fonts/governance-text.ttf') format('truetype');
+        }
+
+        /* Root variables */
+        :root {
+            /* Pastel Color Palette */
+            --soft-pink: #FFD6EC;
+            --lavender-purple: #D8B5FF;
+            --pastel-turquoise: #A9EEE6;
+            --soft-white: #FFFFFF;
+            --dark-bg: #12151a;
+            --medium-bg: #1c2029;
+            --light-bg: #272b36;
+            
+            /* Accent Colors */
+            --accent-pink: #ff9ee5;
+            --accent-purple: #b38aff;
+            --accent-turquoise: #7adbcf;
+            
+            /* Transparency Values */
+            --trans-light: rgba(255, 255, 255, 0.1);
+            --trans-medium: rgba(255, 255, 255, 0.05);
+            --trans-dark: rgba(0, 0, 0, 0.3);
+            
+            /* Fonts */
+            --display-font: 'Aikira Display', sans-serif;
+            --text-font: 'Governance Text', sans-serif;
+        }
+
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--soft-white);
+            font-family: var(--text-font);
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Main container layout */
+        .aikira-container {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            grid-template-columns: 1fr 320px;
+            height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Header Styles */
+        .aikira-header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--medium-bg);
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(216, 181, 255, 0.2);
+            border: 1px solid var(--trans-light);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .core-logo {
+            height: 45px;
+            width: auto;
+            filter: drop-shadow(0 0 8px var(--lavender-purple));
+        }
+
+        .terminal-title {
+            font-family: var(--display-font);
+            color: var(--soft-pink);
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(255, 214, 236, 0.6);
+            letter-spacing: 2px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 15px;
+        }
+
+        .status-item {
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .status-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--pastel-turquoise);
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 14px;
+            color: var(--soft-white);
+            background: var(--trans-medium);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border-bottom: 2px solid var(--accent-turquoise);
+            transition: all 0.3s ease;
+        }
+
+        /* Main Terminal Area */
+        .terminal-container {
+            grid-column: 1;
+            grid-row: 2;
+            position: relative;
+            background: var(--medium-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--trans-light);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Digital World Background */
+        .digital-world-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            background-image: 
+                linear-gradient(rgba(169, 238, 230, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(216, 181, 255, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.5;
+        }
+
+        /* Response Area */
+        .response-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .startup-message {
+            color: var(--lavender-purple);
+            text-align: center;
+            font-size: 18px;
+            margin: 20px auto;
+            font-family: var(--display-font);
+            letter-spacing: 1px;
+            animation: pulse 2s infinite;
+        }
+
+        .response-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--soft-white);
+            padding: 20px;
+            background: rgba(28, 32, 41, 0.7);
+            border-radius: 15px;
+            border: 1px solid rgba(216, 181, 255, 0.3);
+            box-shadow: 0 0 20px rgba(216, 181, 255, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Sound Visualization */
+        .sound-visualization {
+            width: 100%;
+            height: 60px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #voice-waveform {
+            width: 100%;
+            height: 100%;
+            background-color: rgba(18, 21, 26, 0.5);
+            border-radius: 8px;
+        }
+
+        .sound-visualization::before, .sound-visualization::after {
+            content: '';
+            position: absolute;
+            height: 1px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(90deg, transparent, var(--accent-purple), transparent);
+            z-index: 1;
+        }
+
+        .sound-visualization::before {
+            top: 0;
+            animation: dataFlow 3s linear infinite;
+        }
+
+        .sound-visualization::after {
+            bottom: 0;
+            animation: dataFlow 3s linear reverse infinite;
+        }
+
+        /* User Input Area */
+        .user-input-container {
+            width: 100%;
+            padding: 20px;
+            margin-top: auto;
+            background: var(--light-bg);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1;
+            border-top: 1px solid var(--trans-light);
+        }
+
+        .input-methods {
+            display: flex;
+            gap: 15px;
+        }
+
+        .voice-input-btn {
+            background: transparent;
+            border: 2px solid var(--accent-pink);
+            border-radius: 10px;
+            color: var(--soft-pink);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: var(--text-font);
+        }
+
+        .voice-input-btn:hover {
+            background: rgba(255, 158, 229, 0.1);
+            box-shadow: 0 0 10px rgba(255, 158, 229, 0.3);
+        }
+
+        .mic-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--soft-pink);
+            position: relative;
+        }
+
+        .mic-icon::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 10px;
+            background: var(--soft-pink);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -30%);
+        }
+
+        .text-input-area {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+        }
+
+        #proposal-text {
+            flex: 1;
+            background: var(--trans-medium);
+            border: 1px solid var(--trans-light);
+            border-radius: 10px;
+            color: var(--soft-white);
+            padding: 12px 15px;
+            resize: none;
+            font-family: var(--text-font);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+            min-height: 45px;
+        }
+
+        #proposal-text:focus {
+            border-color: var(--lavender-purple);
+            box-shadow: 0 0 10px rgba(216, 181, 255, 0.3);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-turquoise));
+            border: none;
+            border-radius: 10px;
+            color: var(--soft-white);
+            padding: 10px 20px;
+            font-family: var(--display-font);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        .submit-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(169, 238, 230, 0.3);
+        }
+
+        .input-status {
+            font-size: 12px;
+            color: var(--pastel-turquoise);
+            text-align: right;
+            font-style: italic;
+        }
+
+        /* Governance Panels */
+        .governance-panels {
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--medium-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--trans-light);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            background: var(--light-bg);
+            padding: 15px;
+            font-family: var(--display-font);
+            font-size: 16px;
+            color: var(--soft-pink);
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--trans-light);
+        }
+
+        .panel-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Evaluation Metrics */
+        .evaluation-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--lavender-purple);
+        }
+
+        .metric-bar {
+            height: 8px;
+            background: var(--trans-medium);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .metric-value {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--accent-turquoise), var(--accent-purple));
+            width: 0%;
+            transition: width 1s ease-in-out;
+        }
+
+        /* Consensus Visualization */
+        .consensus-visualization {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: center;
+            padding: 20px 0;
+        }
+
+        .consensus-label {
+            font-size: 14px;
+            color: var(--accent-turquoise);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .consensus-triangle {
+            width: 180px;
+            height: 160px;
+            position: relative;
+            margin: 0 auto;
+        }
+
+        .triangle-shape {
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            background: linear-gradient(180deg, var(--lavender-purple), var(--pastel-turquoise));
+            opacity: 0.6;
+        }
+
+        .consensus-indicator {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            z-index: 10;
+        }
+
+        .consensus-value {
+            text-align: center;
+            font-size: 24px;
+            font-family: var(--display-font);
+            color: var(--soft-white);
+            margin-top: 20px;
+        }
+
+        /* Particle styles */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: var(--accent-turquoise);
+            border-radius: 50%;
+            opacity: 0.5;
+            pointer-events: none;
+            animation: float 8s infinite linear;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+
+        @keyframes dataFlow {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.5;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(-100px) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .aikira-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .governance-panels {
+                grid-column: 1;
+                grid-row: 3;
+            }
+            
+            .terminal-container {
+                height: 60vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .aikira-header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .status-bar {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .input-methods {
+                flex-direction: column;
+            }
+            
+            .voice-input-btn {
+                align-self: flex-start;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="aikira-container">
-        <!-- Header Section - More Compact -->
+        <!-- Header Section -->
         <header class="aikira-header">
             <div class="logo-container">
-                <img src="assets/images/aikira-core.png" alt="Aikira Core" class="core-logo">
+                <!-- Updated to use the animated core logo -->
+                <img src="assets/images/aikira-core.svg" alt="Aikira Core" class="core-logo">
                 <h1 class="terminal-title">AIKIRA TERMINAL</h1>
             </div>
             <div class="status-bar">
                 <div class="status-item" id="constitutional-alignment">
                     <div class="status-label">Constitutional Alignment</div>
-                    <div class="status-value">Initializing...</div>
+                    <div class="status-value" style="border-color: var(--accent-turquoise);">Initializing...</div>
                 </div>
                 <div class="status-item" id="proposal-evaluation">
                     <div class="status-label">Proposal Evaluation</div>
-                    <div class="status-value">Ready</div>
+                    <div class="status-value" style="border-color: var(--accent-purple);">Ready</div>
                 </div>
                 <div class="status-item" id="voice-authentication">
                     <div class="status-label">Voice Authentication</div>
-                    <div class="status-value">Standby</div>
+                    <div class="status-value" style="border-color: var(--accent-pink);">Standby</div>
                 </div>
                 <div class="status-item" id="consensus-index">
                     <div class="status-label">Consensus Index</div>
-                    <div class="status-value">98.7%</div>
+                    <div class="status-value" style="border-color: var(--accent-turquoise);">92%</div>
                 </div>
                 <div class="status-item" id="governance-notices">
                     <div class="status-label">Governance Notices</div>
-                    <div class="status-value">0</div>
+                    <div class="status-value" style="border-color: var(--accent-purple);">0</div>
                 </div>
             </div>
         </header>
@@ -47,14 +579,13 @@
         <main class="terminal-container">
             <!-- Digital World Background -->
             <div class="digital-world-bg">
-                <canvas id="background-canvas"></canvas>
+                <!-- Floating particles will be added here via JS -->
             </div>
 
-            <!-- Core Hexagonal Display - Removed -->
-            <div class="alternate-response-area">
-                <div class="response-area" id="aikira-response">
-                    <div class="startup-message" id="startup-message">Initializing Constitutional Parameters...</div>
-                    <div class="response-text" id="response-text"></div>
+            <!-- Response Area -->
+            <div class="response-area">
+                <div class="response-text" id="response-text">
+                    Aikira Constitutional AI Core initialized. How may I assist you today?
                 </div>
                 <div class="sound-visualization">
                     <canvas id="voice-waveform"></canvas>
@@ -70,33 +601,34 @@
                     </button>
                     <div class="text-input-area">
                         <textarea id="proposal-text" placeholder="Enter your governance proposal here..."></textarea>
-                        <button id="submit-proposal" class="submit-btn">Submit Proposal</button>
+                        <button id="submit-proposal" class="submit-btn">Submit</button>
                     </div>
                 </div>
                 <div class="input-status" id="input-status">Ready for input</div>
             </div>
         </main>
 
-        <!-- Status Panels -->
+        <!-- Governance Panels -->
         <aside class="governance-panels">
+            <!-- Proposal Evaluation Panel -->
             <div class="panel" id="evaluation-panel">
-                <h3 class="panel-title">Proposal Evaluation</h3>
+                <div class="panel-title">Proposal Evaluation</div>
                 <div class="panel-content">
                     <div class="evaluation-metrics">
                         <div class="metric">
-                            <span class="metric-label">Fairness Index:</span>
+                            <div class="metric-label">Fairness Index:</div>
                             <div class="metric-bar">
                                 <div class="metric-value" style="width: 80%"></div>
                             </div>
                         </div>
                         <div class="metric">
-                            <span class="metric-label">Value Alignment:</span>
+                            <div class="metric-label">Value Alignment:</div>
                             <div class="metric-bar">
                                 <div class="metric-value" style="width: 75%"></div>
                             </div>
                         </div>
                         <div class="metric">
-                            <span class="metric-label">Protection Score:</span>
+                            <div class="metric-label">Protection Score:</div>
                             <div class="metric-bar">
                                 <div class="metric-value" style="width: 90%"></div>
                             </div>
@@ -104,32 +636,376 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Consensus Visualization Panel -->
             <div class="panel" id="consensus-panel">
-                <h3 class="panel-title">Consensus Visualization</h3>
+                <div class="panel-title">Consensus Visualization</div>
                 <div class="panel-content">
-                    <canvas id="consensus-graph"></canvas>
+                    <div class="consensus-visualization">
+                        <div class="consensus-label">Consensus Index</div>
+                        <div class="consensus-triangle">
+                            <div class="triangle-shape"></div>
+                            <div class="consensus-indicator"></div>
+                        </div>
+                        <div class="consensus-value">92%</div>
+                    </div>
                 </div>
             </div>
         </aside>
     </div>
 
-    <!-- Audio Elements -->
-    <audio id="startup-sound" src="assets/audio/startup.mp3" preload="auto"></audio>
-    <audio id="proposal-submit-sound" src="assets/audio/proposal-submit.mp3" preload="auto"></audio>
-    <audio id="governance-alert-sound" src="assets/audio/governance-alert.mp3" preload="auto"></audio>
-    <audio id="deliberation-sound" src="assets/audio/deliberation.mp3" preload="auto"></audio>
-
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/terminal.js"></script>
-    <script src="js/digital-effects.js"></script>
-    <script src="js/constitutional-core.js"></script>
-    <script src="js/audio-processor.js"></script>
-    <script src="js/governance-elements.js"></script>
-    <script src="js/animations.js"></script>
-    <script src="js/api-client.js"></script>
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the UI
+            initializeUI();
+            
+            // Set up event listeners for user interactions
+            setupEventListeners();
+        });
+        
+        // Initialize UI elements and animations
+        function initializeUI() {
+            // Create floating particle effects
+            createParticles();
+            
+            // Initialize sound waveform visualization
+            initializeWaveform();
+            
+            // Animate initial metrics
+            animateMetrics();
+            
+            // Type out welcome message
+            const welcomeMessage = "Aikira Constitutional AI Core initialized. How may I assist you today?";
+            typeText(document.getElementById('response-text'), welcomeMessage);
+        }
+        
+        // Set up event listeners for user interactions
+        function setupEventListeners() {
+            // Get DOM elements
+            const submitButton = document.getElementById('submit-proposal');
+            const proposalText = document.getElementById('proposal-text');
+            const voiceButton = document.getElementById('voice-input-btn');
+            
+            // Add event listener for proposal submission
+            if (submitButton && proposalText) {
+                submitButton.addEventListener('click', function() {
+                    const proposal = proposalText.value.trim();
+                    if (proposal) {
+                        submitProposal(proposal);
+                    }
+                });
+                
+                // Allow submission using Enter key (Shift+Enter for new line)
+                proposalText.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        submitButton.click();
+                    }
+                });
+            }
+            
+            // Add event listener for voice input
+            if (voiceButton) {
+                voiceButton.addEventListener('click', function() {
+                    // Toggle voice input state
+                    this.classList.toggle('active');
+                    
+                    if (this.classList.contains('active')) {
+                        // Start recording
+                        document.getElementById('input-status').textContent = 'Listening...';
+                        
+                        // Animate waveform
+                        animateActiveWaveform(true);
+                        
+                        // For demo, simulate stopping after 3 seconds
+                        setTimeout(() => {
+                            this.classList.remove('active');
+                            document.getElementById('input-status').textContent = 'Processing voice input...';
+                            animateActiveWaveform(false);
+                            
+                            // Simulate voice processing
+                            setTimeout(() => {
+                                submitProposal("Implement a transparent governance system with equal voting rights.");
+                            }, 1000);
+                        }, 3000);
+                    }
+                });
+            }
+        }
+        
+        // Submit proposal to the API
+        function submitProposal(proposalText) {
+            // Update status
+            document.getElementById('input-status').textContent = 'Processing proposal...';
+            
+            // Clear input field
+            document.getElementById('proposal-text').value = '';
+            
+            // Make API call to backend
+            fetch('/api/openai/generate-response', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ proposal: proposalText })
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('API response:', data);
+                
+                if (data.success) {
+                    // Display AI response with typing effect
+                    typeText(document.getElementById('response-text'), data.response);
+                    
+                    // Update metrics visualization
+                    updateMetrics(
+                        data.metrics.fairness,
+                        data.metrics.value,
+                        data.metrics.protection, 
+                        data.consensus
+                    );
+                } else {
+                    // Handle API error
+                    document.getElementById('response-text').textContent = 
+                        "I apologize, but I'm unable to process your proposal at this time. Please try again later.";
+                }
+                
+                // Reset status
+                document.getElementById('input-status').textContent = 'Ready for input';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Display error message
+                document.getElementById('response-text').textContent = 
+                    "A communication error occurred. Please check your connection and try again.";
+                    
+                // Reset status
+                document.getElementById('input-status').textContent = 'Connection error';
+            });
+        }
+        
+        // Create floating particle effects
+        function createParticles() {
+            const container = document.querySelector('.digital-world-bg');
+            if (!container) return;
+            
+            const colors = ['var(--soft-pink)', 'var(--lavender-purple)', 'var(--pastel-turquoise)'];
+            
+            // Create 20 particles
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random position
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                particle.style.left = `${x}%`;
+                particle.style.top = `${y}%`;
+                
+                // Random color
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.backgroundColor = color;
+                
+                // Random size
+                const size = Math.random() * 3 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random animation delay
+                const delay = Math.random() * 8;
+                particle.style.animationDelay = `${delay}s`;
+                
+                // Add to container
+                container.appendChild(particle);
+            }
+        }
+        
+        // Initialize waveform visualization
+        function initializeWaveform() {
+            const canvas = document.getElementById('voice-waveform');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // Draw a subtle idle waveform
+            function drawIdleWave() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(28, 32, 41, 0.8)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const centerY = canvas.height / 2;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                
+                // Draw a gentle sine wave
+                for (let x = 0; x < canvas.width; x++) {
+                    const amplitude = 5 + Math.sin(Date.now() * 0.001) * 2;
+                    const y = centerY + Math.sin(x * 0.05 + Date.now() * 0.001) * amplitude;
+                    ctx.lineTo(x, y);
+                }
+                
+                ctx.strokeStyle = 'rgba(169, 238, 230, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                requestAnimationFrame(drawIdleWave);
+            }
+            
+            drawIdleWave();
+        }
+        
+        // Animate waveform for active voice recording
+        function animateActiveWaveform(isActive) {
+            const canvas = document.getElementById('voice-waveform');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            if (isActive) {
+                // Store the animation frame ID to cancel it later
+                window.activeWaveformAnimationId = requestAnimationFrame(function animateFrame() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'rgba(28, 32, 41, 0.8)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    const centerY = canvas.height / 2;
+                    
+                    // Draw a more active waveform
+                    ctx.beginPath();
+                    ctx.moveTo(0, centerY);
+                    
+                    for (let x = 0; x < canvas.width; x++) {
+                        // More dynamic wave with multiple frequencies
+                        const y = centerY + 
+                            Math.sin(x * 0.05 + Date.now() * 0.002) * 10 + 
+                            Math.sin(x * 0.02 + Date.now() * 0.001) * 5;
+                        ctx.lineTo(x, y);
+                    }
+                    
+                    // Gradient stroke
+                    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+                    gradient.addColorStop(0, 'rgba(255, 214, 236, 0.8)');
+                    gradient.addColorStop(0.5, 'rgba(216, 181, 255, 0.8)');
+                    gradient.addColorStop(1, 'rgba(169, 238, 230, 0.8)');
+                    
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    
+                    // Continue animation
+                    if (document.querySelector('.voice-input-btn.active')) {
+                        window.activeWaveformAnimationId = requestAnimationFrame(animateFrame);
+                    }
+                });
+            } else {
+                // Cancel active animation
+                if (window.activeWaveformAnimationId) {
+                    cancelAnimationFrame(window.activeWaveformAnimationId);
+                }
+            }
+        }
+        
+        // Update metrics visualization
+        function updateMetrics(fairness, value, protection, consensus) {
+            // Get metric elements
+            const metricBars = document.querySelectorAll('.metric-value');
+            
+            // Update metrics bars with animation
+            if (metricBars.length >= 3) {
+                // Reset before animating
+                metricBars.forEach(bar => {
+                    bar.style.width = '0%';
+                });
+                
+                // Animate after a short delay
+                setTimeout(() => {
+                    metricBars[0].style.width = `${fairness}%`;
+                    metricBars[1].style.width = `${value}%`;
+                    metricBars[2].style.width = `${protection}%`;
+                }, 300);
+            }
+            
+            // Update consensus value
+            const consensusValueEl = document.querySelector('.consensus-value');
+            if (consensusValueEl) {
+                consensusValueEl.textContent = `${consensus}%`;
+            }
+            
+            // Update status bar consensus
+            const consensusStatusEl = document.querySelector('#consensus-index .status-value');
+            if (consensusStatusEl) {
+                consensusStatusEl.textContent = `${consensus}%`;
+            }
+            
+            // Update triangle visualization
+            updateConsensusTriangle(consensus / 100);
+        }
+        
+        // Initial metric animation
+        function animateMetrics() {
+            setTimeout(() => {
+                const metricBars = document.querySelectorAll('.metric-value');
+                metricBars.forEach(bar => {
+                    // Store original width
+                    const originalWidth = bar.style.width;
+                    // Reset to zero
+                    bar.style.width = '0%';
+                    // Animate to original
+                    setTimeout(() => {
+                        bar.style.width = originalWidth;
+                    }, 300);
+                });
+            }, 1000);
+        }
+        
+        // Update consensus triangle visualization
+        function updateConsensusTriangle(consensusValue) {
+            const indicator = document.querySelector('.consensus-indicator');
+            if (!indicator) return;
+            
+            const triangle = document.querySelector('.consensus-triangle');
+            if (!triangle) return;
+            
+            // Triangle dimensions
+            const height = triangle.offsetHeight;
+            const width = triangle.offsetWidth;
+            
+            // Calculate position (higher consensus = higher position)
+            const yPos = height - (consensusValue * height * 0.8); // Leave some space at top/bottom
+            const xPos = width / 2; // Center horizontally
+            
+            // Update indicator position
+            indicator.style.top = `${yPos}px`;
+            indicator.style.left = `${xPos}px`;
+        }
+        
+        // Text typing effect
+        function typeText(element, text, speed = 30) {
+            if (!element) return;
+            
+            // Clear the element
+            element.textContent = '';
+            
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                }
+            }
+            
+            // Start typing
+            type();
+        }
+    </script>
 </body>
 </html>
