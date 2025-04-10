@@ -1,6 +1,4 @@
-<!-- Add necessary library scripts via CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,16 +8,25 @@
 <link rel="stylesheet" href="css/aikira-theme.css">
 <link rel="stylesheet" href="css/terminal.css">
 <link rel="stylesheet" href="css/digital-effects.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
 <style>
-    /* Voice Test specific styles */
+    /* Voice Test specific styles with improved responsiveness */
+    body {
+        overflow-y: auto; /* Allow scrolling */
+        height: 100%;
+    }
+    
     .voice-test-container {
-        max-width: 800px;
-        margin: 40px auto;
-        padding: 30px;
+        width: 100%;
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 20px;
         background-color: var(--medium-bg);
         border-radius: var(--radius-large);
         box-shadow: var(--shadow-soft);
         border: 1px solid var(--trans-light);
+        box-sizing: border-box;
     }
     
     .test-header {
@@ -56,7 +63,7 @@
     
     .voice-settings {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         gap: 15px;
         margin-bottom: 15px;
     }
@@ -139,6 +146,7 @@
         justify-content: center;
         margin-top: 30px;
         gap: 20px;
+        flex-wrap: wrap;
     }
     
     .voice-wave {
@@ -184,6 +192,36 @@
         font-size: 14px;
     }
     
+    /* Improved responsive design */
+    @media (max-width: 992px) {
+        .voice-settings {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .voice-test-container {
+            margin: 10px;
+            padding: 15px;
+        }
+        
+        .test-section {
+            padding: 15px;
+        }
+        
+        .voice-controls {
+            flex-direction: column;
+        }
+        
+        .voice-button {
+            width: 100%;
+        }
+        
+        .voice-settings {
+            grid-template-columns: repeat(1, 1fr);
+        }
+    }
+    
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -209,7 +247,7 @@
         </div>
         
         <div class="voice-visualizer">
-            <canvas id="visualizer" width="700" height="100"></canvas>
+            <canvas id="visualizer" width="100%" height="100"></canvas>
             <div class="voice-wave" id="voice-wave"></div>
         </div>
         
@@ -293,6 +331,12 @@
     </div>
 </div>
 
+<!-- Audio Elements -->
+<audio id="startup-sound" src="assets/audio/startup.mp3" preload="auto"></audio>
+<audio id="deliberation-sound" src="assets/audio/deliberation.mp3" preload="auto"></audio>
+<audio id="proposal-submit-sound" src="assets/audio/proposal-submit.mp3" preload="auto"></audio>
+<audio id="alert-sound" src="assets/audio/governance-alert.mp3" preload="auto"></audio>
+
 <!-- Scripts -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -325,6 +369,12 @@
         const similarityValue = document.getElementById('similarity-value');
         const styleValue = document.getElementById('style-value');
         
+        // Audio elements
+        const startupSound = document.getElementById('startup-sound');
+        const deliberationSound = document.getElementById('deliberation-sound');
+        const proposalSubmitSound = document.getElementById('proposal-submit-sound');
+        const alertSound = document.getElementById('alert-sound');
+        
         // Audio context and recording variables
         let audioContext;
         let mediaRecorder;
@@ -336,6 +386,17 @@
         let visualization;
         let visualizationData;
         let isRecording = false;
+        
+        // Play startup sound
+        startupSound.volume = 0.5;
+        startupSound.play().catch(e => console.log('Audio autoplay prevented: User interaction needed.'));
+        
+        // Initialize audio on first user interaction
+        document.addEventListener('click', function() {
+            if (startupSound.paused) {
+                startupSound.play().catch(e => console.log('User interaction required for audio'));
+            }
+        }, { once: true });
         
         // Initialize wave visualization
         createWaveBars();
@@ -352,6 +413,18 @@
                 voiceWave.appendChild(bar);
             }
         }
+        
+        // Fix canvas sizing
+        function resizeCanvas() {
+            if (visualizer) {
+                visualizer.width = visualizer.offsetWidth;
+                visualizer.height = visualizer.offsetHeight;
+            }
+        }
+        
+        // Call resize on load and window resize
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
         
         // Update sliders display values
         stabilitySlider.addEventListener('input', () => {
@@ -415,6 +488,9 @@
                     cancelAnimationFrame(visualization);
                     resetVisualizer();
                     
+                    // Play submit sound
+                    proposalSubmitSound.play().catch(e => console.log('Audio play error:', e));
+                    
                     // Simulate transcription (in a real app, send to Whisper API)
                     simulateTranscription();
                 };
@@ -468,15 +544,17 @@
                 style: styleSlider.value / 100
             };
             
+            // Play deliberation sound
+            deliberationSound.play().catch(e => console.log('Audio play error:', e));
+            
             // Simulate speech generation (in a real app, send to Eleven Labs API)
             simulateSpeechGeneration(settings);
         });
         
         // Handle play response button
         playResponseButton.addEventListener('click', () => {
-            // For demo, play a pre-recorded audio if available
-            const demoAudio = new Audio('assets/audio/deliberation.mp3');
-            demoAudio.play();
+            // Play a pre-recorded audio
+            deliberationSound.play().catch(e => console.log('Audio play error:', e));
         });
         
         // Navigation buttons

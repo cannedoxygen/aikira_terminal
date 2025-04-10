@@ -9,6 +9,8 @@ const path = require('path');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const axios = require('axios');
+const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +30,18 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from the frontend directory
 app.use(express.static(path.join(__dirname, 'frontend')));
 
+// Create necessary directories
+const uploadsDir = path.join(__dirname, 'uploads');
+const downloadsDir = path.join(__dirname, 'downloads');
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+if (!fs.existsSync(downloadsDir)) {
+  fs.mkdirSync(downloadsDir, { recursive: true });
+}
+
 // OpenAI integration endpoint
 app.post('/api/openai/generate-response', async (req, res) => {
   try {
@@ -43,10 +57,10 @@ app.post('/api/openai/generate-response', async (req, res) => {
     // Your OpenAI API key from environment variables
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({
-        success: false,
-        error: 'OpenAI API key not configured'
-      });
+      console.warn('OpenAI API key not configured, using mockup response');
+      
+      // Return mockup response for testing
+      return simulateAiResponse(proposal, res);
     }
     
     // Create a system prompt that guides the AI to respond like Aikira
@@ -106,31 +120,108 @@ app.post('/api/openai/generate-response', async (req, res) => {
     
   } catch (error) {
     console.error('OpenAI API error:', error.response?.data || error.message);
-    return res.status(500).json({
-      success: false,
-      error: 'Error generating AI response'
-    });
+    
+    // Return mockup response for testing if API fails
+    return simulateAiResponse(req.body.proposal, res);
   }
 });
 
-// Speech-to-text endpoint (for future implementation with Whisper)
+// Helper function to simulate AI response when API is not available
+function simulateAiResponse(proposal, res) {
+  // Sample responses for different types of proposals
+  const responses = [
+    "After constitutional analysis, I've determined that your proposal aligns well with our governance principles. The value generation aspects are particularly strong. However, there is room to improve consensus alignment. Consider enhancing the fairness distribution framework.",
+    "Your proposal demonstrates excellent protection protocols while maintaining fair distribution mechanisms. I recommend strengthening the value generation component to achieve better overall constitutional alignment. The consensus metrics indicate strong support across parameters.",
+    "This proposal requires refinement to fully align with our constitutional parameters. The fairness distribution framework is inadequate and the protection mechanisms are insufficient. I recommend addressing these issues before resubmission.",
+    "I've analyzed your proposal against our constitutional framework and found strong alignment with core principles. The fairness metrics are particularly impressive, though there's room for improvement in the value generation aspects. With minor adjustments, this could achieve even higher consensus."
+  ];
+  
+  // Randomly select a response
+  const responseIndex = Math.floor(Math.random() * responses.length);
+  
+  // Generate random metrics
+  const metrics = {
+    fairness: Math.floor(Math.random() * 20) + 70, // 70-90%
+    value: Math.floor(Math.random() * 30) + 65, // 65-95%
+    protection: Math.floor(Math.random() * 15) + 80, // 80-95%
+  };
+  
+  // Calculate consensus
+  const consensus = Math.floor((metrics.fairness + metrics.value + metrics.protection) / 3);
+  
+  return res.status(200).json({
+    success: true,
+    response: responses[responseIndex],
+    metrics: metrics,
+    consensus: consensus
+  });
+}
+
+// Speech-to-text endpoint (handles file uploads for Whisper)
 app.post('/api/speech/transcribe', (req, res) => {
+  // Check if we have audio data or a file
+  if (!req.body && !req.files) {
+    return res.status(400).json({
+      success: false,
+      error: 'No audio content provided'
+    });
+  }
+  
   // This is a placeholder for future Whisper API integration
   // For now, it returns a mock response
-  res.json({
-    success: true,
-    text: "Sample transcription of voice input for governance proposal evaluation."
-  });
+  
+  // Random sample transcriptions for testing
+  const sampleTranscriptions = [
+    "Implement a transparent governance system with equal voting rights for all participants.",
+    "Propose a solution that maximizes value while maintaining fairness in resource distribution.",
+    "Create a protection framework that safeguards user privacy while enabling collaborative governance.",
+    "Develop a system where consensus is achieved through deliberative analysis rather than simple voting."
+  ];
+  
+  const randomIndex = Math.floor(Math.random() * sampleTranscriptions.length);
+  
+  setTimeout(() => {
+    res.json({
+      success: true,
+      text: sampleTranscriptions[randomIndex]
+    });
+  }, 1000); // Simulate processing delay
 });
 
-// Text-to-speech endpoint (for future implementation with Eleven Labs)
+// Text-to-speech endpoint (with Eleven Labs API stub)
 app.post('/api/speech/generate', (req, res) => {
-  // This is a placeholder for future Eleven Labs API integration
-  // For now, it returns a mock response
-  res.json({
-    success: true,
-    audio_url: "/assets/audio/sample-response.mp3"
-  });
+  const { text, voice_id, model_id } = req.body;
+  
+  if (!text) {
+    return res.status(400).json({
+      success: false,
+      error: 'Text content is required'
+    });
+  }
+  
+  // For testing, we'll serve a pre-recorded audio file
+  // In production, this would call Eleven Labs API
+  
+  // Create a unique filename for each request (in a real implementation)
+  const filename = `aikira_response_${Date.now()}.mp3`;
+  
+  // Use one of the existing audio files as a placeholder
+  const sampleAudios = [
+    '/assets/audio/deliberation.mp3',
+    '/assets/audio/proposal-submit.mp3',
+    '/assets/audio/startup.mp3'
+  ];
+  
+  const randomAudio = sampleAudios[Math.floor(Math.random() * sampleAudios.length)];
+  
+  setTimeout(() => {
+    res.json({
+      success: true,
+      audio_url: randomAudio, // Return path to sample audio
+      voice_id: voice_id || 'default',
+      model_id: model_id || 'eleven_multilingual_v2'
+    });
+  }, 1000); // Simulate processing delay
 });
 
 // System status endpoint
@@ -159,6 +250,48 @@ app.use((err, req, res, next) => {
     message: err.message
   });
 });
+
+// Cleanup temporary files periodically
+setInterval(() => {
+  // Clean up files in uploads directory that are older than 1 hour
+  const now = Date.now();
+  const oneHourAgo = now - (60 * 60 * 1000);
+  
+  fs.readdir(uploadsDir, (err, files) => {
+    if (err) return console.error('Error reading uploads directory:', err);
+    
+    files.forEach(file => {
+      const filePath = path.join(uploadsDir, file);
+      fs.stat(filePath, (err, stats) => {
+        if (err) return console.error('Error getting file stats:', err);
+        
+        if (stats.mtime.getTime() < oneHourAgo) {
+          fs.unlink(filePath, err => {
+            if (err) console.error('Error deleting file:', err);
+          });
+        }
+      });
+    });
+  });
+  
+  // Also clean up downloads directory
+  fs.readdir(downloadsDir, (err, files) => {
+    if (err) return console.error('Error reading downloads directory:', err);
+    
+    files.forEach(file => {
+      const filePath = path.join(downloadsDir, file);
+      fs.stat(filePath, (err, stats) => {
+        if (err) return console.error('Error getting file stats:', err);
+        
+        if (stats.mtime.getTime() < oneHourAgo) {
+          fs.unlink(filePath, err => {
+            if (err) console.error('Error deleting file:', err);
+          });
+        }
+      });
+    });
+  });
+}, 60 * 60 * 1000); // Run every hour
 
 // Start the server
 app.listen(PORT, () => {

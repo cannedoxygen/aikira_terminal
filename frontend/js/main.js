@@ -15,10 +15,31 @@ document.addEventListener('DOMContentLoaded', function() {
     const consensusValue = document.querySelector('.consensus-value');
     const consensusStatusValue = document.querySelector('#consensus-index .status-value');
     
+    // Audio context and elements
+    let audioContext;
+    let audioPlayer;
+    
     // Initialize app
     initializeApp();
     
     function initializeApp() {
+        // Initialize Audio Context
+        try {
+            window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioContext();
+            
+            // Create audio player element
+            audioPlayer = new Audio();
+            document.body.appendChild(audioPlayer);
+            
+            // Preload startup sound
+            const startupSound = new Audio('assets/audio/startup.mp3');
+            startupSound.volume = 0.5;
+            startupSound.play().catch(e => console.log('Audio autoplay prevented: User interaction needed.'));
+        } catch (e) {
+            console.error('Web Audio API not supported:', e);
+        }
+        
         // Initialize metrics animation
         initializeMetrics();
         
@@ -47,6 +68,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (proposalText.value.trim()) {
                     // Send proposal to API
                     processProposal(proposalText.value);
+                    
+                    // Play deliberation sound
+                    playAudio('assets/audio/deliberation.mp3');
                 }
             });
             
@@ -71,9 +95,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     // Stop voice recording
                     stopVoiceRecording();
+                    
+                    // Play proposal submit sound
+                    playAudio('assets/audio/proposal-submit.mp3');
                 }
             });
         }
+        
+        // Initialize audio on first user interaction (needed for browsers)
+        document.addEventListener('click', initAudio, { once: true });
+    }
+    
+    // Initialize audio context (needs user interaction first)
+    function initAudio() {
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    }
+    
+    // Play audio file
+    function playAudio(src) {
+        if (!audioPlayer) return;
+        
+        // Check if we're already playing something
+        const isPlaying = !audioPlayer.paused;
+        
+        // Set up new audio
+        audioPlayer.src = src;
+        audioPlayer.volume = 0.8;
+        
+        // If we were playing something, we need to stop it first
+        if (isPlaying) {
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+        }
+        
+        // Play the new audio
+        audioPlayer.play().catch(e => {
+            console.error('Audio playback error:', e);
+        });
     }
     
     // Initialize metrics animation
@@ -171,6 +231,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear the input
         document.getElementById('proposal-text').value = '';
         
+        // Play deliberation sound again
+        playAudio('assets/audio/deliberation.mp3');
+        
         // Call API to process proposal
         fetch('/api/openai/generate-response', {
             method: 'POST',
@@ -190,17 +253,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Reset status
                 inputStatus.textContent = 'Ready for input';
+                
+                // Generate and play speech using test audio for now
+                generateSpeech(data.response);
             } else {
                 // Handle error
                 responseText.textContent = "I apologize, but I'm unable to process your proposal at this time. Please try again later.";
                 inputStatus.textContent = 'Error occurred';
+                
+                // Play error sound
+                playAudio('assets/audio/governance-alert.mp3');
             }
         })
         .catch(error => {
             console.error('Error:', error);
             responseText.textContent = "A communication error occurred. Please check your connection and try again.";
             inputStatus.textContent = 'Connection error';
+            
+            // Play error sound
+            playAudio('assets/audio/governance-alert.mp3');
         });
+    }
+    
+    // Generate speech from text
+    async function generateSpeech(text) {
+        // In the interim, play sample audio
+        playAudio('assets/audio/deliberation.mp3');
+        
+        try {
+            // Call the speech generation API
+            const response = await fetch('/api/speech/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    text: text,
+                    voice_id: 'default',
+                    model_id: 'eleven_multilingual_v2'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.audio_url) {
+                // Play the generated speech audio
+                playAudio(data.audio_url);
+            }
+        } catch (error) {
+            console.error('Speech generation error:', error);
+            // Fall back to playing sample audio
+        }
     }
     
     // Start voice recording
@@ -365,6 +468,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update the count
         document.querySelector('#governance-notices .status-value').textContent = noticesCount;
+        
+        // Play notification sound
+        playAudio('assets/audio/governance-alert.mp3');
         
         // In a full implementation, you would create and display notification elements here
         console.log(`[${type.toUpperCase()}] Governance Notice: ${message}`);
