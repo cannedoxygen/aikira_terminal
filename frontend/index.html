@@ -287,6 +287,54 @@
             transform: translate(-50%, -30%);
         }
 
+        /* Volume Icon */
+        .volume-icon {
+            width: 20px;
+            height: 20px;
+            position: relative;
+        }
+
+        .volume-icon::before {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--soft-pink);
+            left: 0;
+            top: 6px;
+            clip-path: polygon(0 0, 40% 0, 100% 100%, 0 100%);
+        }
+
+        .volume-icon::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--soft-pink);
+            border-left: none;
+            border-radius: 0 12px 12px 0;
+            top: 4px;
+            left: 6px;
+        }
+
+        .volume-icon.muted::after {
+            opacity: 0.5;
+        }
+
+        .volume-icon.muted::before {
+            background: var(--accent-pink);
+        }
+
+        .volume-icon.muted span {
+            position: absolute;
+            width: 22px;
+            height: 2px;
+            background: var(--accent-pink);
+            transform: rotate(45deg);
+            top: 9px;
+            left: -1px;
+        }
+
         .text-input-area {
             flex: 1;
             display: flex;
@@ -474,6 +522,77 @@
             animation: float 8s infinite linear;
         }
 
+        /* Volume Slider */
+        .volume-slider-container {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            background: var(--medium-bg);
+            border: 1px solid var(--trans-light);
+            border-radius: 10px;
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .volume-slider-container.visible {
+            display: flex;
+        }
+
+        #volume-slider {
+            width: 150px;
+            -webkit-appearance: none;
+            height: 6px;
+            background: var(--trans-light);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        #volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-pink);
+            cursor: pointer;
+        }
+
+        #volume-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-pink);
+            cursor: pointer;
+            border: none;
+        }
+
+        .volume-value {
+            color: var(--soft-white);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* Debug panel */
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff00;
+            font-family: monospace;
+            padding: 5px;
+            font-size: 12px;
+            z-index: 9999;
+            max-width: 300px;
+            max-height: 100px;
+            overflow: auto;
+            border: 1px solid #333;
+            display: none;
+        }
+
         /* Animations */
         @keyframes pulse {
             0% { opacity: 0.7; }
@@ -543,6 +662,9 @@
     </style>
 </head>
 <body>
+    <!-- Debug panel for audio troubleshooting -->
+    <div class="debug-panel" id="debug-panel"></div>
+
     <div class="aikira-container">
         <!-- Header Section -->
         <header class="aikira-header">
@@ -599,12 +721,22 @@
                         <div class="mic-icon"></div>
                         <span>Voice Input</span>
                     </button>
+                    <button class="voice-input-btn" id="volume-btn">
+                        <div class="volume-icon"></div>
+                        <span>Volume</span>
+                    </button>
                     <div class="text-input-area">
                         <textarea id="proposal-text" placeholder="Enter your governance proposal here..."></textarea>
                         <button id="submit-proposal" class="submit-btn">Submit</button>
                     </div>
                 </div>
                 <div class="input-status" id="input-status">Ready for input</div>
+            </div>
+
+            <!-- Volume Slider (Hidden by default) -->
+            <div class="volume-slider-container" id="volume-slider-container">
+                <input type="range" min="0" max="100" value="80" id="volume-slider">
+                <div class="volume-value" id="volume-value">Volume: 80%</div>
             </div>
         </main>
 
@@ -654,34 +786,310 @@
         </aside>
     </div>
 
+    <!-- Audio Elements -->
+    <audio id="startup-sound" src="assets/audio/startup.mp3" preload="auto"></audio>
+    <audio id="deliberation-sound" src="assets/audio/deliberation.mp3" preload="auto"></audio>
+    <audio id="proposal-submit-sound" src="assets/audio/proposal-submit.mp3" preload="auto"></audio>
+    <audio id="governance-alert-sound" src="assets/audio/governance-alert.mp3" preload="auto"></audio>
+
+    <!-- Scripts -->
+    <script src="lib/three.min.js"></script>
+    <script src="lib/p5.min.js"></script>
+    <script src="lib/gsap.min.js"></script>
+    <script src="js/audio-controls.js"></script>
+    
     <script>
         // Wait for DOM to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize the UI
+            // Show debug panel
+            const debugPanel = document.getElementById('debug-panel');
+            debugPanel.style.display = 'block';
+            
+            // Add debug message function
+            window.debugLog = function(message) {
+                if (debugPanel) {
+                    const logItem = document.createElement('div');
+                    logItem.textContent = message;
+                    debugPanel.appendChild(logItem);
+                    
+                    // Scroll to bottom
+                    debugPanel.scrollTop = debugPanel.scrollHeight;
+                    
+                    // Limit log entries
+                    if (debugPanel.children.length > 20) {
+                        debugPanel.removeChild(debugPanel.firstChild);
+                    }
+                }
+                
+                // Also log to console
+                console.log(message);
+            };
+            
+            // Initialize audio functionality
+            initAudioControls();
+            
+            // Initialize the rest of your application
             initializeUI();
             
             // Set up event listeners for user interactions
             setupEventListeners();
         });
         
+        // Initialize audio controls
+        function initAudioControls() {
+            debugLog('Initializing audio controls');
+            
+            const volumeBtn = document.getElementById('volume-btn');
+            const volumeSliderContainer = document.getElementById('volume-slider-container');
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumeValue = document.getElementById('volume-value');
+            
+            // Create audio context
+            try {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                window.audioContext = new AudioContext();
+                debugLog('Audio Context created: ' + window.audioContext.state);
+            } catch (e) {
+                debugLog('Error creating Audio Context: ' + e.message);
+            }
+            
+            // Track mute state
+            let isMuted = false;
+            let lastVolume = 0.8; // Default 80%
+            
+            // Show/hide volume slider and toggle mute
+            volumeBtn.addEventListener('click', function() {
+                debugLog('Volume button clicked');
+                
+                // Toggle slider visibility
+                if (volumeSliderContainer.classList.contains('visible')) {
+                    // Already visible, toggle mute
+                    isMuted = !isMuted;
+                    
+                    if (isMuted) {
+                        // Store current volume before muting
+                        if (parseFloat(volumeSlider.value) > 0) {
+                            lastVolume = parseFloat(volumeSlider.value) / 100;
+                        }
+                        
+                        // Set slider to 0
+                        volumeSlider.value = 0;
+                        volumeValue.textContent = 'Volume: 0%';
+                        
+                        // Update volume icon
+                        const volumeIcon = volumeBtn.querySelector('.volume-icon');
+                        volumeIcon.classList.add('muted');
+                        if (!volumeIcon.querySelector('span')) {
+                            const muteSlash = document.createElement('span');
+                            volumeIcon.appendChild(muteSlash);
+                        }
+                        
+                        // Update all audio elements
+                        updateAudioVolume(0);
+                        debugLog('Audio muted');
+                    } else {
+                        // Restore previous volume
+                        const restoredValue = Math.round(lastVolume * 100);
+                        volumeSlider.value = restoredValue;
+                        volumeValue.textContent = `Volume: ${restoredValue}%`;
+                        
+                        // Update volume icon
+                        const volumeIcon = volumeBtn.querySelector('.volume-icon');
+                        volumeIcon.classList.remove('muted');
+                        const muteSlash = volumeIcon.querySelector('span');
+                        if (muteSlash) muteSlash.remove();
+                        
+                        // Update all audio elements
+                        updateAudioVolume(lastVolume);
+                        debugLog('Audio unmuted: ' + lastVolume);
+                    }
+                } else {
+                    // Show volume slider
+                    volumeSliderContainer.classList.add('visible');
+                    
+                    // Auto-hide after 5 seconds
+                    setTimeout(() => {
+                        volumeSliderContainer.classList.remove('visible');
+                    }, 5000);
+                }
+            });
+            
+            // Update volume when slider changes
+            volumeSlider.addEventListener('input', function() {
+                const volume = this.value / 100;
+                volumeValue.textContent = `Volume: ${this.value}%`;
+                
+                // Update all audio elements
+                updateAudioVolume(volume);
+                debugLog('Volume changed: ' + volume);
+                
+                // Update mute state and icon
+                const volumeIcon = volumeBtn.querySelector('.volume-icon');
+                
+                if (volume > 0 && isMuted) {
+                    isMuted = false;
+                    volumeIcon.classList.remove('muted');
+                    const muteSlash = volumeIcon.querySelector('span');
+                    if (muteSlash) muteSlash.remove();
+                } else if (volume === 0 && !isMuted) {
+                    isMuted = true;
+                    volumeIcon.classList.add('muted');
+                    if (!volumeIcon.querySelector('span')) {
+                        const muteSlash = document.createElement('span');
+                        volumeIcon.appendChild(muteSlash);
+                    }
+                }
+                
+                // Store non-zero volume
+                if (volume > 0) {
+                    lastVolume = volume;
+                }
+            });
+            
+            // Initialize audio on first user interaction
+            document.addEventListener('click', function() {
+                debugLog('User interaction - initializing audio');
+                
+                if (window.audioContext && window.audioContext.state === 'suspended') {
+                    window.audioContext.resume().then(() => {
+                        debugLog('Audio Context resumed: ' + window.audioContext.state);
+                        
+                        // Play startup sound
+                        playTestSound();
+                    }).catch(e => {
+                        debugLog('Error resuming Audio Context: ' + e.message);
+                    });
+                } else {
+                    debugLog('Audio Context already running or not available');
+                    
+                    // Play startup sound anyway
+                    playTestSound();
+                }
+            }, { once: true });
+            
+            // Play a test sound to verify audio is working
+            function playTestSound() {
+                try {
+                    const startupSound = document.getElementById('startup-sound');
+                    if (startupSound) {
+                        startupSound.volume = volumeSlider.value / 100;
+                        debugLog('Playing startup sound (volume: ' + startupSound.volume + ')');
+                        
+                        // Add event listeners for monitoring
+                        startupSound.addEventListener('playing', () => {
+                            debugLog('Startup sound is playing');
+                        });
+                        
+                        startupSound.addEventListener('ended', () => {
+                            debugLog('Startup sound ended');
+                        });
+                        
+                        startupSound.addEventListener('error', (e) => {
+                            debugLog('Startup sound error: ' + e.type);
+                        });
+                        
+                        // Play the sound
+                        startupSound.play().then(() => {
+                            debugLog('Startup sound playback started');
+                        }).catch(e => {
+                            debugLog('Startup sound playback error: ' + e.message);
+                        });
+                    } else {
+                        debugLog('Startup sound element not found');
+                    }
+                } catch (e) {
+                    debugLog('Error playing test sound: ' + e.message);
+                }
+            }
+        }
+        
+        // Update volume for all audio elements
+        function updateAudioVolume(volume) {
+            // Update HTML audio elements
+            const audioElements = document.querySelectorAll('audio');
+            audioElements.forEach(audio => {
+                audio.volume = volume;
+            });
+            
+            // Update audio processor if available
+            if (window.audioProcessor && window.audioProcessor.gainNode) {
+                window.audioProcessor.setVolume(volume);
+            }
+            
+            // Store in localStorage for persistence
+            localStorage.setItem('aikiraVolume', volume);
+        }
+        
+        // Play audio with robust error handling
+        function playAudio(src) {
+            debugLog('Attempting to play audio: ' + src);
+            
+            try {
+                // Check if audio file exists (indirectly)
+                fetch(src, { method: 'HEAD' })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Audio file not found: ${response.status}`);
+                        }
+                        
+                        // Create or reuse audio element
+                        const audio = new Audio(src);
+                        
+                        // Set volume based on slider
+                        const volumeSlider = document.getElementById('volume-slider');
+                        if (volumeSlider) {
+                            audio.volume = volumeSlider.value / 100;
+                            debugLog('Setting volume to: ' + audio.volume);
+                        }
+                        
+                        // Add event listeners for debugging
+                        audio.addEventListener('playing', () => {
+                            debugLog('Audio started playing: ' + src);
+                        });
+                        
+                        audio.addEventListener('ended', () => {
+                            debugLog('Audio finished: ' + src);
+                        });
+                        
+                        audio.addEventListener('error', (e) => {
+                            debugLog('Audio error: ' + e.type);
+                            document.getElementById('input-status').textContent = 'Audio Error';
+                        });
+                        
+                        // Play audio with more detailed error handling
+                        audio.play().catch(e => {
+                            debugLog('Audio play error: ' + e.message);
+                            document.getElementById('input-status').textContent = 'Audio Error: ' + e.message;
+                        });
+                    })
+                    .catch(error => {
+                        debugLog('Fetch error for audio: ' + error.message);
+                        document.getElementById('input-status').textContent = 'Audio Error: File Not Found';
+                    });
+            } catch (e) {
+                debugLog('Audio play exception: ' + e.message);
+                document.getElementById('input-status').textContent = 'Audio Error: ' + e.message;
+            }
+        }
+        
         // Initialize UI elements and animations
         function initializeUI() {
-            // Create floating particle effects
+            debugLog('Initializing UI');
+            
+            // Create floating particles
             createParticles();
             
-            // Initialize sound waveform visualization
+            // Set up waveform visualization
             initializeWaveform();
             
             // Animate initial metrics
             animateMetrics();
-            
-            // Type out welcome message
-            const welcomeMessage = "Aikira Constitutional AI Core initialized. How may I assist you today?";
-            typeText(document.getElementById('response-text'), welcomeMessage);
         }
         
-        // Set up event listeners for user interactions
+        // Set up event listeners
         function setupEventListeners() {
+            debugLog('Setting up event listeners');
+            
             // Get DOM elements
             const submitButton = document.getElementById('submit-proposal');
             const proposalText = document.getElementById('proposal-text');
@@ -692,7 +1100,7 @@
                 submitButton.addEventListener('click', function() {
                     const proposal = proposalText.value.trim();
                     if (proposal) {
-                        submitProposal(proposal);
+                        processProposal(proposal);
                     }
                 });
                 
@@ -708,42 +1116,159 @@
             // Add event listener for voice input
             if (voiceButton) {
                 voiceButton.addEventListener('click', function() {
-                    // Toggle voice input state
+                    debugLog('Voice button clicked');
+                    
+                    // Toggle active state
                     this.classList.toggle('active');
                     
                     if (this.classList.contains('active')) {
-                        // Start recording
+                        // Start voice recording
                         document.getElementById('input-status').textContent = 'Listening...';
                         
                         // Animate waveform
                         animateActiveWaveform(true);
                         
-                        // For demo, simulate stopping after 3 seconds
-                        setTimeout(() => {
-                            this.classList.remove('active');
-                            document.getElementById('input-status').textContent = 'Processing voice input...';
-                            animateActiveWaveform(false);
-                            
-                            // Simulate voice processing
-                            setTimeout(() => {
-                                submitProposal("Implement a transparent governance system with equal voting rights.");
-                            }, 1000);
-                        }, 3000);
+                        // Play sound
+                        playAudio('assets/audio/proposal-submit.mp3');
+                        
+                        // Actually start recording
+                        startVoiceRecording();
+                    } else {
+                        stopVoiceRecording();
                     }
                 });
             }
         }
         
-        // Submit proposal to the API
-        function submitProposal(proposalText) {
+        // Start voice recording
+        function startVoiceRecording() {
+            debugLog('Starting voice recording');
+            
+            try {
+                // Request microphone access
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        debugLog('Microphone access granted');
+                        
+                        // Create media recorder
+                        window.mediaRecorder = new MediaRecorder(stream);
+                        window.audioChunks = [];
+                        
+                        // Add data handler
+                        window.mediaRecorder.addEventListener('dataavailable', event => {
+                            window.audioChunks.push(event.data);
+                        });
+                        
+                        // Add stop handler
+                        window.mediaRecorder.addEventListener('stop', () => {
+                            debugLog('Recording stopped');
+                            
+                            // Create blob from chunks
+                            const audioBlob = new Blob(window.audioChunks, { type: 'audio/wav' });
+                            
+                            // Send to server for transcription
+                            transcribeAudio(audioBlob);
+                        });
+                        
+                        // Start recording
+                        window.mediaRecorder.start();
+                        debugLog('Recording started');
+                        
+                        // Automatically stop after 10 seconds as safety
+                        setTimeout(() => {
+                            if (window.mediaRecorder && window.mediaRecorder.state === 'recording') {
+                                stopVoiceRecording();
+                            }
+                        }, 10000);
+                    })
+                    .catch(error => {
+                        debugLog('Microphone access denied: ' + error.message);
+                        document.getElementById('input-status').textContent = 'Error: Microphone access denied';
+                        document.getElementById('voice-input-btn').classList.remove('active');
+                        animateActiveWaveform(false);
+                    });
+            } catch (error) {
+                debugLog('Voice recording error: ' + error.message);
+                document.getElementById('input-status').textContent = 'Error: ' + error.message;
+                document.getElementById('voice-input-btn').classList.remove('active');
+                animateActiveWaveform(false);
+            }
+        }
+        
+        // Stop voice recording
+        function stopVoiceRecording() {
+            debugLog('Stopping voice recording');
+            
+            document.getElementById('input-status').textContent = 'Processing voice input...';
+            animateActiveWaveform(false);
+            
+            // Stop the recorder
+            if (window.mediaRecorder && window.mediaRecorder.state === 'recording') {
+                window.mediaRecorder.stop();
+                
+                // Stop microphone access
+                window.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            } else {
+                debugLog('No active media recorder to stop');
+                document.getElementById('input-status').textContent = 'Error: No active recording';
+            }
+        }
+        
+        // Transcribe audio using server API
+        function transcribeAudio(audioBlob) {
+            debugLog('Transcribing audio');
+            
+            // Create form data for upload
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.wav');
+            
+            // Send to server
+            fetch('/api/speech/transcribe', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Server error: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.text) {
+                    debugLog('Transcription successful: ' + data.text);
+                    
+                    // Process the transcribed text
+                    processProposal(data.text);
+                } else {
+                    debugLog('Transcription failed - no text received');
+                    document.getElementById('input-status').textContent = 'Error: Transcription failed';
+                }
+            })
+            .catch(error => {
+                debugLog('Transcription error: ' + error.message);
+                document.getElementById('input-status').textContent = 'Error: ' + error.message;
+                
+                // Show static error message instead of fallback
+                typeText(document.getElementById('response-text'), 
+                    "I'm sorry, but I couldn't transcribe your voice input. There was an error: " + error.message);
+            });
+        }
+        
+        // Process proposal
+        function processProposal(proposalText) {
+            debugLog('Processing proposal: ' + proposalText);
+            
             // Update status
             document.getElementById('input-status').textContent = 'Processing proposal...';
             
-            // Clear input field
+            // Clear input
             document.getElementById('proposal-text').value = '';
             
-            // Make API call to backend
-            fetch('/api/openai/generate-response', {
+            // Play sound
+            playAudio('assets/audio/deliberation.mp3');
+            
+            // Send to API
+            fetch('/api/proposal/evaluate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -751,45 +1276,65 @@
                 body: JSON.stringify({ proposal: proposalText })
             })
             .then(response => {
-                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('Server error: ' + response.status);
+                }
                 return response.json();
             })
             .then(data => {
-                console.log('API response:', data);
-                
-                if (data.success) {
-                    // Display AI response with typing effect
-                    typeText(document.getElementById('response-text'), data.response);
+                if (data.success && data.result) {
+                    debugLog('Proposal evaluation successful');
                     
-                    // Update metrics visualization
+                    // Update response text with typing effect
+                    typeText(document.getElementById('response-text'), data.result.response);
+                    
+                    // Update metrics
                     updateMetrics(
-                        data.metrics.fairness,
-                        data.metrics.value,
-                        data.metrics.protection, 
-                        data.consensus
+                        Math.round(data.result.scores.fairness * 100),
+                        Math.round(data.result.scores.value * 100),
+                        Math.round(data.result.scores.protection * 100),
+                        Math.round(data.result.consensusIndex * 100)
                     );
+                    
+                    // Update status
+                    document.getElementById('input-status').textContent = 'Ready for input';
+                    
+                    // Play response audio
+                    playAudio('assets/audio/deliberation.mp3');
                 } else {
-                    // Handle API error
-                    document.getElementById('response-text').textContent = 
-                        "I apologize, but I'm unable to process your proposal at this time. Please try again later.";
+                    throw new Error('Invalid response format');
                 }
-                
-                // Reset status
-                document.getElementById('input-status').textContent = 'Ready for input';
             })
             .catch(error => {
-                console.error('Error:', error);
+                debugLog('Proposal processing error: ' + error.message);
+                document.getElementById('input-status').textContent = 'Error: ' + error.message;
                 
-                // Display error message
-                document.getElementById('response-text').textContent = 
-                    "A communication error occurred. Please check your connection and try again.";
-                    
-                // Reset status
-                document.getElementById('input-status').textContent = 'Connection error';
+                // Fallback to simulated response for demo
+                simulateProposalResponse(proposalText);
             });
         }
         
-        // Create floating particle effects
+        // Simulate proposal response for demo/testing
+        function simulateProposalResponse(proposalText) {
+            debugLog('Using simulated proposal response');
+            
+            // Sample response
+            const response = "After constitutional analysis, I've determined that your proposal aligns well with our governance principles. The value generation aspects are particularly strong. However, there is room to improve consensus alignment. Consider enhancing the fairness distribution framework.";
+            
+            // Update response text with typing effect
+            typeText(document.getElementById('response-text'), response);
+            
+            // Update metrics
+            updateMetrics(78, 85, 90, 84);
+            
+            // Update status
+            document.getElementById('input-status').textContent = 'Ready for input';
+            
+            // Play response audio
+            playAudio('assets/audio/deliberation.mp3');
+        }
+        
+        // Create particles
         function createParticles() {
             const container = document.querySelector('.digital-world-bg');
             if (!container) return;
@@ -802,25 +1347,17 @@
                 particle.classList.add('particle');
                 
                 // Random position
-                const x = Math.random() * 100;
-                const y = Math.random() * 100;
-                particle.style.left = `${x}%`;
-                particle.style.top = `${y}%`;
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
                 
-                // Random color
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                particle.style.backgroundColor = color;
-                
-                // Random size
-                const size = Math.random() * 3 + 2;
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
+                // Random color and size
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.width = `${Math.random() * 3 + 2}px`;
+                particle.style.height = `${Math.random() * 3 + 2}px`;
                 
                 // Random animation delay
-                const delay = Math.random() * 8;
-                particle.style.animationDelay = `${delay}s`;
+                particle.style.animationDelay = `${Math.random() * 8}s`;
                 
-                // Add to container
                 container.appendChild(particle);
             }
         }
@@ -862,7 +1399,7 @@
             drawIdleWave();
         }
         
-        // Animate waveform for active voice recording
+        // Animate active waveform
         function animateActiveWaveform(isActive) {
             const canvas = document.getElementById('voice-waveform');
             if (!canvas) return;
@@ -913,8 +1450,29 @@
             }
         }
         
-        // Update metrics visualization
+        // Animate metrics
+        function animateMetrics() {
+            // Get metric elements
+            const metricBars = document.querySelectorAll('.metric-value');
+            
+            // Animate metrics after a short delay
+            setTimeout(() => {
+                metricBars.forEach(metric => {
+                    // Get the current width from the style
+                    const width = metric.style.width;
+                    // Reset to 0 and then animate to the target width
+                    metric.style.width = '0%';
+                    setTimeout(() => {
+                        metric.style.width = width;
+                    }, 300);
+                });
+            }, 800);
+        }
+        
+        // Update metrics
         function updateMetrics(fairness, value, protection, consensus) {
+            debugLog(`Updating metrics - F: ${fairness}, V: ${value}, P: ${protection}, C: ${consensus}`);
+            
             // Get metric elements
             const metricBars = document.querySelectorAll('.metric-value');
             
@@ -949,23 +1507,6 @@
             updateConsensusTriangle(consensus / 100);
         }
         
-        // Initial metric animation
-        function animateMetrics() {
-            setTimeout(() => {
-                const metricBars = document.querySelectorAll('.metric-value');
-                metricBars.forEach(bar => {
-                    // Store original width
-                    const originalWidth = bar.style.width;
-                    // Reset to zero
-                    bar.style.width = '0%';
-                    // Animate to original
-                    setTimeout(() => {
-                        bar.style.width = originalWidth;
-                    }, 300);
-                });
-            }, 1000);
-        }
-        
         // Update consensus triangle visualization
         function updateConsensusTriangle(consensusValue) {
             const indicator = document.querySelector('.consensus-indicator');
@@ -993,8 +1534,8 @@
             
             // Clear the element
             element.textContent = '';
-            
             let i = 0;
+            
             function type() {
                 if (i < text.length) {
                     element.textContent += text.charAt(i);

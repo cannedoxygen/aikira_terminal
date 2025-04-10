@@ -1,0 +1,386 @@
+/**
+ * Audio Controls for Aikira Terminal
+ * 
+ * This file contains the code to add:
+ * 1. A "Click to enable audio" button
+ * 2. Volume controls for the terminal
+ * 
+ * Add this code to your existing main.js file, or include it as a separate script.
+ */
+
+// Function to create and initialize audio controls
+function initializeAudioControls() {
+  // Create the audio initialization overlay
+  createAudioInitOverlay();
+  
+  // Create volume control
+  createVolumeControl();
+  
+  // Set up event listeners for audio context initialization
+  setupAudioInitListeners();
+}
+
+// Create overlay with button to enable audio
+function createAudioInitOverlay() {
+  // Create overlay container
+  const overlay = document.createElement('div');
+  overlay.id = 'audio-init-overlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.backgroundColor = 'rgba(18, 21, 26, 0.85)';
+  overlay.style.display = 'flex';
+  overlay.style.justifyContent = 'center';
+  overlay.style.alignItems = 'center';
+  overlay.style.zIndex = '9999';
+  overlay.style.backdropFilter = 'blur(5px)';
+  
+  // Create button container
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.textAlign = 'center';
+  buttonContainer.style.padding = '30px';
+  buttonContainer.style.backgroundColor = 'var(--medium-bg)';
+  buttonContainer.style.borderRadius = '15px';
+  buttonContainer.style.border = '1px solid var(--trans-light)';
+  buttonContainer.style.boxShadow = '0 0 30px rgba(216, 181, 255, 0.3)';
+  buttonContainer.style.animation = 'fadeIn 0.5s ease-out forwards';
+  
+  // Create header
+  const header = document.createElement('h2');
+  header.textContent = 'Welcome to Aikira Terminal';
+  header.style.color = 'var(--soft-pink)';
+  header.style.marginBottom = '20px';
+  header.style.fontFamily = 'var(--display-font)';
+  
+  // Create message
+  const message = document.createElement('p');
+  message.textContent = 'Browser security requires user interaction before playing audio.';
+  message.style.color = 'var(--soft-white)';
+  message.style.marginBottom = '25px';
+  
+  // Create enable button
+  const enableButton = document.createElement('button');
+  enableButton.id = 'enable-audio-btn';
+  enableButton.textContent = 'Enable Audio';
+  enableButton.className = 'button primary';
+  enableButton.style.padding = '12px 25px';
+  enableButton.style.fontSize = '16px';
+  enableButton.style.marginBottom = '15px';
+  
+  // Create secondary info
+  const secondaryInfo = document.createElement('p');
+  secondaryInfo.textContent = 'Click to initialize Aikira\'s voice capabilities';
+  secondaryInfo.style.color = 'var(--lavender-purple)';
+  secondaryInfo.style.fontSize = '14px';
+  secondaryInfo.style.opacity = '0.8';
+  
+  // Assemble the container
+  buttonContainer.appendChild(header);
+  buttonContainer.appendChild(message);
+  buttonContainer.appendChild(enableButton);
+  buttonContainer.appendChild(secondaryInfo);
+  overlay.appendChild(buttonContainer);
+  
+  // Add to body
+  document.body.appendChild(overlay);
+}
+
+// Create volume control
+function createVolumeControl() {
+  // Create volume control container
+  const volumeControl = document.createElement('div');
+  volumeControl.id = 'aikira-volume-control';
+  volumeControl.style.position = 'fixed';
+  volumeControl.style.bottom = '20px';
+  volumeControl.style.right = '20px';
+  volumeControl.style.backgroundColor = 'var(--medium-bg)';
+  volumeControl.style.borderRadius = '10px';
+  volumeControl.style.padding = '10px';
+  volumeControl.style.display = 'flex';
+  volumeControl.style.alignItems = 'center';
+  volumeControl.style.gap = '10px';
+  volumeControl.style.boxShadow = '0 0 15px rgba(0, 0, 0, 0.3)';
+  volumeControl.style.border = '1px solid var(--trans-light)';
+  volumeControl.style.zIndex = '100';
+  
+  // Create volume icon
+  const volumeIcon = document.createElement('div');
+  volumeIcon.id = 'volume-icon';
+  volumeIcon.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 5L5 9H1V15H5L10 19V5Z" stroke="var(--soft-white)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M19.07 4.93C20.9447 6.80528 21.9979 9.34836 21.9979 12C21.9979 14.6516 20.9447 17.1947 19.07 19.07M15.54 8.46C16.4774 9.39764 17.004 10.6692 17.004 11.995C17.004 13.3208 16.4774 14.5924 15.54 15.53" stroke="var(--soft-white)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+  
+  // Create volume slider
+  const volumeSlider = document.createElement('input');
+  volumeSlider.id = 'volume-slider';
+  volumeSlider.type = 'range';
+  volumeSlider.min = '0';
+  volumeSlider.max = '100';
+  volumeSlider.value = '80';
+  volumeSlider.style.width = '80px';
+  volumeSlider.style.accentColor = 'var(--accent-purple)';
+  
+  // Create volume percentage display
+  const volumeValue = document.createElement('span');
+  volumeValue.id = 'volume-value';
+  volumeValue.textContent = '80%';
+  volumeValue.style.color = 'var(--soft-white)';
+  volumeValue.style.fontSize = '12px';
+  volumeValue.style.minWidth = '35px';
+  
+  // Create mute button
+  const muteButton = document.createElement('button');
+  muteButton.id = 'mute-button';
+  muteButton.style.background = 'none';
+  muteButton.style.border = 'none';
+  muteButton.style.cursor = 'pointer';
+  muteButton.style.display = 'flex';
+  muteButton.style.alignItems = 'center';
+  muteButton.style.justifyContent = 'center';
+  muteButton.style.padding = '5px';
+  muteButton.style.borderRadius = '5px';
+  muteButton.style.transition = 'all 0.2s';
+  
+  muteButton.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="24" height="24" fill="none" stroke="none" />
+      <path d="M22 9.5L12 3L2 9.5V21.5H22V9.5Z" stroke="var(--soft-white)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M9 21.5V12.5H15V21.5" stroke="var(--soft-white)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+  
+  // Assemble volume control
+  volumeControl.appendChild(volumeIcon);
+  volumeControl.appendChild(volumeSlider);
+  volumeControl.appendChild(volumeValue);
+  volumeControl.appendChild(muteButton);
+  
+  // Initially hide the volume control (will show after initialization)
+  volumeControl.style.display = 'none';
+  
+  // Add to body
+  document.body.appendChild(volumeControl);
+}
+
+// Setup event listeners for audio initialization
+function setupAudioInitListeners() {
+  // Get DOM elements
+  const enableBtn = document.getElementById('enable-audio-btn');
+  const overlay = document.getElementById('audio-init-overlay');
+  const volumeControl = document.getElementById('aikira-volume-control');
+  const volumeSlider = document.getElementById('volume-slider');
+  const volumeValue = document.getElementById('volume-value');
+  const muteButton = document.getElementById('mute-button');
+  
+  // Track mute state
+  let isMuted = false;
+  let lastVolume = 0.8; // 80% default volume
+  
+  if (enableBtn) {
+    enableBtn.addEventListener('click', function() {
+      // Initialize audio context
+      if (window.audioContext && window.audioContext.state === 'suspended') {
+        window.audioContext.resume();
+      }
+      
+      // Play startup sound
+      playStartupSound();
+      
+      // Hide overlay with animation
+      overlay.style.animation = 'fadeOut 0.5s forwards';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 500);
+      
+      // Show volume control
+      volumeControl.style.display = 'flex';
+      volumeControl.style.animation = 'fadeIn 0.5s forwards';
+    });
+  }
+  
+  // Volume slider events
+  if (volumeSlider) {
+    volumeSlider.addEventListener('input', function() {
+      const volume = this.value / 100;
+      
+      // Update volume value display
+      volumeValue.textContent = `${this.value}%`;
+      
+      // Update global volume
+      updateGlobalVolume(volume);
+      
+      // Update mute state
+      if (volume > 0 && isMuted) {
+        isMuted = false;
+        updateMuteButtonStyle();
+      } else if (volume === 0 && !isMuted) {
+        isMuted = true;
+        updateMuteButtonStyle();
+      }
+      
+      // Store last non-zero volume
+      if (volume > 0) {
+        lastVolume = volume;
+      }
+    });
+  }
+  
+  // Mute button event
+  if (muteButton) {
+    muteButton.addEventListener('click', function() {
+      isMuted = !isMuted;
+      
+      if (isMuted) {
+        // Store current volume before muting
+        if (parseFloat(volumeSlider.value) > 0) {
+          lastVolume = parseFloat(volumeSlider.value) / 100;
+        }
+        
+        // Set volume to 0
+        volumeSlider.value = 0;
+        volumeValue.textContent = '0%';
+        updateGlobalVolume(0);
+      } else {
+        // Restore previous volume
+        const restoredValue = Math.round(lastVolume * 100);
+        volumeSlider.value = restoredValue;
+        volumeValue.textContent = `${restoredValue}%`;
+        updateGlobalVolume(lastVolume);
+      }
+      
+      // Update button style
+      updateMuteButtonStyle();
+    });
+    
+    // Hover effect
+    muteButton.addEventListener('mouseenter', function() {
+      this.style.backgroundColor = 'var(--trans-light)';
+    });
+    
+    muteButton.addEventListener('mouseleave', function() {
+      this.style.backgroundColor = '';
+    });
+  }
+  
+  // Update mute button visual state
+  function updateMuteButtonStyle() {
+    if (isMuted) {
+      muteButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3L2 9.5V21.5H22V9.5L12 3Z" fill="none" stroke="var(--accent-pink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="4" y1="20" x2="20" y2="4" stroke="var(--accent-pink)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      `;
+    } else {
+      muteButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="24" height="24" fill="none" stroke="none" />
+          <path d="M22 9.5L12 3L2 9.5V21.5H22V9.5Z" stroke="var(--soft-white)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 21.5V12.5H15V21.5" stroke="var(--soft-white)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+    }
+  }
+}
+
+// Function to update global audio volume
+function updateGlobalVolume(volume) {
+  // Update audio context gain node if available
+  if (window.audioProcessor && window.audioProcessor.gainNode) {
+    window.audioProcessor.setVolume(volume);
+  }
+  
+  // Update HTML audio elements
+  const audioElements = document.querySelectorAll('audio');
+  audioElements.forEach(audio => {
+    audio.volume = volume;
+  });
+  
+  // Store in localStorage for persistence
+  localStorage.setItem('aikiraVolume', volume);
+}
+
+// Function to play startup sound
+function playStartupSound() {
+  const startupSound = document.getElementById('startup-sound') || 
+                       new Audio('assets/audio/startup.mp3');
+  
+  // Set volume based on current slider
+  const volumeSlider = document.getElementById('volume-slider');
+  if (volumeSlider) {
+    startupSound.volume = volumeSlider.value / 100;
+  } else {
+    startupSound.volume = 0.8; // Default
+  }
+  
+  // Play the sound
+  startupSound.play().catch(e => {
+    console.error('Startup sound play error:', e);
+  });
+}
+
+// Add keyframe animations to document
+function addAnimationStyles() {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+  `;
+  document.head.appendChild(styleElement);
+}
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', function() {
+  addAnimationStyles();
+  initializeAudioControls();
+  
+  // Read saved volume from localStorage
+  const savedVolume = localStorage.getItem('aikiraVolume');
+  if (savedVolume !== null) {
+    const volumeSlider = document.getElementById('volume-slider');
+    const volumeValue = document.getElementById('volume-value');
+    
+    if (volumeSlider && volumeValue) {
+      volumeSlider.value = Math.round(savedVolume * 100);
+      volumeValue.textContent = `${Math.round(savedVolume * 100)}%`;
+      updateGlobalVolume(parseFloat(savedVolume));
+    }
+  }
+});
+
+// Modify existing initAudio function to work with our overlay
+if (typeof initAudio === 'function') {
+  const originalInitAudio = initAudio;
+  window.initAudio = function() {
+    // Call original function
+    originalInitAudio();
+    
+    // Also hide our overlay if it exists
+    const overlay = document.getElementById('audio-init-overlay');
+    if (overlay && overlay.style.display !== 'none') {
+      overlay.style.animation = 'fadeOut 0.5s forwards';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 500);
+      
+      // Show volume control
+      const volumeControl = document.getElementById('aikira-volume-control');
+      if (volumeControl) {
+        volumeControl.style.display = 'flex';
+        volumeControl.style.animation = 'fadeIn 0.5s forwards';
+      }
+    }
+  };
+}
