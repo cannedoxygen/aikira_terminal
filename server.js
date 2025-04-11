@@ -95,7 +95,7 @@ if (!fs.existsSync(downloadsDir)) {
 // Serve static files from the frontend directory
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-// Serve generated audio files
+// Explicitly serve generated audio files from downloads directory
 app.use('/downloads', express.static(downloadsDir));
 
 // Apply the API key middleware to relevant routes
@@ -105,6 +105,40 @@ app.use('/api/speech', requireApiKeys);
 // Import proposal controller
 const proposalController = require('./backend/controllers/proposal-controller');
 app.use('/api/proposal', proposalController);
+
+// Helper function to get a valid voice ID from Eleven Labs
+async function getValidVoiceId(apiKey, requestedVoiceId) {
+  try {
+    // Get available voices
+    const voicesResponse = await axios.get('https://api.elevenlabs.io/v1/voices', {
+      headers: {
+        'xi-api-key': apiKey
+      }
+    });
+    
+    if (voicesResponse.data.voices && voicesResponse.data.voices.length > 0) {
+      // If a specific voice ID was requested, check if it exists
+      if (requestedVoiceId && requestedVoiceId !== 'default') {
+        const voiceExists = voicesResponse.data.voices.some(voice => voice.voice_id === requestedVoiceId);
+        if (voiceExists) {
+          console.log(`Using requested voice ID: ${requestedVoiceId}`);
+          return requestedVoiceId;
+        }
+        console.log(`Requested voice ID ${requestedVoiceId} not found, using first available voice`);
+      }
+      
+      // Otherwise, use the first available voice
+      const firstVoiceId = voicesResponse.data.voices[0].voice_id;
+      console.log(`Using first available voice: ${firstVoiceId} (${voicesResponse.data.voices[0].name})`);
+      return firstVoiceId;
+    } else {
+      throw new Error('No voices found in your Eleven Labs account');
+    }
+  } catch (error) {
+    console.error('Error getting valid voice ID:', error.message);
+    throw new Error('Could not get a valid voice ID from Eleven Labs');
+  }
+}
 
 // OpenAI integration endpoint
 app.post('/api/openai/generate-response', async (req, res) => {
@@ -364,8 +398,8 @@ app.post('/api/speech/generate', async (req, res) => {
     
     console.log(`Generating speech with Eleven Labs for text: ${text.substring(0, 50)}...`);
     
-    // Use default voice ID if not provided
-    const useVoiceId = voice_id || "default";
+    // Get a valid voice ID
+    const useVoiceId = await getValidVoiceId(apiKey, voice_id);
     console.log(`Using voice ID: ${useVoiceId}`);
     
     // Use default model if not provided
@@ -450,39 +484,60 @@ app.post('/api/speech/generate', async (req, res) => {
   }
 });
 
-// Helper function to get a valid voice ID from Eleven Labs
-async function getValidVoiceId(apiKey, requestedVoiceId) {
+// Debug endpoint for Eleven Labs API
+app.get('/api/debug/eleven-labs', async (req, res) => {
   try {
-    // Get available voices
-    const voicesResponse = await axios.get('https://api.elevenlabs.io/v1/voices', {
+    const apiKey = process.env.ELEVEN_LABS_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'Eleven Labs API key not configured'
+      });
+    }
+    
+    console.log(`Testing Eleven Labs API with key: ${apiKey.substring(0, 5)}...`);
+    
+    // Get a valid voice ID
+    const voiceId = await getValidVoiceId(apiKey, "default");
+    
+    // Test by generating a short audio clip
+    const testText = "This is a test of the Aikira speech system.";
+    
+    // Generate test speech
+    const response = await axios({
+      method: 'post',
+      url: `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      data: {
+        text: testText,
+        model_id: 'eleven_multilingual_v2'
+      },
       headers: {
-        'xi-api-key': apiKey
-      }
+        'Accept': 'audio/mpeg',
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      responseType: 'arraybuffer'
     });
     
-    if (voicesResponse.data.voices && voicesResponse.data.voices.length > 0) {
-      // If a specific voice ID was requested, check if it exists
-      if (requestedVoiceId && requestedVoiceId !== 'default') {
-        const voiceExists = voicesResponse.data.voices.some(voice => voice.voice_id === requestedVoiceId);
-        if (voiceExists) {
-          console.log(`Using requested voice ID: ${requestedVoiceId}`);
-          return requestedVoiceId;
-        }
-        console.log(`Requested voice ID ${requestedVoiceId} not found, using first available voice`);
-      }
-      
-      // Otherwise, use the first available voice
-      const firstVoiceId = voicesResponse.data.voices[0].voice_id;
-      console.log(`Using first available voice: ${firstVoiceId} (${voicesResponse.data.voices[0].name})`);
-      return firstVoiceId;
-    } else {
-      throw new Error('No voices found in your Eleven Labs account');
-    }
+    // Save the test audio
+    const filename = `test_speech_${Date.now()}.mp3`;
+    const filePath = path.join(downloadsDir, filename);
+    fs.writeFileSync(filePath, Buffer.from(response.data));
+    
+    return res.json({
+      success: true,
+      message: 'Eleven Labs API test successful',
+      test_audio_url: `/downloads/${filename}`
+    });
   } catch (error) {
-    console.error('Error getting valid voice ID:', error.message);
-    throw new Error('Could not get a valid voice ID from Eleven Labs');
+    console.error('Eleven Labs debug test error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Eleven Labs API test failed',
+      message: error.message
+    });
   }
-}
+});
 
 // Simple test endpoint for Eleven Labs API
 app.get('/api/speech/test', async (req, res) => {

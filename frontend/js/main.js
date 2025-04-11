@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const consensusValue = document.querySelector('.consensus-value');
     const consensusStatusValue = document.querySelector('#consensus-index .status-value');
     
+    // Debug mode - set to true for more logging
+    const debugMode = true;
+    
     // Audio context
     let audioContext = null;
     // Current audio URL for speech
@@ -26,9 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function initializeApp() {
         console.log('Initializing Aikira Terminal');
-        
-        // Create audio initialization overlay
-        createAudioInitOverlay();
         
         // Create floating particles
         createParticles();
@@ -49,142 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Aikira Terminal initialized');
     }
     
-    // Create audio initialization overlay
-    function createAudioInitOverlay() {
-        // Create overlay container
-        const overlay = document.createElement('div');
-        overlay.id = 'audio-init-overlay';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(18, 21, 26, 0.85)';
-        overlay.style.display = 'flex';
-        overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'center';
-        overlay.style.zIndex = '9999';
-        overlay.style.backdropFilter = 'blur(5px)';
-        
-        // Create button container
-        const buttonContainer = document.createElement('div');
-        buttonContainer.style.textAlign = 'center';
-        buttonContainer.style.padding = '30px';
-        buttonContainer.style.backgroundColor = 'var(--medium-bg)';
-        buttonContainer.style.borderRadius = '15px';
-        buttonContainer.style.border = '1px solid var(--trans-light)';
-        buttonContainer.style.boxShadow = '0 0 30px rgba(216, 181, 255, 0.3)';
-        buttonContainer.style.animation = 'fadeIn 0.5s ease-out forwards';
-        
-        // Create header
-        const header = document.createElement('h2');
-        header.textContent = 'Welcome to Aikira Terminal';
-        header.style.color = 'var(--soft-pink)';
-        header.style.marginBottom = '20px';
-        header.style.fontFamily = 'var(--display-font)';
-        
-        // Create message
-        const message = document.createElement('p');
-        message.textContent = 'Browser security requires user interaction before playing audio.';
-        message.style.color = 'var(--soft-white)';
-        message.style.marginBottom = '25px';
-        
-        // Create enable button
-        const enableButton = document.createElement('button');
-        enableButton.id = 'enable-audio-btn';
-        enableButton.textContent = 'Enable Audio';
-        enableButton.className = 'button primary';
-        enableButton.style.padding = '12px 25px';
-        enableButton.style.fontSize = '16px';
-        enableButton.style.marginBottom = '15px';
-        enableButton.style.background = 'linear-gradient(135deg, var(--accent-purple), var(--accent-turquoise))';
-        enableButton.style.border = 'none';
-        enableButton.style.borderRadius = '10px';
-        enableButton.style.color = 'var(--soft-white)';
-        enableButton.style.cursor = 'pointer';
-        
-        // Create secondary info
-        const secondaryInfo = document.createElement('p');
-        secondaryInfo.textContent = 'Click to initialize Aikira\'s voice capabilities';
-        secondaryInfo.style.color = 'var(--lavender-purple)';
-        secondaryInfo.style.fontSize = '14px';
-        secondaryInfo.style.opacity = '0.8';
-        
-        // When clicked, initialize audio and remove overlay
-        enableButton.addEventListener('click', function() {
-            // Initialize audio context
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    console.log('Audio context resumed');
-                });
-            }
-            
-            // Play a silent sound to initialize audio
-            const audio = new Audio();
-            audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-            audio.play().then(() => {
-                console.log('Audio initialized');
-                
-                // Play startup sound
-                playAudio('assets/audio/startup.wav');
-            }).catch(err => {
-                console.log(`Audio init error: ${err.message}`);
-            });
-            
-            // Remove overlay with animation
-            overlay.style.animation = 'fadeOut 0.5s forwards';
-            setTimeout(() => {
-                overlay.remove();
-            }, 500);
-        });
-        
-        // Assemble the container
-        buttonContainer.appendChild(header);
-        buttonContainer.appendChild(message);
-        buttonContainer.appendChild(enableButton);
-        buttonContainer.appendChild(secondaryInfo);
-        overlay.appendChild(buttonContainer);
-        
-        // Add to body
-        document.body.appendChild(overlay);
-        
-        // Add keyframe animations to document if needed
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(-20px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes fadeOut {
-                from { opacity: 1; }
-                to { opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    // Initialize audio context
-    function initializeAudio() {
-        try {
-            // Create audio context
-            window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioContext = new AudioContext();
-            
-            // Resume context on user interaction
-            document.addEventListener('click', function() {
-                if (audioContext && audioContext.state === 'suspended') {
-                    audioContext.resume().then(() => {
-                        console.log('Audio context resumed on user interaction');
-                    });
-                }
-            }, { once: true });
-            
-            console.log('Audio context created: ' + audioContext.state);
-        } catch (error) {
-            console.log('Error creating audio context: ' + error.message);
-        }
-    }
-    
     // Set up event listeners
     function setupEventListeners() {
         console.log('Setting up event listeners');
@@ -193,8 +57,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (submitButton && proposalText) {
             submitButton.addEventListener('click', function() {
                 if (proposalText.value.trim()) {
-                    // Send proposal to API
-                    processProposal(proposalText.value);
+                    // Send proposal to API (using function from audio-controls.js)
+                    if (typeof window.processProposal === 'function') {
+                        window.processProposal(proposalText.value);
+                    } else {
+                        processProposalFallback(proposalText.value);
+                    }
                 }
             });
             
@@ -222,60 +90,240 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+        
+        // Volume button
+        const volumeBtn = document.getElementById('volume-btn');
+        const volumeSliderContainer = document.getElementById('volume-slider-container');
+        
+        if (volumeBtn && volumeSliderContainer) {
+            volumeBtn.addEventListener('click', function() {
+                // Toggle volume slider visibility
+                volumeSliderContainer.classList.toggle('visible');
+                
+                // Auto-hide after 5 seconds if visible
+                if (volumeSliderContainer.classList.contains('visible')) {
+                    setTimeout(() => {
+                        volumeSliderContainer.classList.remove('visible');
+                    }, 5000);
+                }
+            });
+        }
+        
+        // Volume slider
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeValue = document.getElementById('volume-value');
+        
+        if (volumeSlider && volumeValue) {
+            volumeSlider.addEventListener('input', function() {
+                const volume = this.value / 100;
+                volumeValue.textContent = `Volume: ${this.value}%`;
+                
+                // Update volume using the setVolume function from audio-controls.js
+                if (typeof window.setVolume === 'function') {
+                    window.setVolume(volume);
+                }
+            });
+        }
+        
+        // Enable audio button (if it exists for initialization)
+        const enableAudioBtn = document.getElementById('enable-audio-btn');
+        const audioOverlay = document.getElementById('audio-init-overlay');
+        
+        if (enableAudioBtn && audioOverlay) {
+            enableAudioBtn.addEventListener('click', function() {
+                // Initialize audio
+                if (typeof window.initAudio === 'function') {
+                    window.initAudio();
+                } else {
+                    initializeAudio();
+                }
+                
+                // Play startup sound
+                if (typeof window.playAudio === 'function') {
+                    window.playAudio('assets/audio/startup.wav');
+                }
+                
+                // Hide overlay
+                audioOverlay.style.animation = 'fadeOut 0.5s forwards';
+                setTimeout(() => {
+                    audioOverlay.style.display = 'none';
+                }, 500);
+            });
+        }
     }
     
-    // Play audio with robust error handling
-    function playAudio(src) {
-        console.log(`Playing audio: ${src}`);
-        
+    // Initialize audio context
+    function initializeAudio() {
         try {
-            // First check if file exists
-            fetch(src, { method: 'HEAD' })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Audio file not found: ${response.status}`);
-                    }
-                    
-                    // Create audio element
-                    const audio = new Audio(src);
-                    
-                    // Set volume (0.8 default)
-                    audio.volume = 0.8;
-                    
-                    // Add event handlers
-                    audio.onplay = () => console.log(`Audio playing: ${src}`);
-                    audio.onerror = (e) => console.log(`Audio error: ${e.type}`);
-                    
-                    // Play with error handling
-                    audio.play()
-                        .then(() => console.log(`Audio playing: ${src}`))
-                        .catch(err => {
-                            console.log(`Error playing audio: ${err.message}`);
-                            
-                            // Check if this is due to autoplay restrictions
-                            if (err.name === 'NotAllowedError') {
-                                console.log('Autoplay restricted - need user interaction first');
+            // Create audio context
+            window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioContext();
+            
+            // Store globally
+            window.audioContext = audioContext;
+            
+            // Resume context on user interaction
+            document.addEventListener('click', function resumeAudio() {
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        console.log('Audio context resumed on user interaction');
+                        // Remove this listener after resuming
+                        document.removeEventListener('click', resumeAudio);
+                    });
+                }
+            }, { once: true });
+            
+            console.log('Audio context created: ' + audioContext.state);
+        } catch (error) {
+            console.error('Error creating audio context: ' + error.message);
+        }
+    }
+    
+    // Fallback method for processing proposals
+    function processProposalFallback(proposalText) {
+        console.log(`Processing proposal: ${proposalText.substring(0, 50)}${proposalText.length > 50 ? '...' : ''}`);
+        
+        // Update status
+        inputStatus.textContent = 'Processing proposal...';
+        
+        // Clear the input
+        document.getElementById('proposal-text').value = '';
+        
+        fetch('/api/proposal/evaluate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ proposal: proposalText })
+        })
+        .then(response => {
+            console.log(`Proposal API response status: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`Proposal API error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Proposal API response received');
+            
+            if (data.success && data.result && data.result.response) {
+                // Type out the AI response
+                typeText(responseText, data.result.response);
+                
+                // Update metrics with returned values
+                if (data.result.scores) {
+                    updateMetrics(
+                        Math.round(data.result.scores.fairness * 100),
+                        Math.round(data.result.scores.value * 100),
+                        Math.round(data.result.scores.protection * 100),
+                        Math.round(data.result.consensusIndex * 100)
+                    );
+                }
+                
+                // Generate speech
+                generateSpeechFallback(data.result.response);
+            } else {
+                throw new Error('Invalid API response');
+            }
+        })
+        .catch(error => {
+            console.error('Proposal processing error:', error);
+            inputStatus.textContent = `Error: ${error.message}`;
+            
+            // Show error in response area
+            responseText.textContent = `I encountered an error processing your proposal. Please try again. Error: ${error.message}`;
+        });
+    }
+    
+    // Fallback method for generating speech
+    function generateSpeechFallback(text) {
+        console.log('Generating speech for text');
+        inputStatus.textContent = 'Generating speech...';
+        
+        fetch('/api/speech/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                text: text,
+                voice_id: "default",
+                model_id: "eleven_multilingual_v2"
+            })
+        })
+        .then(response => {
+            console.log(`Speech API response status: ${response.status}`);
+            
+            if (!response.ok) {
+                throw new Error(`Speech API error: ${response.status}`);
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            console.log('Speech response received:', data);
+            
+            if (data.success && data.audio_url) {
+                console.log(`Playing speech from URL: ${data.audio_url}`);
+                
+                // Verify file exists
+                fetch(data.audio_url, { method: 'HEAD' })
+                    .then(fileCheck => {
+                        if (!fileCheck.ok) {
+                            throw new Error(`Speech file not found: ${fileCheck.status}`);
+                        }
+                        
+                        // Play the audio
+                        const audio = new Audio(data.audio_url);
+                        
+                        // Add event handlers
+                        audio.onplay = () => {
+                            console.log('Speech audio playing');
+                            inputStatus.textContent = 'Speaking...';
+                            animateActiveWaveform(true);
+                        };
+                        
+                        audio.onended = () => {
+                            console.log('Speech audio completed');
+                            inputStatus.textContent = 'Ready for input';
+                            animateActiveWaveform(false);
+                        };
+                        
+                        audio.onerror = (e) => {
+                            console.error('Speech audio error:', e);
+                            inputStatus.textContent = 'Speech playback error';
+                            animateActiveWaveform(false);
+                        };
+                        
+                        // Play with error handling
+                        audio.play()
+                            .then(() => console.log('Speech playback started'))
+                            .catch(playError => {
+                                console.error('Speech play error:', playError);
                                 
-                                // Try to resume audio context
-                                if (audioContext && audioContext.state === 'suspended') {
+                                // If autoplay is blocked, try to resume audio context
+                                if (playError.name === 'NotAllowedError' && audioContext) {
                                     audioContext.resume()
                                         .then(() => {
-                                            console.log('Audio context resumed, trying playback again');
+                                            console.log('Audio context resumed, trying again');
                                             return audio.play();
                                         })
-                                        .catch(resumeErr => {
-                                            console.log(`Error after resume: ${resumeErr.message}`);
-                                        });
+                                        .catch(e => console.error('Still failed after resume:', e));
                                 }
-                            }
-                        });
-                })
-                .catch(error => {
-                    console.log(`Audio file check error: ${error.message}`);
-                });
-        } catch (err) {
-            console.log(`Audio playback exception: ${err.message}`);
-        }
+                            });
+                    })
+                    .catch(err => {
+                        console.error('Speech file check error:', err);
+                        inputStatus.textContent = 'Error: Speech file not found';
+                    });
+            } else {
+                throw new Error('Invalid speech response');
+            }
+        })
+        .catch(error => {
+            console.error('Speech generation error:', error);
+            inputStatus.textContent = `Speech error: ${error.message}`;
+        });
     }
     
     // Create floating particles effect
@@ -284,6 +332,26 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const container = document.querySelector('.digital-world-bg');
         if (!container) return;
+        
+        // Add CSS for particles if not already in stylesheet
+        const style = document.createElement('style');
+        style.textContent = `
+            .particle {
+                position: absolute;
+                border-radius: 50%;
+                opacity: 0.5;
+                pointer-events: none;
+                animation: float 8s ease-in-out infinite;
+            }
+            
+            @keyframes float {
+                0%, 100% { transform: translateY(0) translateX(0); }
+                25% { transform: translateY(-20px) translateX(10px); }
+                50% { transform: translateY(10px) translateX(-15px); }
+                75% { transform: translateY(15px) translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
         
         const colors = ['var(--soft-pink)', 'var(--lavender-purple)', 'var(--pastel-turquoise)'];
         
@@ -364,179 +432,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Process proposal submission using OpenAI API
-    async function processProposal(proposalText) {
-        console.log(`Processing proposal: ${proposalText.substring(0, 50)}${proposalText.length > 50 ? '...' : ''}`);
-        
-        // Update status
-        inputStatus.textContent = 'Processing proposal...';
-        
-        // Clear the input
-        document.getElementById('proposal-text').value = '';
-        
-        try {
-            // Call proposal evaluation API
-            const response = await fetch('/api/proposal/evaluate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ proposal: proposalText })
-            });
-            
-            // Log response status
-            console.log(`Proposal API response status: ${response.status}`);
-            
-            if (!response.ok) {
-                // Try to extract error details
-                const errorText = await response.text();
-                console.log(`Proposal API error: ${errorText}`);
-                throw new Error(`Proposal API error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('Proposal API response received');
-            
-            // Validate response
-            if (!data.success) {
-                throw new Error(data.error || 'API returned failure status');
-            }
-            
-            // Check if we have a valid response
-            if (data.result && data.result.response) {
-                // Type out the AI response
-                typeText(responseText, data.result.response);
-                
-                // Update metrics with returned values
-                if (data.result.scores) {
-                    updateMetrics(
-                        Math.round(data.result.scores.fairness * 100),
-                        Math.round(data.result.scores.value * 100),
-                        Math.round(data.result.scores.protection * 100),
-                        Math.round(data.result.consensusIndex * 100)
-                    );
-                }
-                
-                // ONLY focus on speech generation here
-                try {
-                    // Set status text
-                    inputStatus.textContent = 'Generating speech...';
-                    
-                    // Use direct approach to speech generation
-                    const speechResponse = await fetch('/api/speech/generate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ 
-                            text: data.result.response,
-                            voice_id: "default",
-                            model_id: "eleven_multilingual_v2"
-                        })
-                    });
-                    
-                    console.log(`Speech API response status: ${speechResponse.status}`);
-                    
-                    if (!speechResponse.ok) {
-                        const speechErrorText = await speechResponse.text().catch(e => 'Could not read error response');
-                        console.log(`Speech API error response: ${speechErrorText}`);
-                        throw new Error(`Speech API error: ${speechResponse.status}`);
-                    }
-                    
-                    const speechData = await speechResponse.json();
-                    console.log(`Speech response received: ${JSON.stringify(speechData)}`);
-                    
-                    if (speechData.success && speechData.audio_url) {
-                        console.log(`Playing speech from URL: ${speechData.audio_url}`);
-                        
-                        // Verify file exists
-                        const fileCheckResponse = await fetch(speechData.audio_url, { method: 'HEAD' });
-                        if (!fileCheckResponse.ok) {
-                            console.log(`Speech file not found: ${fileCheckResponse.status}`);
-                            throw new Error(`Speech file not found: ${fileCheckResponse.status}`);
-                        }
-                        
-                        // Play the speech
-                        const audio = new Audio(speechData.audio_url);
-                        
-                        // Set volume
-                        const volumeSlider = document.getElementById('volume-slider');
-                        if (volumeSlider) {
-                            audio.volume = volumeSlider.value / 100;
-                        } else {
-                            audio.volume = 0.8; // Default volume
-                        }
-                        
-                        audio.onplay = () => {
-                            console.log('Speech audio playing');
-                            inputStatus.textContent = 'Speaking...';
-                            animateActiveWaveform(true);
-                        };
-                        
-                        audio.onended = () => {
-                            console.log('Speech audio completed');
-                            inputStatus.textContent = 'Ready for input';
-                            animateActiveWaveform(false);
-                        };
-                        
-                        audio.onerror = (e) => {
-                            console.log(`Speech audio error: ${e.type}`);
-                            console.error('Audio error details:', audio.error);
-                            inputStatus.textContent = 'Speech playback error';
-                        };
-                        
-                        // Try to play the speech
-                        try {
-                            await audio.play();
-                            console.log('Speech playback started successfully');
-                        } catch (playError) {
-                            console.log(`Speech play error: ${playError.message}`);
-                            
-                            // If autoplay is blocked, try to resume audio context
-                            if (playError.name === 'NotAllowedError') {
-                                console.log('Autoplay blocked - need user interaction');
-                                
-                                if (audioContext && audioContext.state === 'suspended') {
-                                    try {
-                                        await audioContext.resume();
-                                        console.log('Audio context resumed, trying again');
-                                        await audio.play();
-                                        console.log('Speech playback started after context resume');
-                                    } catch (resumeError) {
-                                        console.log(`Error after resume: ${resumeError.message}`);
-                                        throw resumeError;
-                                    }
-                                } else {
-                                    throw playError;
-                                }
-                            } else {
-                                throw playError;
-                            }
-                        }
-                    } else {
-                        throw new Error('Invalid speech response: ' + JSON.stringify(speechData));
-                    }
-                } catch (speechError) {
-                    console.log(`Speech error: ${speechError.message}`);
-                    inputStatus.textContent = 'Speech generation failed';
-                }
-                
-            } else {
-                throw new Error('Response missing expected structure');
-            }
-            
-        } catch (error) {
-            console.log(`Proposal processing error: ${error.message}`);
-            inputStatus.textContent = `Error: ${error.message}`;
-            
-            // Show error in response area
-            responseText.textContent = `I encountered an error processing your proposal. Please try again later. Error details: ${error.message}`;
-            
-            // Only play error sound here
-            playAudio('assets/audio/governance-alert.wav');
-        }
-    }
-    
     // Start voice recording
     function startVoiceRecording() {
         console.log('Starting voice recording');
@@ -593,9 +488,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     inputStatus.textContent = 'Microphone access denied';
                     document.getElementById('voice-input-btn').classList.remove('active');
                     animateActiveWaveform(false);
-                    
-                    // Play error sound
-                    playAudio('assets/audio/governance-alert.wav');
                 });
         } catch (error) {
             console.log(`Voice recording error: ${error.message}`);
@@ -656,20 +548,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`Transcription successful: ${data.text}`);
                 
                 // Process the transcribed text as a proposal
-                processProposal(data.text);
+                if (typeof window.processProposal === 'function') {
+                    window.processProposal(data.text);
+                } else {
+                    processProposalFallback(data.text);
+                }
             } else {
                 throw new Error(data.error || 'Transcription failed - no text received');
             }
         } catch (error) {
-            console.log(`Transcription error: ${error.message}`);
+            console.error(`Transcription error: ${error.message}`);
             inputStatus.textContent = `Error: ${error.message}`;
             
             // Show error message
             responseText.textContent = 
                 `I encountered an error processing your voice input. Please try again or type your proposal instead. Error details: ${error.message}`;
-                
-            // Play error sound
-            playAudio('assets/audio/governance-alert.wav');
         }
     }
     
@@ -810,4 +703,42 @@ document.addEventListener('DOMContentLoaded', function() {
         indicator.style.top = `${yPos}px`;
         indicator.style.left = `${xPos}px`;
     }
+    
+    // Debug test button for direct speech testing
+    if (debugMode) {
+        // Create test button
+        const testBtn = document.createElement('button');
+        testBtn.textContent = 'Test Speech';
+        testBtn.style.position = 'fixed';
+        testBtn.style.bottom = '10px';
+        testBtn.style.left = '10px';
+        testBtn.style.zIndex = '1000';
+        testBtn.style.padding = '5px 10px';
+        testBtn.style.fontSize = '12px';
+        testBtn.style.opacity = '0.7';
+        
+        testBtn.addEventListener('click', () => {
+            fetch('/api/debug/eleven-labs')
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Debug test response:', data);
+                    
+                    if (data.success && data.test_audio_url) {
+                        const audio = new Audio(data.test_audio_url);
+                        audio.play()
+                            .then(() => console.log('Debug audio playing'))
+                            .catch(err => console.error('Debug audio error:', err));
+                    }
+                })
+                .catch(err => console.error('Debug test error:', err));
+        });
+        
+        document.body.appendChild(testBtn);
+    }
+    
+    // Make functions available globally
+    window.animateActiveWaveform = animateActiveWaveform;
+    window.updateMetrics = updateMetrics;
+    window.updateConsensusTriangle = updateConsensusTriangle;
+    window.typeText = typeText;
 });

@@ -32,6 +32,9 @@ function initAudio() {
         window.AudioContext = window.AudioContext || window.webkitAudioContext;
         audioContext = new AudioContext();
         
+        // Store it globally for access from other scripts
+        window.audioContext = audioContext;
+        
         // Create gain node for volume control
         gainNode = audioContext.createGain();
         gainNode.connect(audioContext.destination);
@@ -82,7 +85,7 @@ function playTestSound() {
 
 // Generate speech via the Eleven Labs API
 async function generateSpeech(text) {
-    console.log('Generating speech for text');
+    console.log('Generating speech for text:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
     
     // Update status
     const statusElement = document.getElementById('input-status');
@@ -112,7 +115,7 @@ async function generateSpeech(text) {
         const data = await response.json();
         
         if (data.success && data.audio_url) {
-            console.log('Speech generated successfully');
+            console.log('Speech generated successfully, URL:', data.audio_url);
             
             // Start visualization if available
             if (typeof animateActiveWaveform === 'function') {
@@ -146,9 +149,20 @@ async function generateSpeech(text) {
 
 // Play the generated speech
 async function playGeneratedSpeech(audioUrl) {
-    console.log('Playing generated speech');
+    console.log('Playing generated speech from URL:', audioUrl);
     
     try {
+        // First verify the file exists with a HEAD request
+        try {
+            const fileCheck = await fetch(audioUrl, { method: 'HEAD' });
+            if (!fileCheck.ok) {
+                throw new Error(`Audio file not found at ${audioUrl}, status: ${fileCheck.status}`);
+            }
+        } catch (fetchError) {
+            console.error('Audio file check error:', fetchError);
+            throw new Error(`Could not verify audio file exists: ${fetchError.message}`);
+        }
+        
         // Create an audio element
         const audio = new Audio(audioUrl);
         
@@ -162,6 +176,10 @@ async function playGeneratedSpeech(audioUrl) {
         }
         
         // Event handlers
+        audio.onplay = () => {
+            console.log('Speech playback started');
+        };
+        
         audio.onended = () => {
             console.log('Speech playback completed');
             
@@ -177,6 +195,7 @@ async function playGeneratedSpeech(audioUrl) {
         
         audio.onerror = (e) => {
             console.error('Speech playback error:', e);
+            console.error('Audio error details:', audio.error);
             
             if (statusElement) {
                 statusElement.textContent = 'Playback error';
@@ -186,6 +205,8 @@ async function playGeneratedSpeech(audioUrl) {
             if (typeof animateActiveWaveform === 'function') {
                 animateActiveWaveform(false);
             }
+            
+            throw new Error(`Audio playback error: ${audio.error ? audio.error.message : 'unknown error'}`);
         };
         
         // Try to play the audio
@@ -220,24 +241,55 @@ async function playGeneratedSpeech(audioUrl) {
                     };
                     
                     document.addEventListener('click', clickHandler, { once: true });
+                    
+                    throw new Error('Autoplay prevented. User interaction required.');
                 }
+            } else {
+                throw playError;
             }
         }
     } catch (error) {
         console.error('Error playing speech:', error);
+        throw error;
     }
 }
 
 // Play any audio file - for notification sounds
 function playAudio(src) {
-    console.log('Playing audio file');
+    console.log('Playing audio file:', src);
     
     try {
-        const audio = new Audio(src);
-        audio.volume = getVolume();
-        audio.play().catch(error => {
-            console.error('Error playing audio:', error);
-        });
+        // First check if file exists
+        fetch(src, { method: 'HEAD' })
+            .then(response => {
+                if (!response.ok) {
+                    console.error(`Audio file not found: ${src}, status: ${response.status}`);
+                    return;
+                }
+                
+                const audio = new Audio(src);
+                audio.volume = getVolume();
+                
+                // Add error handling
+                audio.onerror = (e) => {
+                    console.error(`Error playing ${src}:`, e);
+                };
+                
+                audio.play().catch(error => {
+                    console.error('Error playing audio:', error);
+                    
+                    // If autoplay is blocked, try to resume audio context
+                    if (error.name === 'NotAllowedError' && audioContext) {
+                        audioContext.resume().then(() => {
+                            console.log('Audio context resumed after block');
+                            audio.play().catch(e => console.error('Still failed after resume:', e));
+                        });
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error checking audio file:', error);
+            });
     } catch (error) {
         console.error('Audio play error:', error);
     }
@@ -271,12 +323,18 @@ function setVolume(level) {
         volumeSlider.value = volumeLevel * 100;
     }
     
+    // Update volume value display if it exists
+    const volumeValue = document.getElementById('volume-value');
+    if (volumeValue) {
+        volumeValue.textContent = `Volume: ${Math.round(volumeLevel * 100)}%`;
+    }
+    
     console.log('Volume set to:', volumeLevel);
 }
 
 // Process proposal with OpenAI and speak the response
 async function processProposal(proposalText) {
-    console.log('Processing proposal');
+    console.log('Processing proposal:', proposalText.substring(0, 50) + (proposalText.length > 50 ? '...' : ''));
     
     // Update status
     const statusElement = document.getElementById('input-status');
@@ -291,6 +349,9 @@ async function processProposal(proposalText) {
     }
     
     try {
+        // Play deliberation sound
+        playAudio('assets/audio/deliberation.wav');
+        
         // Call proposal evaluation API
         const response = await fetch('/api/proposal/evaluate', {
             method: 'POST',
@@ -325,7 +386,7 @@ async function processProposal(proposalText) {
                 );
             }
             
-            // Generate and play speech - this is the key part
+            // Generate and play speech
             await generateSpeech(data.result.response);
             
         } else {
@@ -370,7 +431,7 @@ function typeText(element, text, speed = 30) {
     type();
 }
 
-// Update UI metrics (implemented elsewhere but included for completeness)
+// Update UI metrics
 function updateMetrics(fairness, value, protection, consensus) {
     console.log(`Updating metrics - F:${fairness}, V:${value}, P:${protection}, C:${consensus}`);
     

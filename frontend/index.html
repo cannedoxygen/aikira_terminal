@@ -24,9 +24,292 @@
             from { opacity: 1; }
             to { opacity: 0; }
         }
+        
+        /* Terminal-specific styles */
+        .terminal-layout {
+            width: 85%;
+            max-width: 950px;
+            margin: 2rem auto;
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 15px;
+        }
+        
+        /* System Info Terminal (Top Left) */
+        .system-info {
+            grid-column: 1 / 3;
+            grid-row: 1;
+            background-color: rgba(28, 32, 41, 0.9);
+            border: 1px solid var(--accent-purple);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(216, 181, 255, 0.2);
+            overflow: hidden;
+        }
+        
+        .system-header {
+            background-color: rgba(39, 43, 54, 0.9);
+            padding: 5px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--accent-purple);
+        }
+        
+        .system-body {
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            font-size: 0.9rem;
+        }
+        
+        .system-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 30px;
+        }
+        
+        .system-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Main Terminal (Bottom) */
+        .terminal-display {
+            grid-column: 1 / 3;
+            grid-row: 2;
+            height: 400px;
+            background-color: rgba(28, 32, 41, 0.9);
+            border: 1px solid var(--accent-purple);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(216, 181, 255, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .terminal-header {
+            background-color: rgba(39, 43, 54, 0.9);
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--accent-purple);
+            z-index: 5;
+        }
+        
+        .terminal-title-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--accent-pink);
+        }
+        
+        .terminal-dot:nth-child(2) {
+            background-color: var(--accent-purple);
+        }
+        
+        .terminal-dot:nth-child(3) {
+            background-color: var(--accent-turquoise);
+        }
+        
+        .terminal-name {
+            color: var(--soft-white);
+            font-size: 14px;
+            margin-left: 10px;
+            font-family: var(--display-font);
+            letter-spacing: 1px;
+        }
+        
+        .terminal-status {
+            font-size: 12px;
+            color: var(--accent-turquoise);
+            opacity: 0.8;
+        }
+        
+        .terminal-body {
+            padding: 20px;
+            height: calc(100% - 40px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+            /* Always scroll to bottom */
+            scroll-behavior: smooth;
+        }
+        
+        /* Hide scrollbar */
+        .terminal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .terminal-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .terminal-body::-webkit-scrollbar-thumb {
+            background-color: rgba(216, 181, 255, 0.3);
+            border-radius: 4px;
+        }
+        
+        /* Background Visualizer */
+        .terminal-background {
+            position: absolute;
+            top: 40px; /* Below header */
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+            background-color: rgba(18, 21, 26, 0.7);
+            overflow: hidden;
+        }
+        
+        .terminal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            opacity: 0.2;
+            z-index: 1;
+        }
+        
+        .terminal-line {
+            margin-bottom: 8px;
+            font-family: var(--text-font);
+            opacity: 0.9;
+        }
+        
+        .terminal-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+            min-height: 250px;
+        }
+        
+        .response-area {
+            flex: 1;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .terminal-prompt {
+            color: var(--accent-pink);
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .response-text {
+            padding: 10px 0;
+            color: var(--soft-white);
+            line-height: 1.6;
+            font-size: 15px;
+        }
+        
+        .sound-visualization {
+            height: 60px;
+            width: 100%;
+            border-radius: 5px;
+            margin-top: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #voice-waveform {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        /* Animated cursor */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background-color: var(--accent-pink);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* Updated styles for user input area */
+        .user-input-container {
+            margin-top: 20px;
+            width: 85%;
+            max-width: 950px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .text-input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        #proposal-text {
+            flex: 1;
+            background-color: rgba(28, 32, 41, 0.9);
+            border: 1px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: var(--soft-white);
+            font-family: var(--text-font);
+            resize: none;
+            min-height: 60px;
+        }
+        
+        #proposal-text:focus {
+            outline: none;
+            border-color: var(--accent-pink);
+            box-shadow: 0 0 10px rgba(216, 181, 255, 0.3);
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-turquoise));
+            color: var(--soft-white);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: var(--display-font);
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(169, 238, 230, 0.3);
+        }
     </style>
 </head>
 <body>
+    <!-- Debug panel for audio troubleshooting -->
+    <div class="debug-panel" id="debug-panel" style="position: fixed; right: 10px; bottom: 10px; background: rgba(0,0,0,0.7); color: white; width: 300px; height: 200px; overflow: auto; padding: 10px; font-size: 12px; opacity: 0.5; z-index: 1000; display: none;"></div>
+
     <div class="aikira-container">
         <!-- Header Section -->
         <header class="aikira-header">
@@ -37,7 +320,7 @@
             <div class="status-bar">
                 <div class="status-item" id="constitutional-alignment">
                     <div class="status-label">Constitutional Alignment</div>
-                    <div class="status-value" style="border-color: var(--accent-turquoise);">Initializing...</div>
+                    <div class="status-value" style="border-color: var(--accent-turquoise);">Active</div>
                 </div>
                 <div class="status-item" id="proposal-evaluation">
                     <div class="status-label">Proposal Evaluation</div>
@@ -62,16 +345,87 @@
         <main class="terminal-container">
             <!-- Digital World Background -->
             <div class="digital-world-bg">
+                <canvas id="background-canvas"></canvas>
                 <!-- Floating particles will be added here via JS -->
             </div>
 
-            <!-- Response Area -->
-            <div class="response-area">
-                <div class="response-text" id="response-text">
-                    Aikira Constitutional AI Core initialized. How may I assist you today?
+            <!-- Terminal Layout with two separate terminals -->
+            <div class="terminal-layout">
+                <!-- System Info Terminal (fixed, non-scrolling) -->
+                <div class="system-info">
+                    <div class="system-header">
+                        <div class="terminal-title-bar">
+                            <div class="terminal-dot"></div>
+                            <div class="terminal-dot"></div>
+                            <div class="terminal-dot"></div>
+                            <div class="terminal-name">System Information</div>
+                        </div>
+                        <div class="terminal-status">core v1.0</div>
+                    </div>
+                    <div class="system-body">
+                        <div class="system-content">
+                            <div class="system-item">
+                                <span class="terminal-prompt">$</span>
+                                <span style="color: var(--accent-turquoise);">system.load</span>
+                                <span>constitutional_parameters</span>
+                            </div>
+                            <div class="system-item">
+                                <span class="principle primary-directive">Primary Directive:</span>
+                                <span>"Maximize value with fairness and protection"</span>
+                            </div>
+                            <div class="system-item">
+                                <span class="principle governance-approach">Governance:</span>
+                                <span>"Deliberative analysis of community proposals"</span>
+                            </div>
+                            <div class="system-item">
+                                <span class="principle execution-protocol">Execution Protocol:</span>
+                                <span>"Automated on-chain implementation"</span>
+                            </div>
+                            <div class="system-item">
+                                <span class="terminal-prompt">$</span>
+                                <span style="color: var(--accent-turquoise);">system.status</span>
+                            </div>
+                            <div class="system-item">
+                                <span>Constitutional AI Core:</span>
+                                <span style="color: var(--accent-pink);">ONLINE</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="sound-visualization">
-                    <canvas id="voice-waveform"></canvas>
+                
+                <!-- Main Terminal Display -->
+                <div class="terminal-display">
+                    <!-- Terminal Header -->
+                    <div class="terminal-header">
+                        <div class="terminal-title-bar">
+                            <div class="terminal-dot"></div>
+                            <div class="terminal-dot"></div>
+                            <div class="terminal-dot"></div>
+                            <div class="terminal-name">Aikira Constitutional AI</div>
+                        </div>
+                        <div class="terminal-status">interactive</div>
+                    </div>
+                    
+                    <!-- Background Visualizer (behind text) -->
+                    <div class="terminal-background">
+                        <canvas id="voice-waveform"></canvas>
+                        <div class="terminal-overlay"></div>
+                    </div>
+                    
+                    <!-- Terminal Content -->
+                    <div class="terminal-body" id="terminal-body">
+                        <!-- Terminal Content Area -->
+                        <div class="terminal-content">
+                            <!-- Response Area -->
+                            <div class="response-area">
+                                <div class="terminal-line"><span class="terminal-prompt">aikira></span> <span style="color: var(--accent-purple);">initialize</span></div>
+                                <div class="response-text" id="response-text">
+                                    Aikira Constitutional AI Core initialized. How may I assist you today?
+                                </div>
+                                <span class="cursor"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -83,21 +437,24 @@
                         <span>Voice Input</span>
                     </button>
                     <button class="voice-input-btn" id="volume-btn">
-                        <div class="volume-icon"></div>
+                        <div class="volume-icon" style="width: 20px; height: 20px; position: relative;">
+                            <div style="width: 10px; height: 10px; border: 2px solid white; border-radius: 50%; position: absolute; bottom: 0;"></div>
+                            <div style="width: 6px; height: 6px; border: 2px solid white; border-radius: 50%; position: absolute; right: 0; top: 4px;"></div>
+                        </div>
                         <span>Volume</span>
                     </button>
-                    <div class="text-input-area">
-                        <textarea id="proposal-text" placeholder="Enter your governance proposal here..."></textarea>
-                        <button id="submit-proposal" class="submit-btn">Submit</button>
-                    </div>
+                </div>
+                <div class="text-input-area">
+                    <textarea id="proposal-text" placeholder="Enter your governance proposal here..."></textarea>
+                    <button id="submit-proposal" class="submit-btn">Submit</button>
                 </div>
                 <div class="input-status" id="input-status">Ready for input</div>
             </div>
 
             <!-- Volume Slider (Hidden by default) -->
-            <div class="volume-slider-container" id="volume-slider-container">
-                <input type="range" min="0" max="100" value="80" id="volume-slider">
-                <div class="volume-value" id="volume-value">Volume: 80%</div>
+            <div class="volume-slider-container" id="volume-slider-container" style="position: absolute; bottom: 80px; right: 20px; background: var(--medium-bg); padding: 15px; border-radius: 10px; border: 1px solid var(--trans-light); display: none; z-index: 100;">
+                <input type="range" min="0" max="100" value="80" id="volume-slider" style="width: 150px;">
+                <div class="volume-value" id="volume-value" style="text-align: center; margin-top: 5px; font-size: 12px;">Volume: 80%</div>
             </div>
         </main>
 
@@ -109,19 +466,28 @@
                 <div class="panel-content">
                     <div class="evaluation-metrics">
                         <div class="metric">
-                            <div class="metric-label">Fairness Index:</div>
+                            <div class="metric-header">
+                                <div class="metric-label">Fairness Index:</div>
+                                <div class="metric-value-text">80%</div>
+                            </div>
                             <div class="metric-bar">
                                 <div class="metric-value" style="width: 80%"></div>
                             </div>
                         </div>
                         <div class="metric">
-                            <div class="metric-label">Value Alignment:</div>
+                            <div class="metric-header">
+                                <div class="metric-label">Value Alignment:</div>
+                                <div class="metric-value-text">75%</div>
+                            </div>
                             <div class="metric-bar">
                                 <div class="metric-value" style="width: 75%"></div>
                             </div>
                         </div>
                         <div class="metric">
-                            <div class="metric-label">Protection Score:</div>
+                            <div class="metric-header">
+                                <div class="metric-label">Protection Score:</div>
+                                <div class="metric-value-text">90%</div>
+                            </div>
                             <div class="metric-bar">
                                 <div class="metric-value" style="width: 90%"></div>
                             </div>
@@ -135,10 +501,9 @@
                 <div class="panel-title">Consensus Visualization</div>
                 <div class="panel-content">
                     <div class="consensus-visualization">
-                        <div class="consensus-label">Consensus Index</div>
-                        <div class="consensus-triangle">
-                            <div class="triangle-shape"></div>
-                            <div class="consensus-indicator"></div>
+                        <div class="consensus-triangle" style="position: relative; width: 200px; height: 180px; margin: 0 auto;">
+                            <div class="triangle-shape" style="position: absolute; width: 100%; height: 100%; border-left: 100px solid transparent; border-right: 100px solid transparent; border-bottom: 180px solid rgba(216, 181, 255, 0.2); top: 0; left: 0;"></div>
+                            <div class="consensus-indicator" style="position: absolute; width: 12px; height: 12px; background: var(--accent-turquoise); border-radius: 50%; top: 50px; left: 100px; transform: translate(-50%, -50%); box-shadow: 0 0 10px var(--accent-turquoise);"></div>
                         </div>
                         <div class="consensus-value">92%</div>
                     </div>
@@ -167,96 +532,72 @@
     <script src="lib/three.min.js"></script>
     <script src="lib/p5.min.js"></script>
     <script src="lib/gsap.min.js"></script>
+    <script src="js/audio-controls.js"></script>
     <script src="js/digital-effects.js"></script>
     <script src="js/governance-elements.js"></script>
     <script src="js/constitutional-core.js"></script>
-    <script src="js/audio-controls.js"></script>
     <script src="js/terminal.js"></script>
     <script src="js/animations.js"></script>
     <script src="js/main.js"></script>
     
-    <!-- Audio initialization script -->
+    <!-- Auto-scroll script -->
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Enable audio button
-        const enableBtn = document.getElementById('enable-audio-btn');
-        const overlay = document.getElementById('audio-init-overlay');
-    
-        if (enableBtn && overlay) {
-            enableBtn.addEventListener('click', function() {
-                // Initialize audio context
-                if (typeof initAudio === 'function') {
-                    initAudio();
-                }
-                
-                // Play startup sound
-                if (typeof playAudio === 'function') {
-                    playAudio('assets/audio/startup.wav');
-                }
-                
-                // Hide overlay with animation
-                overlay.style.animation = 'fadeOut 0.5s forwards';
-                setTimeout(() => {
-                    overlay.style.display = 'none';
-                }, 500);
+        // Function to scroll terminal to bottom
+        function scrollTerminalToBottom() {
+            const terminalBody = document.getElementById('terminal-body');
+            if (terminalBody) {
+                terminalBody.scrollTop = terminalBody.scrollHeight;
+            }
+        }
+        
+        // Auto-scroll when content changes
+        const observer = new MutationObserver(scrollTerminalToBottom);
+        const terminalContent = document.getElementById('response-text');
+        
+        if (terminalContent) {
+            observer.observe(terminalContent, { 
+                childList: true, 
+                characterData: true,
+                subtree: true 
             });
         }
         
-        // Submit proposal button
-        const submitButton = document.getElementById('submit-proposal');
-        const proposalText = document.getElementById('proposal-text');
+        // Scroll to bottom on load
+        document.addEventListener('DOMContentLoaded', scrollTerminalToBottom);
         
-        if (submitButton && proposalText) {
-            submitButton.addEventListener('click', function() {
-                const proposal = proposalText.value.trim();
-                if (proposal && typeof processProposal === 'function') {
-                    processProposal(proposal);
-                }
-            });
-            
-            // Submit on Enter key (with Shift+Enter for new line)
-            proposalText.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    submitButton.click();
-                }
-            });
-        }
-        
-        // Volume button
-        const volumeBtn = document.getElementById('volume-btn');
-        const volumeSliderContainer = document.getElementById('volume-slider-container');
-        
-        if (volumeBtn && volumeSliderContainer) {
-            volumeBtn.addEventListener('click', function() {
-                // Toggle volume slider visibility
-                volumeSliderContainer.classList.toggle('visible');
+        // Also update typeText function to scroll while typing
+        const originalTypeText = window.typeText;
+        if (typeof originalTypeText === 'function') {
+            window.typeText = function(element, text, speed = 30) {
+                if (!element) return;
                 
-                // Auto-hide after 5 seconds if visible
-                if (volumeSliderContainer.classList.contains('visible')) {
-                    setTimeout(() => {
-                        volumeSliderContainer.classList.remove('visible');
-                    }, 5000);
-                }
-            });
-        }
-        
-        // Volume slider
-        const volumeSlider = document.getElementById('volume-slider');
-        const volumeValue = document.getElementById('volume-value');
-        
-        if (volumeSlider && volumeValue) {
-            volumeSlider.addEventListener('input', function() {
-                const volume = this.value / 100;
-                volumeValue.textContent = `Volume: ${this.value}%`;
+                element.textContent = '';
+                let i = 0;
                 
-                // Update volume if function exists
-                if (typeof setVolume === 'function') {
-                    setVolume(volume);
+                function type() {
+                    if (i < text.length) {
+                        element.textContent += text.charAt(i);
+                        i++;
+                        scrollTerminalToBottom();
+                        setTimeout(type, speed);
+                    }
                 }
-            });
+                
+                type();
+            };
         }
-    });
+        
+        // Debug mode toggle
+        document.addEventListener('keydown', function(e) {
+            // Toggle debug panel with Ctrl+D
+            if (e.ctrlKey && e.key === 'd') {
+                const debugPanel = document.getElementById('debug-panel');
+                if (debugPanel) {
+                    debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+                }
+                e.preventDefault();
+            }
+        });
     </script>
 </body>
 </html>
