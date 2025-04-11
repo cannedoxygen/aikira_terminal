@@ -101,6 +101,7 @@ app.use('/downloads', express.static(downloadsDir));
 // Apply the API key middleware to relevant routes
 app.use('/api/openai', requireApiKeys);
 app.use('/api/speech', requireApiKeys);
+app.use('/api/proposal', require('./backend/controllers/proposal-controller'));
 
 // OpenAI integration endpoint
 app.post('/api/openai/generate-response', async (req, res) => {
@@ -340,6 +341,40 @@ app.post('/api/speech/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
+// Helper function to get a valid voice ID from Eleven Labs
+async function getValidVoiceId(apiKey, requestedVoiceId) {
+  try {
+    // Get available voices
+    const voicesResponse = await axios.get('https://api.elevenlabs.io/v1/voices', {
+      headers: {
+        'xi-api-key': apiKey
+      }
+    });
+    
+    if (voicesResponse.data.voices && voicesResponse.data.voices.length > 0) {
+      // If a specific voice ID was requested, check if it exists
+      if (requestedVoiceId && requestedVoiceId !== 'default') {
+        const voiceExists = voicesResponse.data.voices.some(voice => voice.voice_id === requestedVoiceId);
+        if (voiceExists) {
+          console.log(`Using requested voice ID: ${requestedVoiceId}`);
+          return requestedVoiceId;
+        }
+        console.log(`Requested voice ID ${requestedVoiceId} not found, using first available voice`);
+      }
+      
+      // Otherwise, use the first available voice
+      const firstVoiceId = voicesResponse.data.voices[0].voice_id;
+      console.log(`Using first available voice: ${firstVoiceId} (${voicesResponse.data.voices[0].name})`);
+      return firstVoiceId;
+    } else {
+      throw new Error('No voices found in your Eleven Labs account');
+    }
+  } catch (error) {
+    console.error('Error getting valid voice ID:', error.message);
+    throw new Error('Could not get a valid voice ID from Eleven Labs');
+  }
+}
+
 // Enhanced text-to-speech endpoint with Eleven Labs API
 app.post('/api/speech/generate', async (req, res) => {
   try {
@@ -358,8 +393,13 @@ app.post('/api/speech/generate', async (req, res) => {
       throw new Error('Eleven Labs API key not configured. Please add to .env file.');
     }
     
-    // Use defaults if values not provided
-    const useVoiceId = voice_id || process.env.DEFAULT_VOICE_ID || 'eleven_monolingual_v1';
+    console.log(`Using Eleven Labs API key: ${apiKey.substring(0, 5)}...`);
+    
+    // Get a valid voice ID
+    const requestedVoiceId = voice_id || process.env.DEFAULT_VOICE_ID;
+    const useVoiceId = await getValidVoiceId(apiKey, requestedVoiceId);
+    
+    // Use default model if not provided
     const useModelId = model_id || 'eleven_multilingual_v2';
     
     // Set default voice settings if not provided
@@ -391,12 +431,26 @@ app.post('/api/speech/generate', async (req, res) => {
       responseType: 'arraybuffer'
     });
     
+    console.log("Eleven Labs API response received, size:", response.data.length);
+    
+    // Ensure the downloads directory exists
+    if (!fs.existsSync(downloadsDir)) {
+      fs.mkdirSync(downloadsDir, { recursive: true });
+      console.log(`Created downloads directory: ${downloadsDir}`);
+    }
+    
     // Create a unique filename
     const filename = `aikira_response_${Date.now()}.mp3`;
     const filePath = path.join(downloadsDir, filename);
     
     // Save the audio file
-    fs.writeFileSync(filePath, Buffer.from(response.data));
+    try {
+      fs.writeFileSync(filePath, Buffer.from(response.data));
+      console.log(`Speech file saved to: ${filePath}`);
+    } catch (fsError) {
+      console.error('Error saving audio file:', fsError);
+      throw new Error('Could not save audio file');
+    }
     
     // Get the relative URL path
     const fileUrl = `/downloads/${filename}`;
@@ -404,7 +458,7 @@ app.post('/api/speech/generate', async (req, res) => {
     console.log(`Speech generated successfully: ${fileUrl}`);
     
     // Return success with file URL
-    res.json({
+    res.status(200).json({
       success: true,
       audio_url: fileUrl, 
       voice_id: useVoiceId,
@@ -412,7 +466,19 @@ app.post('/api/speech/generate', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Eleven Labs API error:', error.response?.data || error.message);
+    console.error('Eleven Labs API error:', error.message);
+    
+    // Log more detailed error information
+    if (error.response) {
+      console.error('Error status:', error.response.status);
+      console.error('Error details:', {
+        status: error.response.status, 
+        statusText: error.response.statusText,
+        data: typeof error.response.data === 'object' ? 
+          JSON.stringify(error.response.data) : 
+          error.response.data?.toString('utf8', 0, 200) // Show first 200 chars if it's a buffer
+      });
+    }
     
     return res.status(500).json({
       success: false,
@@ -433,6 +499,8 @@ app.get('/api/speech/test', async (req, res) => {
       });
     }
     
+    console.log(`Testing Eleven Labs API with key: ${apiKey.substring(0, 5)}...`);
+    
     // Make a simple request to the API to check if the key is valid
     const response = await axios.get('https://api.elevenlabs.io/v1/voices', {
       headers: {
@@ -440,13 +508,24 @@ app.get('/api/speech/test', async (req, res) => {
       }
     });
     
+    console.log(`Eleven Labs API test successful. Found ${response.data.voices.length} voices.`);
+    
     return res.json({
       success: true,
       voices_count: response.data.voices.length,
-      message: 'Eleven Labs API key is valid'
+      message: 'Eleven Labs API key is valid',
+      voices: response.data.voices.map(voice => ({
+        name: voice.name,
+        id: voice.voice_id
+      }))
     });
   } catch (error) {
-    console.error('Eleven Labs API test error:', error.response?.data || error.message);
+    console.error('Eleven Labs API test error:', error.message);
+    
+    if (error.response) {
+      console.error('Error status:', error.response.status);
+      console.error('Error data:', error.response.data);
+    }
     
     return res.status(500).json({
       success: false,
