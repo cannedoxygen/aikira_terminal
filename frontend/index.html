@@ -13,86 +13,93 @@
     <link rel="stylesheet" href="css/digital-effects.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/governance-grid.css">
-    <!-- Define animations if not included in other CSS files -->
+    <!-- Text Terminal Style -->
     <style>
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-        
-        /* Terminal-specific styles */
-        .terminal-layout {
-            width: 85%;
-            max-width: 950px;
-            margin: 2rem auto;
-            display: grid;
-            grid-template-columns: 3fr 1fr;
-            grid-template-rows: auto 1fr;
-            gap: 15px;
-        }
-        
-        /* System Info Terminal (Top Left) */
-        .system-info {
-            grid-column: 1 / 3;
-            grid-row: 1;
+        /* Scrolling Banner Styles */
+        .info-banner {
+            position: relative;
             background-color: rgba(28, 32, 41, 0.9);
             border: 1px solid var(--accent-purple);
             border-radius: 10px;
+            height: 40px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
             box-shadow: 0 0 10px rgba(216, 181, 255, 0.2);
+        }
+        
+        .banner-label {
+            background-color: var(--accent-purple);
+            color: var(--soft-white);
+            padding: 0 15px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            font-family: var(--display-font);
+            letter-spacing: 1px;
+            font-size: 14px;
+            white-space: nowrap;
+            z-index: 2;
+        }
+        
+        .ticker-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
         }
         
-        .system-header {
-            background-color: rgba(39, 43, 54, 0.9);
-            padding: 5px 12px;
-            display: flex;
-            justify-content: space-between;
+        /* Fixed animation for ticker */
+        .ticker-content {
+            position: absolute;
+            display: inline-flex;
             align-items: center;
-            border-bottom: 1px solid var(--accent-purple);
+            height: 100%;
+            white-space: nowrap;
+            animation: ticker 30s linear infinite;
+            padding-left: 100%; /* Start offscreen */
         }
         
-        .system-body {
-            padding: 10px 15px;
-            display: flex;
-            flex-direction: column;
-            font-size: 0.9rem;
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
         }
         
-        .system-content {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px 30px;
-        }
-        
-        .system-item {
-            display: flex;
+        .ticker-item {
+            display: inline-flex;
             align-items: center;
-            gap: 5px;
+            margin-right: 40px;
+            color: var(--soft-white);
+            font-family: var(--text-font);
+            font-size: 14px;
         }
         
-        /* Main Terminal (Bottom) */
+        .ticker-label {
+            color: var(--accent-turquoise);
+            margin-right: 8px;
+        }
+        
+        .ticker-value {
+            color: var(--soft-pink);
+        }
+        
+        /* Terminal Styles - Improved for Conversation View */
         .terminal-display {
-            grid-column: 1 / 3;
-            grid-row: 2;
-            height: 400px;
             background-color: rgba(28, 32, 41, 0.9);
             border: 1px solid var(--accent-purple);
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(216, 181, 255, 0.3);
-            overflow: hidden;
             display: flex;
             flex-direction: column;
+            height: 400px; /* Increased height */
             position: relative;
+            overflow: hidden;
         }
         
         .terminal-header {
             background-color: rgba(39, 43, 54, 0.9);
-            padding: 8px 15px;
+            padding: 6px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -107,9 +114,12 @@
         }
         
         .terminal-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
+        }
+        
+        .terminal-dot:nth-child(1) {
             background-color: var(--accent-pink);
         }
         
@@ -123,48 +133,136 @@
         
         .terminal-name {
             color: var(--soft-white);
-            font-size: 14px;
+            font-size: 13px;
             margin-left: 10px;
             font-family: var(--display-font);
             letter-spacing: 1px;
         }
         
         .terminal-status {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--accent-turquoise);
             opacity: 0.8;
         }
         
+        /* Terminal Body - Conversation Style */
         .terminal-body {
-            padding: 20px;
-            height: calc(100% - 40px);
+            flex: 1;
+            padding: 10px 15px;
             overflow-y: auto;
-            display: flex;
-            flex-direction: column;
+            font-family: monospace;
             position: relative;
             z-index: 2;
-            /* Always scroll to bottom */
-            scroll-behavior: smooth;
+            color: var(--soft-white);
+            font-size: 14px;
+            line-height: 1.5;
         }
         
-        /* Hide scrollbar */
-        .terminal-body::-webkit-scrollbar {
-            width: 8px;
+        /* Conversation Feed Styling - User and Aikira */
+        .conversation-feed {
+            display: flex;
+            flex-direction: column;
         }
         
-        .terminal-body::-webkit-scrollbar-track {
+        .line {
+            margin-bottom: 8px;
+            white-space: pre-wrap;
+        }
+        
+        .system-msg {
+            color: var(--accent-turquoise);
+            opacity: 0.8;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        
+        /* IMPROVED: Different styling for Aikira and User */
+        .prompt-aikira {
+            color: var(--accent-pink);
+            font-weight: bold;
+        }
+        
+        .prompt-user {
+            color: var(--accent-turquoise);
+            font-weight: bold;
+        }
+        
+        .response {
+            color: var(--soft-white);
+            display: inline;
+        }
+        
+        /* Input Line - Improved for clear indication */
+        .input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        #text-input {
+            flex: 1;
             background: transparent;
+            border: none;
+            color: var(--soft-white);
+            font-family: monospace;
+            font-size: 14px;
+            outline: none;
+            caret-color: var(--accent-turquoise);
+            padding: 0;
+            margin: 0;
+            width: calc(100% - 70px); /* Account for prompt width */
         }
         
-        .terminal-body::-webkit-scrollbar-thumb {
-            background-color: rgba(216, 181, 255, 0.3);
-            border-radius: 4px;
+        /* Blinking cursor */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background-color: var(--accent-turquoise);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
         }
         
-        /* Background Visualizer */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* User controls */
+        .user-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            width: 85%;
+            max-width: 950px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .voice-input-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: 1px solid var(--accent-purple);
+            border-radius: 5px;
+            padding: 5px 10px;
+            color: var(--soft-white);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .voice-input-btn:hover {
+            background: rgba(216, 181, 255, 0.1);
+            border-color: var(--accent-pink);
+        }
+        
+        /* Background */
         .terminal-background {
             position: absolute;
-            top: 40px; /* Below header */
+            top: 32px;
             left: 0;
             right: 0;
             bottom: 0;
@@ -173,7 +271,8 @@
             overflow: hidden;
         }
         
-        .terminal-overlay {
+        /* Scan lines */
+        .scan-lines {
             position: absolute;
             top: 0;
             left: 0;
@@ -181,128 +280,57 @@
             bottom: 0;
             background: repeating-linear-gradient(
                 0deg,
-                rgba(0, 0, 0, 0.15),
-                rgba(0, 0, 0, 0.15) 1px,
+                rgba(0, 0, 0, 0.11),
+                rgba(0, 0, 0, 0.11) 1px,
                 transparent 1px,
                 transparent 2px
             );
             pointer-events: none;
-            opacity: 0.2;
             z-index: 1;
+            opacity: 0.2;
         }
         
-        .terminal-line {
-            margin-bottom: 8px;
-            font-family: var(--text-font);
-            opacity: 0.9;
-        }
-        
-        .terminal-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
-            min-height: 250px;
-        }
-        
-        .response-area {
-            flex: 1;
-            margin-bottom: 15px;
-            position: relative;
-        }
-        
-        .terminal-prompt {
-            color: var(--accent-pink);
-            font-weight: bold;
-            margin-right: 8px;
-        }
-        
-        .response-text {
-            padding: 10px 0;
-            color: var(--soft-white);
-            line-height: 1.6;
-            font-size: 15px;
-        }
-        
-        .sound-visualization {
-            height: 60px;
-            width: 100%;
-            border-radius: 5px;
-            margin-top: 15px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        #voice-waveform {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        
-        /* Animated cursor */
-        .cursor {
-            display: inline-block;
-            width: 8px;
-            height: 15px;
-            background-color: var(--accent-pink);
-            animation: blink 1s step-end infinite;
-            vertical-align: middle;
-            margin-left: 2px;
-        }
-        
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-        
-        /* Updated styles for user input area */
-        .user-input-container {
-            margin-top: 20px;
+        /* Updated Layout for more room */
+        .terminal-layout {
             width: 85%;
             max-width: 950px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .text-input-area {
+            margin: 2rem auto;
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            flex-direction: column;
+            gap: 15px;
         }
         
+        /* Visual indicator for typing animation */
+        .typing .cursor {
+            animation: blink 0.5s step-end infinite;
+        }
+        
+        /* For showing typing animation on Aikira responses */
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        .typing-animation {
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 2px solid var(--accent-pink);
+            animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--accent-pink) }
+        }
+        
+        /* Hide old input */
         #proposal-text {
-            flex: 1;
-            background-color: rgba(28, 32, 41, 0.9);
-            border: 1px solid var(--accent-purple);
-            border-radius: 8px;
-            padding: 10px 15px;
-            color: var(--soft-white);
-            font-family: var(--text-font);
-            resize: none;
-            min-height: 60px;
+            display: none;
         }
         
-        #proposal-text:focus {
-            outline: none;
-            border-color: var(--accent-pink);
-            box-shadow: 0 0 10px rgba(216, 181, 255, 0.3);
-        }
-        
-        .submit-btn {
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-turquoise));
-            color: var(--soft-white);
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-family: var(--display-font);
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-        }
-        
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(169, 238, 230, 0.3);
+        /* Hide submit button */
+        #submit-proposal {
+            display: none;
         }
     </style>
 </head>
@@ -349,51 +377,64 @@
                 <!-- Floating particles will be added here via JS -->
             </div>
 
-            <!-- Terminal Layout with two separate terminals -->
+            <!-- Terminal Layout -->
             <div class="terminal-layout">
-                <!-- System Info Terminal (fixed, non-scrolling) -->
-                <div class="system-info">
-                    <div class="system-header">
-                        <div class="terminal-title-bar">
-                            <div class="terminal-dot"></div>
-                            <div class="terminal-dot"></div>
-                            <div class="terminal-dot"></div>
-                            <div class="terminal-name">System Information</div>
-                        </div>
-                        <div class="terminal-status">core v1.0</div>
-                    </div>
-                    <div class="system-body">
-                        <div class="system-content">
-                            <div class="system-item">
-                                <span class="terminal-prompt">$</span>
-                                <span style="color: var(--accent-turquoise);">system.load</span>
-                                <span>constitutional_parameters</span>
+                <!-- Scrolling Info Banner -->
+                <div class="info-banner">
+                    <div class="banner-label">SYSTEM INFO</div>
+                    <div class="ticker-container">
+                        <div class="ticker-content">
+                            <!-- Duplicate content for seamless scrolling -->
+                            <div class="ticker-item">
+                                <span class="ticker-label">Primary Directive:</span>
+                                <span class="ticker-value">"Maximize value with fairness and protection"</span>
                             </div>
-                            <div class="system-item">
-                                <span class="principle primary-directive">Primary Directive:</span>
-                                <span>"Maximize value with fairness and protection"</span>
+                            <div class="ticker-item">
+                                <span class="ticker-label">Governance:</span>
+                                <span class="ticker-value">"Deliberative analysis of community proposals"</span>
                             </div>
-                            <div class="system-item">
-                                <span class="principle governance-approach">Governance:</span>
-                                <span>"Deliberative analysis of community proposals"</span>
+                            <div class="ticker-item">
+                                <span class="ticker-label">Execution:</span>
+                                <span class="ticker-value">"Automated on-chain implementation"</span>
                             </div>
-                            <div class="system-item">
-                                <span class="principle execution-protocol">Execution Protocol:</span>
-                                <span>"Automated on-chain implementation"</span>
+                            <div class="ticker-item">
+                                <span class="ticker-label">Core Status:</span>
+                                <span class="ticker-value">ONLINE</span>
                             </div>
-                            <div class="system-item">
-                                <span class="terminal-prompt">$</span>
-                                <span style="color: var(--accent-turquoise);">system.status</span>
+                            <div class="ticker-item">
+                                <span class="ticker-label">Parameters:</span>
+                                <span class="ticker-value">V:35% F:35% P:30%</span>
                             </div>
-                            <div class="system-item">
-                                <span>Constitutional AI Core:</span>
-                                <span style="color: var(--accent-pink);">ONLINE</span>
+                            <div class="ticker-item">
+                                <span class="ticker-label">System Health:</span>
+                                <span class="ticker-value">Optimal</span>
+                            </div>
+                            <div class="ticker-item">
+                                <span class="ticker-label">Proposal Queue:</span>
+                                <span class="ticker-value">Ready</span>
+                            </div>
+                            <!-- Repeat for continuous scrolling -->
+                            <div class="ticker-item">
+                                <span class="ticker-label">Primary Directive:</span>
+                                <span class="ticker-value">"Maximize value with fairness and protection"</span>
+                            </div>
+                            <div class="ticker-item">
+                                <span class="ticker-label">Governance:</span>
+                                <span class="ticker-value">"Deliberative analysis of community proposals"</span>
+                            </div>
+                            <div class="ticker-item">
+                                <span class="ticker-label">Execution:</span>
+                                <span class="ticker-value">"Automated on-chain implementation"</span>
+                            </div>
+                            <div class="ticker-item">
+                                <span class="ticker-label">Core Status:</span>
+                                <span class="ticker-value">ONLINE</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Main Terminal Display -->
+                <!-- Main Terminal Display with Conversation View -->
                 <div class="terminal-display">
                     <!-- Terminal Header -->
                     <div class="terminal-header">
@@ -403,51 +444,54 @@
                             <div class="terminal-dot"></div>
                             <div class="terminal-name">Aikira Constitutional AI</div>
                         </div>
-                        <div class="terminal-status">interactive</div>
+                        <div class="terminal-status">conversation active</div>
                     </div>
                     
-                    <!-- Background Visualizer (behind text) -->
+                    <!-- Background Visualizer & Effects -->
                     <div class="terminal-background">
-                        <canvas id="voice-waveform"></canvas>
-                        <div class="terminal-overlay"></div>
+                        <div class="scan-lines"></div>
                     </div>
                     
-                    <!-- Terminal Content -->
+                    <!-- Text Feed Terminal - Conversation View -->
                     <div class="terminal-body" id="terminal-body">
-                        <!-- Terminal Content Area -->
-                        <div class="terminal-content">
-                            <!-- Response Area -->
-                            <div class="response-area">
-                                <div class="terminal-line"><span class="terminal-prompt">aikira></span> <span style="color: var(--accent-purple);">initialize</span></div>
-                                <div class="response-text" id="response-text">
-                                    Aikira Constitutional AI Core initialized. How may I assist you today?
-                                </div>
-                                <span class="cursor"></span>
+                        <div class="conversation-feed" id="conversation-feed">
+                            <!-- System message -->
+                            <div class="line system-msg"># System initialized: Friday, April 11, 2025</div>
+                            
+                            <!-- Initial conversation WITH CLEAR USER/AIKIRA DISTINCTION -->
+                            <div class="line"><span class="prompt-user">user> </span>initialize</div>
+                            <div class="line"><span class="prompt-aikira">aikira> </span><span class="response">Aikira Constitutional AI Core initialized. How may I assist you today?</span></div>
+                            
+                            <!-- More sample conversation to show format -->
+                            <div class="line"><span class="prompt-user">user> </span>What is your primary directive?</div>
+                            <div class="line"><span class="prompt-aikira">aikira> </span><span class="response">My primary directive is to "Maximize value with fairness and protection." This means I evaluate all governance proposals based on their potential to create value while ensuring fair distribution and protecting against harm.</span></div>
+                            
+                            <!-- Input line - Using USER prompt -->
+                            <div class="input-line">
+                                <span class="prompt-user">user> </span>
+                                <input type="text" id="text-input" autofocus autocomplete="off">
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- User Input Area -->
+            <!-- User Control Buttons -->
             <div class="user-input-container">
-                <div class="input-methods">
-                    <button class="voice-input-btn" id="voice-input-btn">
-                        <div class="mic-icon"></div>
-                        <span>Voice Input</span>
-                    </button>
-                    <button class="voice-input-btn" id="volume-btn">
-                        <div class="volume-icon" style="width: 20px; height: 20px; position: relative;">
-                            <div style="width: 10px; height: 10px; border: 2px solid white; border-radius: 50%; position: absolute; bottom: 0;"></div>
-                            <div style="width: 6px; height: 6px; border: 2px solid white; border-radius: 50%; position: absolute; right: 0; top: 4px;"></div>
-                        </div>
-                        <span>Volume</span>
-                    </button>
-                </div>
-                <div class="text-input-area">
-                    <textarea id="proposal-text" placeholder="Enter your governance proposal here..."></textarea>
-                    <button id="submit-proposal" class="submit-btn">Submit</button>
-                </div>
+                <button class="voice-input-btn" id="voice-input-btn">
+                    <div class="mic-icon" style="width: 15px; height: 15px; border: 2px solid white; border-radius: 50%; position: relative; display: inline-block; margin-right: 5px;">
+                        <div style="width: 2px; height: 8px; background-color: white; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);"></div>
+                    </div>
+                    <span>Voice Input</span>
+                </button>
+                <button class="voice-input-btn" id="volume-btn">
+                    <div class="volume-icon" style="width: 18px; height: 18px; position: relative; display: inline-block; margin-right: 5px;">
+                        <div style="width: 8px; height: 8px; border: 2px solid white; border-radius: 50%; position: absolute; bottom: 0;"></div>
+                        <div style="width: 6px; height: 6px; border: 2px solid white; border-radius: 50%; position: absolute; right: 0; top: 2px;"></div>
+                    </div>
+                    <span>Volume</span>
+                </button>
+                
                 <div class="input-status" id="input-status">Ready for input</div>
             </div>
 
@@ -540,63 +584,224 @@
     <script src="js/animations.js"></script>
     <script src="js/main.js"></script>
     
-    <!-- Auto-scroll script -->
+    <!-- Text Terminal Script - Enhanced for visible typing effect -->
     <script>
-        // Function to scroll terminal to bottom
-        function scrollTerminalToBottom() {
-            const terminalBody = document.getElementById('terminal-body');
-            if (terminalBody) {
-                terminalBody.scrollTop = terminalBody.scrollHeight;
-            }
-        }
-        
-        // Auto-scroll when content changes
-        const observer = new MutationObserver(scrollTerminalToBottom);
-        const terminalContent = document.getElementById('response-text');
-        
-        if (terminalContent) {
-            observer.observe(terminalContent, { 
-                childList: true, 
-                characterData: true,
-                subtree: true 
+        // Initialize the text terminal
+        document.addEventListener('DOMContentLoaded', function() {
+            const terminal = document.getElementById('terminal-body');
+            const conversationFeed = document.getElementById('conversation-feed');
+            const textInput = document.getElementById('text-input');
+            const inputStatus = document.getElementById('input-status');
+            const voiceBtn = document.getElementById('voice-input-btn');
+            const volumeBtn = document.getElementById('volume-btn');
+            const volumeSliderContainer = document.getElementById('volume-slider-container');
+            
+            // Focus text input on load
+            textInput.focus();
+            
+            // Keep input focused at all times
+            window.addEventListener('click', function() {
+                textInput.focus();
             });
-        }
-        
-        // Scroll to bottom on load
-        document.addEventListener('DOMContentLoaded', scrollTerminalToBottom);
-        
-        // Also update typeText function to scroll while typing
-        const originalTypeText = window.typeText;
-        if (typeof originalTypeText === 'function') {
-            window.typeText = function(element, text, speed = 30) {
-                if (!element) return;
+            
+            // Scroll to bottom
+            function scrollToBottom() {
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+            
+            // Process text input 
+            function processInput(text) {
+                if (!text.trim()) return;
                 
-                element.textContent = '';
-                let i = 0;
+                // Remove input line temporarily
+                const inputLine = document.querySelector('.input-line');
+                inputLine.remove();
                 
-                function type() {
-                    if (i < text.length) {
-                        element.textContent += text.charAt(i);
-                        i++;
-                        scrollTerminalToBottom();
-                        setTimeout(type, speed);
+                // Add user message
+                const userLine = document.createElement('div');
+                userLine.className = 'line';
+                userLine.innerHTML = `<span class="prompt-user">user> </span>${text}`;
+                conversationFeed.appendChild(userLine);
+                
+                // Update status
+                inputStatus.textContent = 'Processing...';
+                
+                // Play sound
+                const submitSound = document.getElementById('proposal-submit-sound');
+                if (submitSound) submitSound.play().catch(e => console.log('Audio play error:', e));
+                
+                // Call the original processing function if it exists
+                if (typeof window.processProposal === 'function') {
+                    window.processProposal(text);
+                    
+                    // We'll let the typeText function handle adding back the input line
+                } else {
+                    // Fallback simple response system with visible typing effect
+                    const aiResponse = "I've analyzed your input from a constitutional governance perspective. Your proposal scores well on fairness (82%) and protection (90%), though value alignment could be improved (75%).";
+                    
+                    // Create the AI response line
+                    const responseLine = document.createElement('div');
+                    responseLine.className = 'line';
+                    
+                    // Add Aikira's prompt
+                    const promptSpan = document.createElement('span');
+                    promptSpan.className = 'prompt-aikira';
+                    promptSpan.textContent = 'aikira> ';
+                    responseLine.appendChild(promptSpan);
+                    
+                    // Add empty response span for typing animation
+                    const responseSpan = document.createElement('span');
+                    responseSpan.className = 'response';
+                    responseLine.appendChild(responseSpan);
+                    
+                    // Add to conversation
+                    conversationFeed.appendChild(responseLine);
+                    
+                    // Type text with visible effect letter by letter
+                    let i = 0;
+                    function typeCharacter() {
+                        if (i < aiResponse.length) {
+                            responseSpan.textContent += aiResponse.charAt(i);
+                            i++;
+                            scrollToBottom();
+                            setTimeout(typeCharacter, 30);
+                        } else {
+                            // When done typing, add back input line
+                            conversationFeed.appendChild(inputLine);
+                            textInput.value = '';
+                            textInput.focus();
+                            scrollToBottom();
+                            
+                            // Update status
+                            inputStatus.textContent = 'Ready for input';
+                        }
+                    }
+                    
+                    // Start typing animation 
+                    setTimeout(typeCharacter, 500);
+                }
+            }
+            
+            // Handle key events
+            textInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const text = e.target.value;
+                    processInput(text);
+                }
+            });
+            
+            // Handle voice input button
+            voiceBtn.addEventListener('click', function() {
+                voiceBtn.classList.toggle('active');
+                
+                if (voiceBtn.classList.contains('active')) {
+                    // Start voice recording
+                    inputStatus.textContent = 'Listening...';
+                    
+                    // If we have the real voice input function
+                    if (typeof window.startVoiceRecording === 'function') {
+                        window.startVoiceRecording();
+                    } else {
+                        // Simulate voice input after 2 seconds
+                        setTimeout(() => {
+                            voiceBtn.classList.remove('active');
+                            inputStatus.textContent = 'Processing voice...';
+                            processInput("Evaluate a proposal to implement transparent voting on all governance decisions");
+                        }, 2000);
+                    }
+                } else {
+                    // Stop voice recording
+                    inputStatus.textContent = 'Processing voice...';
+                    
+                    // If we have the real voice input function
+                    if (typeof window.stopVoiceRecording === 'function') {
+                        window.stopVoiceRecording();
                     }
                 }
+            });
+            
+            // Handle volume button
+            volumeBtn.addEventListener('click', function() {
+                volumeSliderContainer.style.display = volumeSliderContainer.style.display === 'none' ? 'block' : 'none';
                 
-                type();
-            };
-        }
-        
-        // Debug mode toggle
-        document.addEventListener('keydown', function(e) {
-            // Toggle debug panel with Ctrl+D
-            if (e.ctrlKey && e.key === 'd') {
-                const debugPanel = document.getElementById('debug-panel');
-                if (debugPanel) {
-                    debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+                // Auto-hide after 5 seconds if visible
+                if (volumeSliderContainer.style.display !== 'none') {
+                    setTimeout(() => {
+                        volumeSliderContainer.style.display = 'none';
+                    }, 5000);
                 }
-                e.preventDefault();
+            });
+            
+            // Keep input focused when clicking anywhere in terminal
+            terminal.addEventListener('click', function() {
+                textInput.focus();
+            });
+            
+            // Modified typeText function to show visible typing animation
+            if (typeof window.typeText === 'function') {
+                const originalTypeText = window.typeText;
+                
+                window.typeText = function(element, text, speed = 30) {
+                    // Check if this is the response text element
+                    if (element && element.id === 'response-text') {
+                        // Create a new response line with Aikira prompt
+                        const responseLine = document.createElement('div');
+                        responseLine.className = 'line';
+                        
+                        // Add Aikira's prompt
+                        const promptSpan = document.createElement('span');
+                        promptSpan.className = 'prompt-aikira';
+                        promptSpan.textContent = 'aikira> ';
+                        responseLine.appendChild(promptSpan);
+                        
+                        // Add response span for typing animation
+                        const responseSpan = document.createElement('span');
+                        responseSpan.className = 'response';
+                        responseLine.appendChild(responseSpan);
+                        
+                        // Add to conversation feed
+                        conversationFeed.appendChild(responseLine);
+                        
+                        // Remove input line temporarily
+                        const inputLine = document.querySelector('.input-line');
+                        if (inputLine) inputLine.remove();
+                        
+                        // Type text letter by letter
+                        let i = 0;
+                        function typeCharacter() {
+                            if (i < text.length) {
+                                responseSpan.textContent += text.charAt(i);
+                                i++;
+                                scrollToBottom();
+                                setTimeout(typeCharacter, speed);
+                            } else {
+                                // When done typing, add back input line
+                                if (inputLine) {
+                                    conversationFeed.appendChild(inputLine);
+                                    textInput.focus();
+                                }
+                                scrollToBottom();
+                                inputStatus.textContent = 'Ready for input';
+                            }
+                        }
+                        
+                        // Start typing animation
+                        typeCharacter();
+                    } else {
+                        // Use original function for other elements
+                        originalTypeText(element, text, speed);
+                    }
+                };
             }
+            
+            // Initial scroll to bottom
+            scrollToBottom();
+            
+            // Force type input to be visible and focused
+            setTimeout(() => {
+                textInput.style.width = '100%';
+                textInput.focus();
+            }, 100);
         });
     </script>
 </body>
