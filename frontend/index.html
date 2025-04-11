@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aikira Terminal</title>
     <!-- Animated Favicon -->
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="frontend/assets/favicon.svg">
     <!-- CSS Files -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/aikira-theme.css">
@@ -84,7 +84,7 @@
             color: var(--soft-pink);
         }
         
-        /* Terminal Styles - Improved for Conversation View */
+        /* IMPROVED Terminal Styles for Chat Interface */
         .terminal-display {
             background-color: rgba(28, 32, 41, 0.9);
             border: 1px solid var(--accent-purple);
@@ -92,14 +92,14 @@
             box-shadow: 0 0 20px rgba(216, 181, 255, 0.3);
             display: flex;
             flex-direction: column;
-            height: 400px; /* Increased height */
+            height: 400px;
             position: relative;
             overflow: hidden;
         }
         
         .terminal-header {
             background-color: rgba(39, 43, 54, 0.9);
-            padding: 6px 15px;
+            padding: 8px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -111,6 +111,27 @@
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+        
+        .terminal-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .terminal-control-btn {
+            background-color: rgba(216, 181, 255, 0.2);
+            border: none;
+            border-radius: 4px;
+            color: var(--soft-white);
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .terminal-control-btn:hover {
+            background-color: rgba(216, 181, 255, 0.4);
         }
         
         .terminal-dot {
@@ -145,124 +166,259 @@
             opacity: 0.8;
         }
         
-        /* Terminal Body - Conversation Style */
+        /* Terminal Body - Improved Chat Style */
         .terminal-body {
             flex: 1;
-            padding: 10px 15px;
+            padding: 15px;
             overflow-y: auto;
-            font-family: monospace;
             position: relative;
             z-index: 2;
-            color: var(--soft-white);
-            font-size: 14px;
-            line-height: 1.5;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-purple) var(--medium-bg);
         }
         
-        /* Conversation Feed Styling - User and Aikira */
+        /* Custom scrollbar */
+        .terminal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .terminal-body::-webkit-scrollbar-track {
+            background: rgba(28, 32, 41, 0.5);
+        }
+        
+        .terminal-body::-webkit-scrollbar-thumb {
+            background-color: rgba(216, 181, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        /* Conversation Feed - IMPROVED CHAT LAYOUT */
         .conversation-feed {
             display: flex;
             flex-direction: column;
+            gap: 15px;
         }
         
-        .line {
-            margin-bottom: 8px;
-            white-space: pre-wrap;
+        /* Message Bubbles - For clear chat style */
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease-out;
         }
         
-        .system-msg {
-            color: var(--accent-turquoise);
-            opacity: 0.8;
-            font-style: italic;
-            margin-bottom: 10px;
+        .message-aikira {
+            align-self: flex-start;
         }
         
-        /* IMPROVED: Different styling for Aikira and User */
-        .prompt-aikira {
-            color: var(--accent-pink);
-            font-weight: bold;
+        .message-user {
+            align-self: flex-end;
         }
         
-        .prompt-user {
-            color: var(--accent-turquoise);
-            font-weight: bold;
-        }
-        
-        .response {
-            color: var(--soft-white);
-            display: inline;
-        }
-        
-        /* Input Line - Improved for clear indication */
-        .input-line {
+        .message-header {
             display: flex;
             align-items: center;
-            margin-top: 10px;
-            width: 100%;
+            margin-bottom: 5px;
+            gap: 8px;
         }
         
-        #text-input {
+        .message-sender {
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        
+        .sender-aikira {
+            color: var(--accent-pink);
+        }
+        
+        .sender-user {
+            color: var(--accent-turquoise);
+        }
+        
+        .message-time {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--soft-white);
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            max-width: 100%;
+            width: fit-content;
+        }
+        
+        .message-aikira .message-bubble {
+            background-color: rgba(216, 181, 255, 0.2);
+            border-top-left-radius: 2px;
+        }
+        
+        .message-user .message-bubble {
+            background-color: rgba(169, 238, 230, 0.2);
+            border-top-right-radius: 2px;
+            align-self: flex-end;
+        }
+        
+        /* System Messages */
+        .system-message {
+            text-align: center;
+            padding: 5px 10px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+            margin: 5px 0;
+        }
+        
+        /* IMPROVED Input Area */
+        .terminal-input-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            background-color: rgba(39, 43, 54, 0.95);
+            border-top: 1px solid var(--trans-light);
+            position: relative;
+            z-index: 5;
+        }
+        
+        .terminal-input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background-color: rgba(28, 32, 41, 0.8);
+            border: 1px solid var(--trans-light);
+            border-radius: 8px;
+            padding: 0 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .terminal-input-wrapper:focus-within {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 8px rgba(216, 181, 255, 0.3);
+        }
+        
+        .terminal-input {
             flex: 1;
             background: transparent;
             border: none;
             color: var(--soft-white);
-            font-family: monospace;
+            font-family: var(--text-font);
             font-size: 14px;
+            padding: 10px;
             outline: none;
-            caret-color: var(--accent-turquoise);
-            padding: 0;
-            margin: 0;
-            width: calc(100% - 70px); /* Account for prompt width */
+            min-width: 0;
         }
         
-        /* Blinking cursor */
-        .cursor {
-            display: inline-block;
-            width: 8px;
-            height: 14px;
-            background-color: var(--accent-turquoise);
-            animation: blink 1s step-end infinite;
-            vertical-align: middle;
+        .terminal-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
         }
         
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-        
-        /* User controls */
-        .user-input-container {
+        /* Input Buttons */
+        .terminal-input-buttons {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-            width: 85%;
-            max-width: 950px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .voice-input-btn {
-            display: flex;
-            align-items: center;
             gap: 8px;
-            background: transparent;
-            border: 1px solid var(--accent-purple);
-            border-radius: 5px;
-            padding: 5px 10px;
+        }
+        
+        .terminal-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(216, 181, 255, 0.15);
             color: var(--soft-white);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
             cursor: pointer;
             transition: all 0.2s ease;
+            gap: 6px;
         }
         
-        .voice-input-btn:hover {
-            background: rgba(216, 181, 255, 0.1);
-            border-color: var(--accent-pink);
+        .terminal-btn:hover {
+            background-color: rgba(216, 181, 255, 0.25);
         }
         
-        /* Background */
+        .terminal-btn.active {
+            background-color: rgba(255, 158, 229, 0.3);
+        }
+        
+        .terminal-btn.send-btn {
+            background-color: rgba(169, 238, 230, 0.2);
+        }
+        
+        .terminal-btn.send-btn:hover {
+            background-color: rgba(169, 238, 230, 0.3);
+        }
+        
+        /* Button Icons */
+        .btn-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* For mic icon */
+        .mic-icon {
+            position: relative;
+            width: 8px;
+            height: 8px;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+        }
+        
+        .mic-icon::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 6px;
+            background-color: currentColor;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 1px;
+        }
+        
+        /* Animation for typing indicators */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin-top: 3px;
+            margin-left: 10px;
+        }
+        
+        .typing-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background-color: var(--accent-pink);
+            opacity: 0.8;
+            animation: typingPulse 1.5s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingPulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 0.8; transform: scale(1); }
+        }
+        
+        /* Background Effects */
         .terminal-background {
             position: absolute;
-            top: 32px;
+            top: 38px;
             left: 0;
             right: 0;
             bottom: 0;
@@ -300,37 +456,83 @@
             gap: 15px;
         }
         
-        /* Visual indicator for typing animation */
-        .typing .cursor {
-            animation: blink 0.5s step-end infinite;
-        }
-        
-        /* For showing typing animation on Aikira responses */
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
-        }
-        
-        .typing-animation {
-            overflow: hidden;
-            white-space: nowrap;
-            border-right: 2px solid var(--accent-pink);
-            animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
-        }
-        
-        @keyframes blink-caret {
-            from, to { border-color: transparent }
-            50% { border-color: var(--accent-pink) }
-        }
-        
-        /* Hide old input */
-        #proposal-text {
+        /* Volume slider container */
+        .volume-slider-container {
+            position: absolute;
+            bottom: 65px;
+            right: 15px;
+            background-color: var(--medium-bg);
+            border: 1px solid var(--trans-light);
+            border-radius: 8px;
+            padding: 10px;
             display: none;
+            z-index: 100;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.2s ease-out;
         }
         
-        /* Hide submit button */
-        #submit-proposal {
-            display: none;
+        /* Volume slider */
+        #volume-slider {
+            width: 150px;
+            height: 5px;
+            -webkit-appearance: none;
+            background: var(--trans-light);
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        #volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-purple);
+            cursor: pointer;
+        }
+        
+        #volume-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border: none;
+            border-radius: 50%;
+            background: var(--accent-purple);
+            cursor: pointer;
+        }
+        
+        .volume-value {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 12px;
+            color: var(--soft-white);
+        }
+        
+        /* Status indicator at bottom of screen */
+        .status-indicator-bar {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 50;
+        }
+        
+        #input-status {
+            background-color: rgba(28, 32, 41, 0.8);
+            color: var(--accent-turquoise);
+            padding: 5px 15px;
+            font-size: 12px;
+            border-radius: 15px;
+            border: 1px solid var(--trans-light);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+        
+        #input-status.active {
+            background-color: rgba(216, 181, 255, 0.2);
+            opacity: 1;
         }
     </style>
 </head>
@@ -434,7 +636,7 @@
                     </div>
                 </div>
                 
-                <!-- Main Terminal Display with Conversation View -->
+                <!-- IMPROVED Terminal Display with Chat Interface -->
                 <div class="terminal-display">
                     <!-- Terminal Header -->
                     <div class="terminal-header">
@@ -444,7 +646,10 @@
                             <div class="terminal-dot"></div>
                             <div class="terminal-name">Aikira Constitutional AI</div>
                         </div>
-                        <div class="terminal-status">conversation active</div>
+                        <div class="terminal-controls">
+                            <button id="clear-terminal" class="terminal-control-btn">Clear Chat</button>
+                            <span class="terminal-status">conversation active</span>
+                        </div>
                     </div>
                     
                     <!-- Background Visualizer & Effects -->
@@ -452,53 +657,91 @@
                         <div class="scan-lines"></div>
                     </div>
                     
-                    <!-- Text Feed Terminal - Conversation View -->
+                    <!-- Chat Interface Terminal Body -->
                     <div class="terminal-body" id="terminal-body">
                         <div class="conversation-feed" id="conversation-feed">
                             <!-- System message -->
-                            <div class="line system-msg"># System initialized: Friday, April 11, 2025</div>
+                            <div class="system-message">System initialized: Friday, April 11, 2025</div>
                             
-                            <!-- Initial conversation WITH CLEAR USER/AIKIRA DISTINCTION -->
-                            <div class="line"><span class="prompt-user">user> </span>initialize</div>
-                            <div class="line"><span class="prompt-aikira">aikira> </span><span class="response">Aikira Constitutional AI Core initialized. How may I assist you today?</span></div>
-                            
-                            <!-- More sample conversation to show format -->
-                            <div class="line"><span class="prompt-user">user> </span>What is your primary directive?</div>
-                            <div class="line"><span class="prompt-aikira">aikira> </span><span class="response">My primary directive is to "Maximize value with fairness and protection." This means I evaluate all governance proposals based on their potential to create value while ensuring fair distribution and protecting against harm.</span></div>
-                            
-                            <!-- Input line - Using USER prompt -->
-                            <div class="input-line">
-                                <span class="prompt-user">user> </span>
-                                <input type="text" id="text-input" autofocus autocomplete="off">
+                            <!-- Aikira message example -->
+                            <div class="message message-aikira">
+                                <div class="message-header">
+                                    <span class="message-sender sender-aikira">Aikira</span>
+                                    <span class="message-time">08:42:17</span>
+                                </div>
+                                <div class="message-bubble">
+                                    Aikira Constitutional AI Core initialized. How may I assist you today?
+                                </div>
                             </div>
+                            
+                            <!-- User message example -->
+                            <div class="message message-user">
+                                <div class="message-header">
+                                    <span class="message-sender sender-user">User12123</span>
+                                    <span class="message-time">08:42:30</span>
+                                </div>
+                                <div class="message-bubble">
+                                    What is your primary directive?
+                                </div>
+                            </div>
+                            
+                            <!-- Aikira response example -->
+                            <div class="message message-aikira">
+                                <div class="message-header">
+                                    <span class="message-sender sender-aikira">Aikira</span>
+                                    <span class="message-time">08:42:33</span>
+                                </div>
+                                <div class="message-bubble">
+                                    My primary directive is to "Maximize value with fairness and protection." This means I evaluate all governance proposals based on their potential to create value while ensuring fair distribution and protecting against harm.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- IMPROVED Input Area -->
+                    <div class="terminal-input-area">
+                        <div class="terminal-input-wrapper">
+                            <input type="text" id="terminal-input" class="terminal-input" placeholder="Type your message here..." autocomplete="off">
+                        </div>
+                        <div class="terminal-input-buttons">
+                            <button id="voice-input-btn" class="terminal-btn">
+                                <div class="btn-icon">
+                                    <div class="mic-icon"></div>
+                                </div>
+                                <span>Voice</span>
+                            </button>
+                            <button id="volume-btn" class="terminal-btn">
+                                <div class="btn-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M11 5L6 9H2V15H6L11 19V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M15.54 8.46C16.4774 9.39764 17.004 10.6692 17.004 11.995C17.004 13.3208 16.4774 14.5924 15.54 15.53" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M19.07 4.93C20.9447 6.80528 21.9979 9.34836 21.9979 12C21.9979 14.6516 20.9447 17.1947 19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
+                            </button>
+                            <button id="send-btn" class="terminal-btn send-btn">
+                                <div class="btn-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
+                                <span>Send</span>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- User Control Buttons -->
-            <div class="user-input-container">
-                <button class="voice-input-btn" id="voice-input-btn">
-                    <div class="mic-icon" style="width: 15px; height: 15px; border: 2px solid white; border-radius: 50%; position: relative; display: inline-block; margin-right: 5px;">
-                        <div style="width: 2px; height: 8px; background-color: white; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);"></div>
-                    </div>
-                    <span>Voice Input</span>
-                </button>
-                <button class="voice-input-btn" id="volume-btn">
-                    <div class="volume-icon" style="width: 18px; height: 18px; position: relative; display: inline-block; margin-right: 5px;">
-                        <div style="width: 8px; height: 8px; border: 2px solid white; border-radius: 50%; position: absolute; bottom: 0;"></div>
-                        <div style="width: 6px; height: 6px; border: 2px solid white; border-radius: 50%; position: absolute; right: 0; top: 2px;"></div>
-                    </div>
-                    <span>Volume</span>
-                </button>
-                
-                <div class="input-status" id="input-status">Ready for input</div>
-            </div>
-
             <!-- Volume Slider (Hidden by default) -->
-            <div class="volume-slider-container" id="volume-slider-container" style="position: absolute; bottom: 80px; right: 20px; background: var(--medium-bg); padding: 15px; border-radius: 10px; border: 1px solid var(--trans-light); display: none; z-index: 100;">
-                <input type="range" min="0" max="100" value="80" id="volume-slider" style="width: 150px;">
-                <div class="volume-value" id="volume-value" style="text-align: center; margin-top: 5px; font-size: 12px;">Volume: 80%</div>
+            <div class="volume-slider-container" id="volume-slider-container">
+                <input type="range" min="0" max="100" value="80" id="volume-slider">
+                <div class="volume-value" id="volume-value">Volume: 80%</div>
+            </div>
+            
+            <!-- Status Indicator -->
+            <div class="status-indicator-bar">
+                <div id="input-status">Ready for input</div>
             </div>
         </main>
 
@@ -572,6 +815,13 @@
         </div>
     </div>
 
+    <!-- Include hidden elements for backward compatibility with existing JS -->
+    <div style="display: none;">
+        <textarea id="proposal-text"></textarea>
+        <button id="submit-proposal"></button>
+        <div id="response-text"></div>
+    </div>
+
     <!-- Scripts -->
     <script src="lib/three.min.js"></script>
     <script src="lib/p5.min.js"></script>
@@ -584,119 +834,221 @@
     <script src="js/animations.js"></script>
     <script src="js/main.js"></script>
     
-    <!-- Text Terminal Script - Enhanced for visible typing effect -->
+    <!-- Enhanced Terminal Script -->
     <script>
-        // Initialize the text terminal
+        // Initialize the improved terminal
         document.addEventListener('DOMContentLoaded', function() {
-            const terminal = document.getElementById('terminal-body');
+            // Terminal elements
+            const terminalBody = document.getElementById('terminal-body');
             const conversationFeed = document.getElementById('conversation-feed');
-            const textInput = document.getElementById('text-input');
-            const inputStatus = document.getElementById('input-status');
-            const voiceBtn = document.getElementById('voice-input-btn');
-            const volumeBtn = document.getElementById('volume-btn');
+            const terminalInput = document.getElementById('terminal-input');
+            const sendButton = document.getElementById('send-btn');
+            const voiceButton = document.getElementById('voice-input-btn');
+            const volumeButton = document.getElementById('volume-btn');
+            const clearButton = document.getElementById('clear-terminal');
             const volumeSliderContainer = document.getElementById('volume-slider-container');
+            const inputStatus = document.getElementById('input-status');
             
-            // Focus text input on load
-            textInput.focus();
+            // Backward compatibility for existing JS functions
+            const proposalText = document.getElementById('proposal-text');
+            const submitProposal = document.getElementById('submit-proposal');
+            const responseText = document.getElementById('response-text');
             
-            // Keep input focused at all times
-            window.addEventListener('click', function() {
-                textInput.focus();
+            // Random user ID (can be replaced with actual user ID if available)
+            const userId = "User" + Math.floor(Math.random() * 10000);
+            
+            // Focus input on load
+            terminalInput.focus();
+            
+            // Keep input focused when clicking in terminal
+            terminalBody.addEventListener('click', function() {
+                terminalInput.focus();
             });
             
-            // Scroll to bottom
+            // Scroll to bottom of conversation
             function scrollToBottom() {
-                terminal.scrollTop = terminal.scrollHeight;
+                terminalBody.scrollTop = terminalBody.scrollHeight;
             }
             
-            // Process text input 
-            function processInput(text) {
-                if (!text.trim()) return;
+            // Format current time for messages
+            function getCurrentTime() {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                return `${hours}:${minutes}:${seconds}`;
+            }
+            
+            // Add user message to conversation
+            function addUserMessage(text) {
+                const message = document.createElement('div');
+                message.className = 'message message-user';
+                message.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender sender-user">${userId}</span>
+                        <span class="message-time">${getCurrentTime()}</span>
+                    </div>
+                    <div class="message-bubble">${text}</div>
+                `;
+                conversationFeed.appendChild(message);
+                scrollToBottom();
+            }
+            
+            // Add Aikira message to conversation
+            function addAikiraMessage(text) {
+                const message = document.createElement('div');
+                message.className = 'message message-aikira';
+                message.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender sender-aikira">Aikira</span>
+                        <span class="message-time">${getCurrentTime()}</span>
+                    </div>
+                    <div class="message-bubble"></div>
+                `;
+                conversationFeed.appendChild(message);
                 
-                // Remove input line temporarily
-                const inputLine = document.querySelector('.input-line');
-                inputLine.remove();
+                // Get message bubble for typing animation
+                const messageBubble = message.querySelector('.message-bubble');
                 
-                // Add user message
-                const userLine = document.createElement('div');
-                userLine.className = 'line';
-                userLine.innerHTML = `<span class="prompt-user">user> </span>${text}`;
-                conversationFeed.appendChild(userLine);
+                // Add typing indicator
+                const typingIndicator = document.createElement('div');
+                typingIndicator.className = 'typing-indicator';
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'typing-dot';
+                    typingIndicator.appendChild(dot);
+                }
+                messageBubble.appendChild(typingIndicator);
                 
-                // Update status
-                inputStatus.textContent = 'Processing...';
+                scrollToBottom();
                 
-                // Play sound
-                const submitSound = document.getElementById('proposal-submit-sound');
-                if (submitSound) submitSound.play().catch(e => console.log('Audio play error:', e));
-                
-                // Call the original processing function if it exists
-                if (typeof window.processProposal === 'function') {
-                    window.processProposal(text);
+                // Type text with animation
+                setTimeout(() => {
+                    // Remove typing indicator
+                    messageBubble.removeChild(typingIndicator);
                     
-                    // We'll let the typeText function handle adding back the input line
-                } else {
-                    // Fallback simple response system with visible typing effect
-                    const aiResponse = "I've analyzed your input from a constitutional governance perspective. Your proposal scores well on fairness (82%) and protection (90%), though value alignment could be improved (75%).";
-                    
-                    // Create the AI response line
-                    const responseLine = document.createElement('div');
-                    responseLine.className = 'line';
-                    
-                    // Add Aikira's prompt
-                    const promptSpan = document.createElement('span');
-                    promptSpan.className = 'prompt-aikira';
-                    promptSpan.textContent = 'aikira> ';
-                    responseLine.appendChild(promptSpan);
-                    
-                    // Add empty response span for typing animation
-                    const responseSpan = document.createElement('span');
-                    responseSpan.className = 'response';
-                    responseLine.appendChild(responseSpan);
-                    
-                    // Add to conversation
-                    conversationFeed.appendChild(responseLine);
-                    
-                    // Type text with visible effect letter by letter
+                    // Type text letter by letter
                     let i = 0;
                     function typeCharacter() {
-                        if (i < aiResponse.length) {
-                            responseSpan.textContent += aiResponse.charAt(i);
+                        if (i < text.length) {
+                            messageBubble.textContent += text.charAt(i);
                             i++;
                             scrollToBottom();
                             setTimeout(typeCharacter, 30);
-                        } else {
-                            // When done typing, add back input line
-                            conversationFeed.appendChild(inputLine);
-                            textInput.value = '';
-                            textInput.focus();
-                            scrollToBottom();
-                            
-                            // Update status
-                            inputStatus.textContent = 'Ready for input';
                         }
                     }
                     
-                    // Start typing animation 
-                    setTimeout(typeCharacter, 500);
+                    typeCharacter();
+                }, 500);
+                
+                return message;
+            }
+            
+            // Add system message
+            function addSystemMessage(text) {
+                const message = document.createElement('div');
+                message.className = 'system-message';
+                message.textContent = text;
+                conversationFeed.appendChild(message);
+                scrollToBottom();
+            }
+            
+            // Process user input
+            function processUserInput(text) {
+                if (!text.trim()) return;
+                
+                // Clear input field
+                terminalInput.value = '';
+                
+                // Add user message to conversation
+                addUserMessage(text);
+                
+                // Update status
+                inputStatus.textContent = 'Processing...';
+                inputStatus.classList.add('active');
+                
+                // Play submit sound
+                const submitSound = document.getElementById('proposal-submit-sound');
+                if (submitSound) submitSound.play().catch(e => console.log('Audio play error:', e));
+                
+                // Forward input to existing processing functions
+                if (typeof window.processProposal === 'function') {
+                    // Set hidden proposal text for compatibility
+                    if (proposalText) proposalText.value = text;
+                    
+                    // Process through existing function
+                    window.processProposal(text);
+                } else {
+                    // Fallback if processProposal is not available
+                    simulateResponse(text);
                 }
             }
             
-            // Handle key events
-            textInput.addEventListener('keydown', function(e) {
+            // Simulate response (fallback if processProposal is not available)
+            function simulateResponse(text) {
+                const responses = [
+                    "I've analyzed your proposal from a constitutional governance perspective. It scores well on fairness (82%) and protection (90%), though value alignment could be improved (75%).",
+                    "Your proposal demonstrates strong alignment with our protection framework (88%) and fairness principles (85%). Consider enhancing the value generation aspects to improve overall constitutional alignment.",
+                    "This proposal shows excellent balance across all three constitutional parameters: value (92%), fairness (88%), and protection (90%). It has my strong recommendation for implementation."
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                
+                // Delay to simulate processing
+                setTimeout(() => {
+                    // Add Aikira response
+                    addAikiraMessage(randomResponse);
+                    
+                    // Update status
+                    inputStatus.textContent = 'Ready for input';
+                    inputStatus.classList.remove('active');
+                }, 1500);
+            }
+            
+            // Override existing typeText function for compatibility
+            if (typeof window.typeText === 'function') {
+                const originalTypeText = window.typeText;
+                
+                window.typeText = function(element, text, speed = 30) {
+                    // Check if this is the response text element
+                    if (element && element.id === 'response-text') {
+                        // Use our new function instead
+                        addAikiraMessage(text);
+                        
+                        // Update status when typing is complete
+                        setTimeout(() => {
+                            inputStatus.textContent = 'Ready for input';
+                            inputStatus.classList.remove('active');
+                        }, text.length * speed + 500);
+                    } else {
+                        // Use original function for other elements
+                        originalTypeText(element, text, speed);
+                    }
+                };
+            }
+            
+            // Set up event listeners
+            
+            // Send button
+            sendButton.addEventListener('click', () => {
+                processUserInput(terminalInput.value);
+            });
+            
+            // Enter key in input field
+            terminalInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    const text = e.target.value;
-                    processInput(text);
+                    processUserInput(e.target.value);
                 }
             });
             
-            // Handle voice input button
-            voiceBtn.addEventListener('click', function() {
-                voiceBtn.classList.toggle('active');
+            // Voice input button
+            voiceButton.addEventListener('click', function() {
+                voiceButton.classList.toggle('active');
                 
-                if (voiceBtn.classList.contains('active')) {
+                if (voiceButton.classList.contains('active')) {
                     // Start voice recording
                     inputStatus.textContent = 'Listening...';
+                    inputStatus.classList.add('active');
                     
                     // If we have the real voice input function
                     if (typeof window.startVoiceRecording === 'function') {
@@ -704,9 +1056,9 @@
                     } else {
                         // Simulate voice input after 2 seconds
                         setTimeout(() => {
-                            voiceBtn.classList.remove('active');
+                            voiceButton.classList.remove('active');
                             inputStatus.textContent = 'Processing voice...';
-                            processInput("Evaluate a proposal to implement transparent voting on all governance decisions");
+                            processUserInput("Evaluate a proposal to implement transparent voting on all governance decisions");
                         }, 2000);
                     }
                 } else {
@@ -720,8 +1072,8 @@
                 }
             });
             
-            // Handle volume button
-            volumeBtn.addEventListener('click', function() {
+            // Volume button
+            volumeButton.addEventListener('click', function() {
                 volumeSliderContainer.style.display = volumeSliderContainer.style.display === 'none' ? 'block' : 'none';
                 
                 // Auto-hide after 5 seconds if visible
@@ -732,76 +1084,59 @@
                 }
             });
             
-            // Keep input focused when clicking anywhere in terminal
-            terminal.addEventListener('click', function() {
-                textInput.focus();
+            // Clear button
+            clearButton.addEventListener('click', function() {
+                // Keep only the system message
+                const systemMessages = conversationFeed.querySelectorAll('.system-message');
+                conversationFeed.innerHTML = '';
+                
+                // Add back system messages
+                systemMessages.forEach(msg => {
+                    conversationFeed.appendChild(msg.cloneNode(true));
+                });
+                
+                // Add fresh welcome message
+                addAikiraMessage("Chat cleared. How may I assist you today?");
+                
+                // Focus input
+                terminalInput.focus();
             });
             
-            // Modified typeText function to show visible typing animation
-            if (typeof window.typeText === 'function') {
-                const originalTypeText = window.typeText;
-                
-                window.typeText = function(element, text, speed = 30) {
-                    // Check if this is the response text element
-                    if (element && element.id === 'response-text') {
-                        // Create a new response line with Aikira prompt
-                        const responseLine = document.createElement('div');
-                        responseLine.className = 'line';
-                        
-                        // Add Aikira's prompt
-                        const promptSpan = document.createElement('span');
-                        promptSpan.className = 'prompt-aikira';
-                        promptSpan.textContent = 'aikira> ';
-                        responseLine.appendChild(promptSpan);
-                        
-                        // Add response span for typing animation
-                        const responseSpan = document.createElement('span');
-                        responseSpan.className = 'response';
-                        responseLine.appendChild(responseSpan);
-                        
-                        // Add to conversation feed
-                        conversationFeed.appendChild(responseLine);
-                        
-                        // Remove input line temporarily
-                        const inputLine = document.querySelector('.input-line');
-                        if (inputLine) inputLine.remove();
-                        
-                        // Type text letter by letter
-                        let i = 0;
-                        function typeCharacter() {
-                            if (i < text.length) {
-                                responseSpan.textContent += text.charAt(i);
-                                i++;
-                                scrollToBottom();
-                                setTimeout(typeCharacter, speed);
-                            } else {
-                                // When done typing, add back input line
-                                if (inputLine) {
-                                    conversationFeed.appendChild(inputLine);
-                                    textInput.focus();
-                                }
-                                scrollToBottom();
-                                inputStatus.textContent = 'Ready for input';
-                            }
-                        }
-                        
-                        // Start typing animation
-                        typeCharacter();
-                    } else {
-                        // Use original function for other elements
-                        originalTypeText(element, text, speed);
+            // Window click for focus
+            window.addEventListener('click', function() {
+                // Don't auto-focus on mobile devices
+                if (window.innerWidth > 768) {
+                    terminalInput.focus();
+                }
+            });
+            
+            // Set up fake submit button click for compatibility
+            if (submitProposal) {
+                submitProposal.addEventListener('click', function() {
+                    if (proposalText && proposalText.value.trim()) {
+                        processUserInput(proposalText.value.trim());
                     }
-                };
+                });
+            }
+            
+            // Volume slider
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumeValue = document.getElementById('volume-value');
+            
+            if (volumeSlider && volumeValue) {
+                volumeSlider.addEventListener('input', function() {
+                    const volume = this.value / 100;
+                    volumeValue.textContent = `Volume: ${this.value}%`;
+                    
+                    // Update volume using the setVolume function
+                    if (typeof window.setVolume === 'function') {
+                        window.setVolume(volume);
+                    }
+                });
             }
             
             // Initial scroll to bottom
             scrollToBottom();
-            
-            // Force type input to be visible and focused
-            setTimeout(() => {
-                textInput.style.width = '100%';
-                textInput.focus();
-            }, 100);
         });
     </script>
 </body>

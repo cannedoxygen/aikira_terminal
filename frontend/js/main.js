@@ -1,7 +1,7 @@
 /**
  * Aikira Terminal - Main JavaScript
  * Handles UI interactions, animations, API communication and speech processing
- * Using OpenAI integration for proposal evaluation
+ * Using OpenAI integration for proposal evaluation with fixed voice transcription
  */
 
 // Wait for DOM to be fully loaded
@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const metricsElements = document.querySelectorAll('.metric-value');
     const consensusValue = document.querySelector('.consensus-value');
     const consensusStatusValue = document.querySelector('#consensus-index .status-value');
+    
+    // Terminal Input - For new interface
+    const terminalInput = document.getElementById('terminal-input');
+    const sendButton = document.getElementById('send-btn');
     
     // Debug mode - set to true for more logging
     const debugMode = true;
@@ -42,11 +46,37 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize audio context 
         initializeAudio();
         
-        // Display welcome message with typing effect
-        const welcomeMessage = "Aikira Constitutional AI Core initialized. How may I assist you today?";
-        typeText(responseText, welcomeMessage);
+        // Clear conversation feed to start empty
+        clearConversationFeed();
+        
+        // Add initial system message
+        addSystemMessage("System initialized: " + new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }));
         
         console.log('Aikira Terminal initialized');
+    }
+    
+    // Clear conversation feed at startup
+    function clearConversationFeed() {
+        const conversationFeed = document.getElementById('conversation-feed');
+        if (conversationFeed) {
+            conversationFeed.innerHTML = '';
+        }
+    }
+    
+    // Add system message
+    function addSystemMessage(text) {
+        const conversationFeed = document.getElementById('conversation-feed');
+        if (conversationFeed) {
+            const systemMsg = document.createElement('div');
+            systemMsg.className = 'system-message';
+            systemMsg.textContent = text;
+            conversationFeed.appendChild(systemMsg);
+        }
     }
     
     // Set up event listeners
@@ -75,6 +105,37 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
+        // New terminal input and send button
+        if (terminalInput && sendButton) {
+            // Send button click
+            sendButton.addEventListener('click', function() {
+                if (terminalInput.value.trim()) {
+                    const text = terminalInput.value;
+                    terminalInput.value = '';
+                    
+                    // Update hidden proposal text for compatibility
+                    if (proposalText) {
+                        proposalText.value = text;
+                    }
+                    
+                    // Process the input
+                    if (typeof window.processProposal === 'function') {
+                        window.processProposal(text);
+                    } else {
+                        processProposalFallback(text);
+                    }
+                }
+            });
+            
+            // Enter key in input
+            terminalInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendButton.click();
+                }
+            });
+        }
+        
         // Voice input button
         if (voiceButton) {
             voiceButton.addEventListener('click', function() {
@@ -98,12 +159,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (volumeBtn && volumeSliderContainer) {
             volumeBtn.addEventListener('click', function() {
                 // Toggle volume slider visibility
-                volumeSliderContainer.classList.toggle('visible');
+                volumeSliderContainer.style.display = 
+                    volumeSliderContainer.style.display === 'none' ? 'block' : 'none';
                 
                 // Auto-hide after 5 seconds if visible
-                if (volumeSliderContainer.classList.contains('visible')) {
+                if (volumeSliderContainer.style.display !== 'none') {
                     setTimeout(() => {
-                        volumeSliderContainer.classList.remove('visible');
+                        volumeSliderContainer.style.display = 'none';
                     }, 5000);
                 }
             });
@@ -121,6 +183,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update volume using the setVolume function from audio-controls.js
                 if (typeof window.setVolume === 'function') {
                     window.setVolume(volume);
+                }
+            });
+        }
+        
+        // Clear terminal button
+        const clearButton = document.getElementById('clear-terminal');
+        if (clearButton) {
+            clearButton.addEventListener('click', function() {
+                const conversationFeed = document.getElementById('conversation-feed');
+                if (conversationFeed) {
+                    // Clear all messages
+                    conversationFeed.innerHTML = '';
+                    
+                    // Add system message back
+                    addSystemMessage("System initialized: " + new Date().toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    }));
+                    
+                    // Add fresh welcome message
+                    addAikiraMessageToConversation("Chat cleared. How may I assist you today?");
                 }
             });
         }
@@ -148,6 +233,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => {
                     audioOverlay.style.display = 'none';
                 }, 500);
+                
+                // Add welcome message after audio is enabled
+                setTimeout(() => {
+                    addAikiraMessageToConversation("Aikira Constitutional AI Core initialized. How may I assist you today?");
+                }, 1000);
             });
         }
     }
@@ -185,9 +275,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update status
         inputStatus.textContent = 'Processing proposal...';
+        inputStatus.classList.add('active');
+        
+        // Add user message to conversation feed if it exists
+        addUserMessageToConversation(proposalText);
         
         // Clear the input
         document.getElementById('proposal-text').value = '';
+        if (terminalInput) {
+            terminalInput.value = '';
+        }
         
         fetch('/api/proposal/evaluate', {
             method: 'POST',
@@ -204,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            console.log('Proposal API response received');
+            console.log('Proposal API response received:', data);
             
             if (data.success && data.result && data.result.response) {
                 // Type out the AI response
@@ -229,9 +326,13 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Proposal processing error:', error);
             inputStatus.textContent = `Error: ${error.message}`;
+            inputStatus.classList.remove('active');
             
             // Show error in response area
             responseText.textContent = `I encountered an error processing your proposal. Please try again. Error: ${error.message}`;
+            
+            // Add error to conversation feed if it exists
+            addAikiraMessageToConversation(`I encountered an error processing your request. Please try again. Error: ${error.message}`);
         });
     }
     
@@ -286,12 +387,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         audio.onended = () => {
                             console.log('Speech audio completed');
                             inputStatus.textContent = 'Ready for input';
+                            inputStatus.classList.remove('active');
                             animateActiveWaveform(false);
                         };
                         
                         audio.onerror = (e) => {
                             console.error('Speech audio error:', e);
                             inputStatus.textContent = 'Speech playback error';
+                            inputStatus.classList.remove('active');
                             animateActiveWaveform(false);
                         };
                         
@@ -315,6 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .catch(err => {
                         console.error('Speech file check error:', err);
                         inputStatus.textContent = 'Error: Speech file not found';
+                        inputStatus.classList.remove('active');
                     });
             } else {
                 throw new Error('Invalid speech response');
@@ -323,6 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Speech generation error:', error);
             inputStatus.textContent = `Speech error: ${error.message}`;
+            inputStatus.classList.remove('active');
         });
     }
     
@@ -432,11 +537,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Start voice recording
+    // IMPROVED: Start voice recording
     function startVoiceRecording() {
-        console.log('Starting voice recording');
+        console.log('Starting voice recording with improved handling');
         
+        // Update status
         inputStatus.textContent = 'Listening...';
+        inputStatus.classList.add('active');
         
         // Animate the voice visualization
         animateActiveWaveform(true);
@@ -447,32 +554,102 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(stream => {
                     console.log('Microphone access granted');
                     
-                    // Create media recorder
-                    window.mediaRecorder = new MediaRecorder(stream);
+                    // Create media recorder with specific MIME type for better compatibility
+                    let options = {};
+                    
+                    // Try different MIME types based on browser support
+                    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                        options = { mimeType: 'audio/webm;codecs=opus' };
+                        console.log('Using audio/webm;codecs=opus');
+                    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                        options = { mimeType: 'audio/webm' };
+                        console.log('Using audio/webm');
+                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                        options = { mimeType: 'audio/mp4' };
+                        console.log('Using audio/mp4');
+                    }
+                    
+                    try {
+                        window.mediaRecorder = new MediaRecorder(stream, options);
+                        console.log('Created MediaRecorder', window.mediaRecorder);
+                        console.log('MediaRecorder state:', window.mediaRecorder.state);
+                        console.log('MediaRecorder mimeType:', window.mediaRecorder.mimeType);
+                    } catch (e) {
+                        console.log('MediaRecorder error:', e);
+                        console.log('Trying without specific MIME type');
+                        window.mediaRecorder = new MediaRecorder(stream);
+                    }
+                    
                     window.audioChunks = [];
                     
                     // Add data handler
-                    window.mediaRecorder.addEventListener('dataavailable', event => {
-                        window.audioChunks.push(event.data);
-                    });
+                    window.mediaRecorder.ondataavailable = (event) => {
+                        console.log('Data chunk received, size:', event.data.size);
+                        if (event.data.size > 0) {
+                            window.audioChunks.push(event.data);
+                        }
+                    };
                     
                     // Add stop handler
-                    window.mediaRecorder.addEventListener('stop', () => {
+                    window.mediaRecorder.onstop = () => {
                         console.log('Recording stopped, processing audio...');
+                        inputStatus.textContent = 'Processing voice...';
+                        
+                        // Make sure we have audio data
+                        if (!window.audioChunks || window.audioChunks.length === 0) {
+                            console.error('No audio chunks captured');
+                            inputStatus.textContent = 'No audio captured. Please try again.';
+                            setTimeout(() => {
+                                inputStatus.textContent = 'Ready for input';
+                                inputStatus.classList.remove('active');
+                            }, 2000);
+                            return;
+                        }
+                        
+                        console.log('Audio chunks:', window.audioChunks.length);
+                        console.log('First chunk type:', window.audioChunks[0].type);
+                        
+                        // Determine the MIME type
+                        let mimeType = window.mediaRecorder.mimeType;
+                        if (!mimeType || mimeType === '') {
+                            // Default to webm if we couldn't determine type
+                            mimeType = 'audio/webm';
+                        }
                         
                         // Create blob from chunks
-                        const audioBlob = new Blob(window.audioChunks, { type: 'audio/wav' });
-                        console.log('Audio blob created, size:', audioBlob.size);
+                        const audioBlob = new Blob(window.audioChunks, { type: mimeType });
+                        console.log('Audio blob created, size:', audioBlob.size, 'type:', audioBlob.type);
+                        
+                        // Make sure blob has data
+                        if (audioBlob.size <= 0) {
+                            console.error('Empty audio blob created');
+                            inputStatus.textContent = 'Empty audio recording. Please try again.';
+                            setTimeout(() => {
+                                inputStatus.textContent = 'Ready for input';
+                                inputStatus.classList.remove('active');
+                            }, 2000);
+                            return;
+                        }
                         
                         // Send to server for transcription
                         transcribeAudio(audioBlob);
                         
                         // Stop tracks
                         stream.getTracks().forEach(track => track.stop());
-                    });
+                    };
                     
-                    // Start recording
-                    window.mediaRecorder.start();
+                    // Add error handler
+                    window.mediaRecorder.onerror = (event) => {
+                        console.error('MediaRecorder error:', event.error);
+                        inputStatus.textContent = `Recording error: ${event.error.message || 'Unknown error'}`;
+                        setTimeout(() => {
+                            inputStatus.textContent = 'Ready for input';
+                            inputStatus.classList.remove('active');
+                        }, 2000);
+                    };
+                    
+                    // Start recording with timeslice to get data more frequently
+                    window.mediaRecorder.start(1000); // Get data every second
                     console.log('Recording started');
                     
                     // Automatically stop after 10 seconds as safety
@@ -484,20 +661,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 10000);
                 })
                 .catch(error => {
-                    console.log(`Microphone access denied: ${error.message}`);
+                    console.error(`Microphone access denied: ${error.message}`);
                     inputStatus.textContent = 'Microphone access denied';
+                    inputStatus.classList.remove('active');
                     document.getElementById('voice-input-btn').classList.remove('active');
                     animateActiveWaveform(false);
                 });
         } catch (error) {
-            console.log(`Voice recording error: ${error.message}`);
+            console.error(`Voice recording error: ${error.message}`);
             inputStatus.textContent = `Recording error: ${error.message}`;
+            inputStatus.classList.remove('active');
             document.getElementById('voice-input-btn').classList.remove('active');
             animateActiveWaveform(false);
         }
     }
     
-    // Stop voice recording and process the audio
+    // IMPROVED: Stop voice recording and process the audio
     function stopVoiceRecording() {
         console.log('Stopping voice recording');
         
@@ -514,30 +693,77 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             console.log('No active recorder to stop');
             inputStatus.textContent = 'Ready for input';
+            inputStatus.classList.remove('active');
+            
+            // Make sure button is not active
+            const voiceBtn = document.getElementById('voice-input-btn');
+            if (voiceBtn && voiceBtn.classList.contains('active')) {
+                voiceBtn.classList.remove('active');
+            }
         }
     }
     
-    // Transcribe audio using server API
+    // IMPROVED: Transcribe audio using server API
     async function transcribeAudio(audioBlob) {
         console.log('Transcribing audio, blob size:', audioBlob.size);
+        console.log('Audio blob type:', audioBlob.type);
         
         try {
+            // First check if the blob has enough data to be meaningful
+            if (audioBlob.size < 1000) {
+                console.error('Audio blob too small, likely no speech captured');
+                throw new Error('Audio recording too short or no speech detected');
+            }
+            
+            // Create a better blob with explicit MIME type
+            let blobToSend = audioBlob;
+            
+            // If the original blob doesn't have a proper MIME type, create a new one
+            if (!audioBlob.type || audioBlob.type === 'audio/wav') {
+                try {
+                    blobToSend = new Blob([audioBlob], { 
+                        type: 'audio/webm;codecs=opus' 
+                    });
+                    console.log('Created new blob with explicit MIME type, size:', blobToSend.size);
+                } catch (e) {
+                    console.log('Failed to create new blob, using original:', e);
+                    blobToSend = audioBlob;
+                }
+            }
+            
             // Create form data for upload
             const formData = new FormData();
-            formData.append('audio', audioBlob, 'recording.wav');
+            formData.append('audio', blobToSend, 'recording.webm');
+            
+            // Debug log
+            console.log('FormData created with blob size:', blobToSend.size, 'type:', blobToSend.type);
+            
+            // Create a longer timeout for large audio files
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
             
             // Send to server
             console.log('Sending audio to transcription API...');
             const response = await fetch('/api/speech/transcribe', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             console.log('Transcription API response status:', response.status);
             
             if (!response.ok) {
-                const errorText = await response.text();
-                console.log('Transcription API error response:', errorText);
+                let errorText;
+                try {
+                    const errorData = await response.json();
+                    errorText = errorData.error || errorData.message || `Server error: ${response.status}`;
+                } catch (e) {
+                    errorText = await response.text();
+                }
+                
+                console.error('Transcription API error response:', errorText);
                 throw new Error(`Server error: ${response.status} - ${errorText}`);
             }
             
@@ -545,7 +771,21 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Transcription API response data:', JSON.stringify(data));
             
             if (data.success && data.text) {
+                // Check for empty or "you" only transcriptions
+                if (!data.text.trim() || data.text.trim().toLowerCase() === "you") {
+                    console.error('Invalid transcription received: "' + data.text + '"');
+                    throw new Error('Could not transcribe speech clearly. Please try speaking louder or reducing background noise.');
+                }
+                
                 console.log(`Transcription successful: ${data.text}`);
+                
+                // Add transcribed text to input if it exists
+                if (terminalInput) {
+                    terminalInput.value = data.text;
+                }
+                
+                // Add user message to conversation feed
+                addUserMessageToConversation(data.text);
                 
                 // Process the transcribed text as a proposal
                 if (typeof window.processProposal === 'function') {
@@ -559,10 +799,25 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error(`Transcription error: ${error.message}`);
             inputStatus.textContent = `Error: ${error.message}`;
+            inputStatus.classList.remove('active');
+            
+            // Ensure voice button is reset
+            const voiceBtn = document.getElementById('voice-input-btn');
+            if (voiceBtn) {
+                voiceBtn.classList.remove('active');
+            }
+            
+            // Stop the waveform animation
+            animateActiveWaveform(false);
             
             // Show error message
-            responseText.textContent = 
-                `I encountered an error processing your voice input. Please try again or type your proposal instead. Error details: ${error.message}`;
+            if (responseText) {
+                responseText.textContent = 
+                    `I encountered an error processing your voice input. Please try again or type your message. Error details: ${error.message}`;
+            }
+            
+            // Add error to conversation feed
+            addAikiraMessageToConversation(`I encountered an error processing your voice input. Please try again or type your message. Error: ${error.message}`);
         }
     }
     
@@ -646,6 +901,119 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         type();
+        
+        // Also add message to conversation interface if it exists
+        addAikiraMessageToConversation(text);
+    }
+    
+    // Add Aikira message to conversation feed
+    function addAikiraMessageToConversation(text) {
+        const conversationFeed = document.getElementById('conversation-feed');
+        if (!conversationFeed) return;
+        
+        // Create message element
+        const message = document.createElement('div');
+        message.className = 'message message-aikira';
+        
+        // Get current time
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        
+        // Create message header
+        const header = document.createElement('div');
+        header.className = 'message-header';
+        header.innerHTML = `
+            <span class="message-sender sender-aikira">Aikira</span>
+            <span class="message-time">${timeStr}</span>
+        `;
+        
+        // Create message bubble
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        
+        // Add typing indicator
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'typing-indicator';
+        for (let i = 0; i < 3; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'typing-dot';
+            typingIndicator.appendChild(dot);
+        }
+        bubble.appendChild(typingIndicator);
+        
+        // Add to message
+        message.appendChild(header);
+        message.appendChild(bubble);
+        
+        // Add to feed
+        conversationFeed.appendChild(message);
+        
+        // Scroll to bottom
+        const terminalBody = document.getElementById('terminal-body');
+        if (terminalBody) {
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
+        
+        // Type text with animation
+        setTimeout(() => {
+            // Remove typing indicator
+            bubble.removeChild(typingIndicator);
+            
+            // Type text letter by letter
+            let i = 0;
+            function typeCharacter() {
+                if (i < text.length) {
+                    bubble.textContent += text.charAt(i);
+                    i++;
+                    
+                    // Scroll to bottom as typing occurs
+                    if (terminalBody) {
+                        terminalBody.scrollTop = terminalBody.scrollHeight;
+                    }
+                    
+                    setTimeout(typeCharacter, 30);
+                }
+            }
+            
+            typeCharacter();
+        }, 500);
+    }
+    
+    // Add user message to conversation feed
+    function addUserMessageToConversation(text) {
+        const conversationFeed = document.getElementById('conversation-feed');
+        if (!conversationFeed) return;
+        
+        // Create message element
+        const message = document.createElement('div');
+        message.className = 'message message-user';
+        
+        // Get current time
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        
+        // Create random user ID if not already created
+        if (!window.currentUserId) {
+            window.currentUserId = "User" + Math.floor(Math.random() * 10000);
+        }
+        
+        // Add message content
+        message.innerHTML = `
+            <div class="message-header">
+                <span class="message-sender sender-user">${window.currentUserId}</span>
+                <span class="message-time">${timeStr}</span>
+            </div>
+            <div class="message-bubble">${text}</div>
+        `;
+        
+        // Add to feed
+        conversationFeed.appendChild(message);
+        
+        // Scroll to bottom
+        const terminalBody = document.getElementById('terminal-body');
+        if (terminalBody) {
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
     }
     
     // Update metrics with received values
@@ -704,41 +1072,14 @@ document.addEventListener('DOMContentLoaded', function() {
         indicator.style.left = `${xPos}px`;
     }
     
-    // Debug test button for direct speech testing
-    if (debugMode) {
-        // Create test button
-        const testBtn = document.createElement('button');
-        testBtn.textContent = 'Test Speech';
-        testBtn.style.position = 'fixed';
-        testBtn.style.bottom = '10px';
-        testBtn.style.left = '10px';
-        testBtn.style.zIndex = '1000';
-        testBtn.style.padding = '5px 10px';
-        testBtn.style.fontSize = '12px';
-        testBtn.style.opacity = '0.7';
-        
-        testBtn.addEventListener('click', () => {
-            fetch('/api/debug/eleven-labs')
-                .then(res => res.json())
-                .then(data => {
-                    console.log('Debug test response:', data);
-                    
-                    if (data.success && data.test_audio_url) {
-                        const audio = new Audio(data.test_audio_url);
-                        audio.play()
-                            .then(() => console.log('Debug audio playing'))
-                            .catch(err => console.error('Debug audio error:', err));
-                    }
-                })
-                .catch(err => console.error('Debug test error:', err));
-        });
-        
-        document.body.appendChild(testBtn);
-    }
-    
     // Make functions available globally
     window.animateActiveWaveform = animateActiveWaveform;
     window.updateMetrics = updateMetrics;
     window.updateConsensusTriangle = updateConsensusTriangle;
     window.typeText = typeText;
+    window.startVoiceRecording = startVoiceRecording;
+    window.stopVoiceRecording = stopVoiceRecording;
+    window.transcribeAudio = transcribeAudio;
+    window.addAikiraMessageToConversation = addAikiraMessageToConversation;
+    window.addUserMessageToConversation = addUserMessageToConversation;
 });
