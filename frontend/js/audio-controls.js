@@ -56,10 +56,10 @@ class AudioController {
         
         // Preload critical audio files
         this.preloadAudioFiles([
-            'assets/audio/startup.mp3',
-            'assets/audio/deliberation.mp3',
-            'assets/audio/proposal-submit.mp3',
-            'assets/audio/governance-alert.mp3'
+            'assets/audio/startup.wav',
+            'assets/audio/deliberation.wav',
+            'assets/audio/proposal-submit.wav',
+            'assets/audio/governance-alert.wav'
         ]);
         
         // Mark as initialized
@@ -299,7 +299,7 @@ class AudioController {
             }
             
             // Play startup sound
-            this.playAudio('assets/audio/startup.mp3');
+            this.playAudio('assets/audio/startup.wav');
             
             // Create global audio processor
             this.createAudioProcessor();

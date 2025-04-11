@@ -308,7 +308,7 @@ function updateGlobalVolume(volume) {
 // Function to play startup sound
 function playStartupSound() {
   const startupSound = document.getElementById('startup-sound') || 
-                       new Audio('assets/audio/startup.mp3');
+                       new Audio('assets/audio/startup.wav');
   
   // Set volume based on current slider
   const volumeSlider = document.getElementById('volume-slider');

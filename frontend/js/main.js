@@ -1,6 +1,6 @@
 /**
- * Aikira Terminal - Main JavaScript
- * Handles UI interactions, animations, and API communication
+ * Aikira Terminal - Main JavaScript (Production Version)
+ * Handles UI interactions, animations, and API communication without fallbacks
  */
 
 // Wait for DOM to be fully loaded
@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const consensusValue = document.querySelector('.consensus-value');
     const consensusStatusValue = document.querySelector('#consensus-index .status-value');
     
-    // Initialize debug mode
-    const debugMode = true;
+    // Debug mode - set to false in production
+    const debugMode = false;
     
     // Initialize app
     initializeApp();
@@ -334,18 +334,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 generateSpeech(data.response);
             } else {
                 // Handle error
-                throw new Error('Invalid response format');
+                throw new Error(data.error || 'Invalid response format');
             }
         })
         .catch(error => {
             log(`Proposal processing error: ${error.message}`);
-            inputStatus.textContent = 'Error occurred';
+            inputStatus.textContent = `Error: ${error.message}`;
+            
+            // Show error in response area
+            responseText.textContent = `I encountered an error processing your proposal. Please try again later or contact support if the issue persists. Error: ${error.message}`;
             
             // Play error sound
             playAudio('assets/audio/governance-alert.wav');
-            
-            // Fallback to simulated response
-            simulateProposalResponse(proposalText);
         });
     }
     
@@ -375,13 +375,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Play the generated speech audio
                 playAudio(data.audio_url);
             } else {
-                throw new Error('Speech generation failed');
+                throw new Error(data.error || 'Speech generation failed');
             }
         } catch (error) {
             log(`Speech generation error: ${error.message}`);
-            
-            // Fall back to playing sample audio
-            playAudio('assets/audio/deliberation.wav');
+            inputStatus.textContent = `Speech error: ${error.message}`;
         }
     }
     
@@ -496,50 +494,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Process the transcribed text
                 processProposal(data.text);
             } else {
-                throw new Error('Transcription failed');
+                throw new Error(data.error || 'Transcription failed');
             }
         })
         .catch(error => {
             log(`Transcription error: ${error.message}`);
-            inputStatus.textContent = 'Transcription error';
+            inputStatus.textContent = `Transcription error: ${error.message}`;
+            
+            // Display error message in response area
+            responseText.textContent = `I encountered an error processing your voice input. Please try again or type your proposal instead. Error: ${error.message}`;
             
             // Play error sound
             playAudio('assets/audio/governance-alert.wav');
-            
-            // Fallback to simulated transcription
-            simulateTranscription();
         });
-    }
-    
-    // Simulate transcription (fallback)
-    function simulateTranscription() {
-        log('Using simulated transcription');
-        
-        // Sample transcription
-        const transcribedText = "Implement a transparent governance system with equal voting rights and strong privacy protections.";
-        
-        // Process the transcribed text as a proposal
-        processProposal(transcribedText);
-    }
-    
-    // Simulate proposal response (fallback)
-    function simulateProposalResponse(proposalText) {
-        log('Using simulated proposal response');
-        
-        // Sample response
-        const response = "After constitutional analysis, I've determined that your proposal aligns well with our governance principles. The value generation aspects are particularly strong. However, there is room to improve consensus alignment. Consider enhancing the fairness distribution framework.";
-        
-        // Update response text with typing effect
-        typeText(responseText, response);
-        
-        // Update metrics
-        updateMetrics(78, 85, 90, 84);
-        
-        // Update status
-        inputStatus.textContent = 'Ready for input';
-        
-        // Play response audio
-        playAudio('assets/audio/deliberation.wav');
     }
     
     // Animate voice visualization during recording
@@ -610,10 +577,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update status indicators
                 document.querySelector('#constitutional-alignment .status-value').textContent = data.constitutional_alignment;
                 
-                // Update other statuses as needed
+                // Log API availability
+                if (data.voice_services === 'Available') {
+                    log('Voice services are available');
+                } else {
+                    log('Voice services are unavailable');
+                    inputStatus.textContent = 'Warning: Voice services unavailable';
+                }
             })
             .catch(error => {
                 log(`System status error: ${error.message}`);
+                inputStatus.textContent = 'Error contacting server';
+                
+                // Create a system notice
+                createGovernanceNotice('System connectivity issue detected. Some features may be unavailable.', 'warning');
             });
     }
     
