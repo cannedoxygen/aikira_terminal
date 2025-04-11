@@ -1,6 +1,7 @@
 /**
  * Aikira Terminal - Main JavaScript
  * Handles UI interactions, animations, API communication and speech processing
+ * Using OpenAI integration for proposal evaluation
  */
 
 // Wait for DOM to be fully loaded
@@ -20,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Audio context
     let audioContext = null;
+    // Current audio URL for speech
+    let currentAudioUrl = null;
     
     // Initialize app
     initializeApp();
@@ -99,9 +102,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (proposalText.value.trim()) {
                     // Send proposal to API
                     processProposal(proposalText.value);
-                    
-                    // Play deliberation sound
-                    playAudio('assets/audio/deliberation.wav');
                 }
             });
             
@@ -126,9 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     // Stop voice recording
                     stopVoiceRecording();
-                    
-                    // Play proposal submit sound
-                    playAudio('assets/audio/proposal-submit.wav');
                 }
             });
         }
@@ -139,38 +136,49 @@ document.addEventListener('DOMContentLoaded', function() {
         log(`Playing audio: ${src}`);
         
         try {
-            // Create audio element
-            const audio = new Audio(src);
-            
-            // Set volume (0.8 default)
-            audio.volume = 0.8;
-            
-            // Add event handlers
-            audio.onplay = () => log(`Audio playing: ${src}`);
-            audio.onerror = (e) => log(`Audio error: ${e.type}`);
-            
-            // Play with error handling
-            audio.play()
-                .then(() => log(`Audio playing: ${src}`))
-                .catch(err => {
-                    log(`Error playing audio: ${err.message}`);
-                    
-                    // Check if this is due to autoplay restrictions
-                    if (err.name === 'NotAllowedError') {
-                        log('Autoplay restricted - need user interaction first');
-                        
-                        // Try to resume audio context
-                        if (audioContext && audioContext.state === 'suspended') {
-                            audioContext.resume()
-                                .then(() => {
-                                    log('Audio context resumed, trying playback again');
-                                    return audio.play();
-                                })
-                                .catch(resumeErr => {
-                                    log(`Error after resume: ${resumeErr.message}`);
-                                });
-                        }
+            // First check if file exists
+            fetch(src, { method: 'HEAD' })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Audio file not found: ${response.status}`);
                     }
+                    
+                    // Create audio element
+                    const audio = new Audio(src);
+                    
+                    // Set volume (0.8 default)
+                    audio.volume = 0.8;
+                    
+                    // Add event handlers
+                    audio.onplay = () => log(`Audio playing: ${src}`);
+                    audio.onerror = (e) => log(`Audio error: ${e.type}`);
+                    
+                    // Play with error handling
+                    audio.play()
+                        .then(() => log(`Audio playing: ${src}`))
+                        .catch(err => {
+                            log(`Error playing audio: ${err.message}`);
+                            
+                            // Check if this is due to autoplay restrictions
+                            if (err.name === 'NotAllowedError') {
+                                log('Autoplay restricted - need user interaction first');
+                                
+                                // Try to resume audio context
+                                if (audioContext && audioContext.state === 'suspended') {
+                                    audioContext.resume()
+                                        .then(() => {
+                                            log('Audio context resumed, trying playback again');
+                                            return audio.play();
+                                        })
+                                        .catch(resumeErr => {
+                                            log(`Error after resume: ${resumeErr.message}`);
+                                        });
+                                }
+                            }
+                        });
+                })
+                .catch(error => {
+                    log(`Audio file check error: ${error.message}`);
                 });
         } catch (err) {
             log(`Audio playback exception: ${err.message}`);
@@ -263,18 +271,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Process proposal submission
+    // Process proposal submission using OpenAI API
     async function processProposal(proposalText) {
-        log(`Processing proposal: ${proposalText.substring(0, 50)}${proposalText.length > 50 ? '...' : ''}`);
+        log(`Processing proposal with OpenAI: ${proposalText.substring(0, 50)}${proposalText.length > 50 ? '...' : ''}`);
         
         // Update status
-        inputStatus.textContent = 'Processing proposal...';
+        inputStatus.textContent = 'Processing proposal with OpenAI...';
         
         // Clear the input
         document.getElementById('proposal-text').value = '';
         
         try {
-            // Call API to process proposal
+            // Call proposal evaluation API
             const response = await fetch('/api/proposal/evaluate', {
                 method: 'POST',
                 headers: {
@@ -283,37 +291,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ proposal: proposalText })
             });
             
+            // Log response status
+            log(`Proposal API response status: ${response.status}`);
+            
             if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
+                // Try to extract error details
+                const errorText = await response.text();
+                log(`Proposal API error: ${errorText}`);
+                throw new Error(`Proposal API error: ${response.status}`);
             }
             
             const data = await response.json();
             log('Proposal API response:', data);
+            log('Full response data structure:', JSON.stringify(data));
             
-            if (!data.success || !data.result) {
-                throw new Error('Invalid response from proposal API');
+            // Validate response
+            if (!data.success) {
+                throw new Error(data.error || 'API returned failure status');
             }
             
-            // Type out the AI response
-            typeText(responseText, data.result.response);
-            
-            // Update metrics with returned values
-            updateMetrics(
-                Math.round(data.result.scores.fairness * 100),
-                Math.round(data.result.scores.value * 100),
-                Math.round(data.result.scores.protection * 100),
-                Math.round(data.result.consensusIndex * 100)
-            );
-            
-            // Generate and play speech
-            await generateSpeech(data.result.response);
+            // Check if we have a valid response
+            if (data.result && data.result.response) {
+                // Type out the AI response
+                typeText(responseText, data.result.response);
+                
+                // Update metrics with returned values
+                if (data.result.scores) {
+                    updateMetrics(
+                        Math.round(data.result.scores.fairness * 100),
+                        Math.round(data.result.scores.value * 100),
+                        Math.round(data.result.scores.protection * 100),
+                        Math.round(data.result.consensusIndex * 100)
+                    );
+                }
+                
+                // Generate and play speech
+                generateSpeech(data.result.response);
+                
+            } else {
+                throw new Error('Response missing expected structure');
+            }
             
         } catch (error) {
             log(`Proposal processing error: ${error.message}`);
             inputStatus.textContent = `Error: ${error.message}`;
             
             // Show error in response area
-            responseText.textContent = `I encountered an error processing your proposal. Please try again later or contact support if the issue persists. Error: ${error.message}`;
+            responseText.textContent = `I encountered an error processing your proposal. Please try again later. Error details: ${error.message}`;
             
             // Play error sound
             playAudio('assets/audio/governance-alert.wav');
@@ -322,19 +346,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Generate speech from text
     async function generateSpeech(text) {
-        log(`Generating speech for response: ${text.substring(0, 50)}...`);
+        log(`Generating speech for text: ${text.substring(0, 50)}...`);
         
         try {
             // Update status
             inputStatus.textContent = 'Generating speech...';
             
-            // Call speech generation API
+            // Call the speech generation API
             const response = await fetch('/api/speech/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ text: text })
+                body: JSON.stringify({ 
+                    text: text,
+                    voice_id: "default",
+                    model_id: "eleven_multilingual_v2"
+                })
             });
             
             if (!response.ok) {
@@ -345,13 +373,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             log('Speech generation response:', data);
             
-            if (!data.success || !data.audio_url) {
-                throw new Error('Speech generation failed: No audio URL returned');
+            if (data.success && data.audio_url) {
+                log(`Speech generated successfully with URL: ${data.audio_url}`);
+                currentAudioUrl = data.audio_url;
+                
+                // Play the generated speech
+                playGeneratedSpeech(data.audio_url);
+            } else {
+                throw new Error(data.error || 'Speech generation failed without specific error');
             }
-            
-            // Play the generated speech
-            await playGeneratedSpeech(data.audio_url);
-            
         } catch (error) {
             log(`Speech generation error: ${error.message}`);
             inputStatus.textContent = `Speech error: ${error.message}`;
@@ -361,15 +391,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Play generated speech with enhanced error handling
-    async function playGeneratedSpeech(audioUrl) {
-        log(`Playing generated speech: ${audioUrl}`);
+    // Play generated speech (similar to test-voice.html)
+    function playGeneratedSpeech(audioUrl) {
+        log(`Playing generated speech from URL: ${audioUrl}`);
+        inputStatus.textContent = 'Playing speech...';
         
         try {
-            // Create audio element
             const audio = new Audio(audioUrl);
             
-            // Set volume based on slider if available
+            // Set volume
             const volumeSlider = document.getElementById('volume-slider');
             if (volumeSlider) {
                 audio.volume = volumeSlider.value / 100;
@@ -377,84 +407,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 audio.volume = 0.8; // Default volume
             }
             
-            // Set up event handlers
-            audio.onloadeddata = () => {
-                log('Speech audio loaded successfully');
-            };
-            
+            // Event handlers
             audio.onplay = () => {
                 log('Speech playback started');
                 inputStatus.textContent = 'Speaking...';
-                
-                // Start visualizer if available
-                if (typeof animateActiveWaveform === 'function') {
-                    animateActiveWaveform(true);
-                }
+                // Start voice visualization
+                animateActiveWaveform(true);
             };
             
             audio.onended = () => {
-                log('Speech playback completed');
+                log('Speech playback finished');
                 inputStatus.textContent = 'Ready for input';
-                
-                // Stop visualizer if available
-                if (typeof animateActiveWaveform === 'function') {
-                    animateActiveWaveform(false);
-                }
+                // Stop voice visualization
+                animateActiveWaveform(false);
             };
             
             audio.onerror = (e) => {
                 log(`Speech playback error: ${e.type}`);
-                inputStatus.textContent = 'Audio playback error';
-                
-                // Play error sound
-                playAudio('assets/audio/governance-alert.wav');
+                console.error('Audio error:', e);
+                inputStatus.textContent = 'Speech playback error';
+                animateActiveWaveform(false);
             };
             
-            // Play the audio with handling for autoplay issues
-            try {
-                await audio.play();
-            } catch (playError) {
-                log(`Initial playback failed: ${playError.message}`);
+            // Play the audio
+            audio.play().catch(error => {
+                log(`Failed to play speech: ${error.message}`);
+                inputStatus.textContent = `Speech playback error: ${error.message}`;
                 
-                if (playError.name === 'NotAllowedError') {
-                    log('Autoplay prevented - attempting to resume audio context');
+                // If autoplay is blocked, try to resume audio context
+                if (error.name === 'NotAllowedError') {
+                    log('Autoplay blocked - need user interaction');
+                    inputStatus.textContent = 'Click to enable audio playback';
                     
                     // Try to resume audio context
                     if (audioContext && audioContext.state === 'suspended') {
-                        try {
-                            await audioContext.resume();
-                            log('Audio context resumed, retrying playback');
-                            await audio.play();
-                        } catch (retryError) {
-                            log(`Retry failed after context resume: ${retryError.message}`);
-                            throw retryError;
-                        }
-                    } else {
-                        // Set up one-time click handler to play audio
-                        inputStatus.textContent = 'Click anywhere to enable audio';
-                        
-                        const handleClick = async () => {
-                            try {
-                                await audio.play();
-                                document.removeEventListener('click', handleClick);
-                            } catch (err) {
-                                log(`Play after click failed: ${err.message}`);
-                            }
-                        };
-                        
-                        document.addEventListener('click', handleClick, { once: true });
-                        throw playError;
+                        audioContext.resume()
+                            .then(() => {
+                                log('Audio context resumed, trying again');
+                                return audio.play();
+                            })
+                            .catch(resumeErr => {
+                                log(`Error after resume: ${resumeErr.message}`);
+                            });
                     }
-                } else {
-                    throw playError;
                 }
-            }
+            });
         } catch (error) {
-            log(`Speech playback error: ${error.message}`);
-            inputStatus.textContent = `Speech error: ${error.message}`;
-            
-            // Play error sound instead
-            playAudio('assets/audio/governance-alert.wav');
+            log(`Error playing speech: ${error.message}`);
+            inputStatus.textContent = 'Speech playback error';
         }
     }
     
@@ -482,6 +482,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.audioChunks.push(event.data);
                     });
                     
+                    // Add stop handler
+                    window.mediaRecorder.addEventListener('stop', () => {
+                        log('Recording stopped, processing audio...');
+                        
+                        // Create blob from chunks
+                        const audioBlob = new Blob(window.audioChunks, { type: 'audio/wav' });
+                        log('Audio blob created, size:', audioBlob.size);
+                        
+                        // Send to server for transcription
+                        transcribeAudio(audioBlob);
+                        
+                        // Stop tracks
+                        stream.getTracks().forEach(track => track.stop());
+                    });
+                    
                     // Start recording
                     window.mediaRecorder.start();
                     log('Recording started');
@@ -489,6 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Automatically stop after 10 seconds as safety
                     setTimeout(() => {
                         if (window.mediaRecorder && window.mediaRecorder.state === 'recording') {
+                            log('Auto-stopping recording after timeout');
                             stopVoiceRecording();
                         }
                     }, 10000);
@@ -522,26 +538,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Stop the recorder if it's active
         if (window.mediaRecorder && window.mediaRecorder.state === 'recording') {
-            // Set up onstop handler before stopping
-            window.mediaRecorder.onstop = async () => {
-                try {
-                    // Create audio blob from chunks
-                    const audioBlob = new Blob(window.audioChunks, { type: 'audio/wav' });
-                    log('Audio recording stopped, blob size: ' + audioBlob.size);
-                    
-                    // Call the transcription API
-                    await transcribeAudio(audioBlob);
-                    
-                } catch (error) {
-                    log(`Error in onstop handler: ${error.message}`);
-                    inputStatus.textContent = `Error: ${error.message}`;
-                } finally {
-                    // Stop microphone access
-                    window.mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                }
-            };
-            
-            // Stop the recording
+            log('Stopping active media recorder');
             window.mediaRecorder.stop();
         } else {
             log('No active recorder to stop');
@@ -551,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Transcribe audio using server API
     async function transcribeAudio(audioBlob) {
-        log('Transcribing audio');
+        log('Transcribing audio, blob size:', audioBlob.size);
         
         try {
             // Create form data for upload
@@ -559,33 +556,38 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('audio', audioBlob, 'recording.wav');
             
             // Send to server
+            log('Sending audio to transcription API...');
             const response = await fetch('/api/speech/transcribe', {
                 method: 'POST',
                 body: formData
             });
             
+            log('Transcription API response status:', response.status);
+            
             if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
+                const errorText = await response.text();
+                log('Transcription API error response:', errorText);
+                throw new Error(`Server error: ${response.status} - ${errorText}`);
             }
             
             const data = await response.json();
-            log(`Transcription result: ${JSON.stringify(data)}`);
+            log('Transcription API response data:', JSON.stringify(data));
             
             if (data.success && data.text) {
                 log(`Transcription successful: ${data.text}`);
                 
                 // Process the transcribed text
-                await processProposal(data.text);
+                processProposal(data.text);
             } else {
-                throw new Error('Transcription failed - no text received');
+                throw new Error(data.error || 'Transcription failed - no text received');
             }
         } catch (error) {
             log(`Transcription error: ${error.message}`);
             inputStatus.textContent = `Error: ${error.message}`;
             
-            // Show static error message
+            // Show error message
             responseText.textContent = 
-                `I'm sorry, but I couldn't transcribe your voice input. There was an error: ${error.message}`;
+                `I encountered an error processing your voice input. Please try again or type your proposal instead. Error details: ${error.message}`;
                 
             // Play error sound
             playAudio('assets/audio/governance-alert.wav');
@@ -603,7 +605,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Active visualization function
             const drawActiveWave = () => {
                 // Only continue if we're still supposed to be animating
-                if (!document.querySelector('.voice-input-btn.active')) return;
+                if (!isActive && !document.querySelector('.voice-input-btn.active')) {
+                    cancelAnimationFrame(window.activeWaveformAnimationId);
+                    return;
+                }
                 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = 'rgba(28, 32, 41, 0.8)';
@@ -678,9 +683,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update metrics bars with animation
         const metricBars = document.querySelectorAll('.metric-value');
         if (metricBars.length >= 3) {
-            metricBars[0].style.width = `${fairness}%`;
-            metricBars[1].style.width = `${value}%`;
-            metricBars[2].style.width = `${protection}%`;
+            // Reset bars first for better animation
+            metricBars.forEach(bar => {
+                bar.style.width = '0%';
+            });
+            
+            // Animate after a short delay
+            setTimeout(() => {
+                metricBars[0].style.width = `${fairness}%`;
+                metricBars[1].style.width = `${value}%`;
+                metricBars[2].style.width = `${protection}%`;
+            }, 300);
         }
         
         // Update status bar value
