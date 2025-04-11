@@ -501,7 +501,7 @@ class AudioController {
             fetch(file)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`Failed to preload ${file}: ${response.status}`);
+                        throw new Error(`Failed to preload ${file}: ${response.status} ${response.statusText}`);
                     }
                     return response.arrayBuffer();
                 })
@@ -521,6 +521,15 @@ class AudioController {
                 })
                 .catch(error => {
                     this.log(`Error preloading ${file}: ${error.message}`);
+                    console.error(`Could not load audio file: ${file}`, error);
+                    // Display more visible error
+                    const debugPanel = document.getElementById('debug-panel');
+                    if (debugPanel) {
+                        const entry = document.createElement('div');
+                        entry.textContent = `[ERROR] Could not load: ${file}`;
+                        entry.style.color = 'red';
+                        debugPanel.appendChild(entry);
+                    }
                 });
         });
     }
@@ -570,7 +579,7 @@ class AudioController {
                 fetch(src)
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error(`Failed to fetch audio: ${response.status}`);
+                            throw new Error(`Failed to fetch audio: ${response.status} ${response.statusText}`);
                         }
                         return response.arrayBuffer();
                     })

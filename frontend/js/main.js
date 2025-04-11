@@ -1,5 +1,5 @@
 /**
- * Aikira Terminal - Main JavaScript (Production Version)
+ * Aikira Terminal - Main JavaScript
  * Handles UI interactions, animations, and API communication without fallbacks
  */
 
@@ -15,8 +15,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const consensusValue = document.querySelector('.consensus-value');
     const consensusStatusValue = document.querySelector('#consensus-index .status-value');
     
-    // Debug mode - set to false in production
-    const debugMode = false;
+    // Debug mode - set to true for more logging
+    const debugMode = true;
+    
+    // Audio context
+    let audioContext = null;
     
     // Initialize app
     initializeApp();
@@ -24,32 +27,48 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeApp() {
         log('Initializing Aikira Terminal');
         
-        // Wait for AudioController to be initialized
-        waitForAudioController().then(() => {
-            // Initialize metrics animation
-            initializeMetrics();
-            
-            // Create floating particles
-            createParticles();
-            
-            // Set up waveform visualization
-            initializeWaveform();
-            
-            // Add event listeners
-            setupEventListeners();
-            
-            // Check system status
-            checkSystemStatus();
-            
-            // Display welcome message with typing effect
-            const welcomeMessage = "Aikira Constitutional AI Core initialized. How may I assist you today?";
-            typeText(responseText, welcomeMessage);
-            
-            log('Aikira Terminal initialized');
-        });
+        // Create floating particles
+        createParticles();
+        
+        // Set up waveform visualization
+        initializeWaveform();
+        
+        // Add event listeners
+        setupEventListeners();
+        
+        // Initialize audio context 
+        initializeAudio();
+        
+        // Display welcome message with typing effect
+        const welcomeMessage = "Aikira Constitutional AI Core initialized. How may I assist you today?";
+        typeText(responseText, welcomeMessage);
+        
+        log('Aikira Terminal initialized');
     }
     
-    // Helper function to log messages to console and debug panel
+    // Initialize audio context
+    function initializeAudio() {
+        try {
+            // Create audio context
+            window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioContext();
+            
+            // Resume context on user interaction
+            document.addEventListener('click', function() {
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        log('Audio context resumed');
+                    });
+                }
+            }, { once: true });
+            
+            log('Audio context created: ' + audioContext.state);
+        } catch (error) {
+            log('Error creating audio context: ' + error.message);
+        }
+    }
+    
+    // Helper function to log messages to console
     function log(message) {
         if (!debugMode) return;
         
@@ -68,34 +87,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 debugPanel.removeChild(debugPanel.firstChild);
             }
         }
-    }
-    
-    // Wait for AudioController to be initialized
-    function waitForAudioController() {
-        return new Promise((resolve) => {
-            // Check for audio controller
-            if (window.audioController && window.audioController.initialized) {
-                log('AudioController already initialized');
-                resolve();
-                return;
-            }
-            
-            // Check every 100ms for audio controller
-            const checkInterval = setInterval(() => {
-                if (window.audioController && window.audioController.initialized) {
-                    clearInterval(checkInterval);
-                    log('AudioController detected');
-                    resolve();
-                }
-            }, 100);
-            
-            // Timeout after 5 seconds
-            setTimeout(() => {
-                clearInterval(checkInterval);
-                log('AudioController not detected, continuing anyway');
-                resolve();
-            }, 5000);
-        });
     }
     
     // Set up event listeners
@@ -147,40 +138,25 @@ document.addEventListener('DOMContentLoaded', function() {
     function playAudio(src) {
         log(`Playing audio: ${src}`);
         
-        // Use AudioController if available
-        if (window.audioController) {
-            window.audioController.playAudio(src);
-            return;
-        }
-        
-        // Use AudioProcessor if available
-        if (window.audioProcessor && window.audioProcessor.playAudio) {
-            window.audioProcessor.playAudio(src)
-                .then(() => log(`Audio playing via AudioProcessor: ${src}`))
-                .catch(err => log(`Error playing via AudioProcessor: ${err.message}`));
-            return;
-        }
-        
-        // Fallback to basic Audio API
         try {
+            // Create audio element
             const audio = new Audio(src);
             
-            // Set volume if available
-            if (window.audioController) {
-                audio.volume = window.audioController.volume;
-            } else {
-                audio.volume = 0.8; // Default
-            }
+            // Set volume (0.8 default)
+            audio.volume = 0.8;
+            
+            // Add error handling
+            audio.onerror = (e) => log(`Audio error: ${e.type}`);
             
             // Play with error handling
             audio.play()
-                .then(() => log(`Audio playing via basic API: ${src}`))
+                .then(() => log(`Audio playing: ${src}`))
                 .catch(err => {
-                    log(`Error playing audio via basic API: ${err.message}`);
+                    log(`Error playing audio: ${err.message}`);
                     
-                    // Show initialization overlay if needed
-                    if (err.name === 'NotAllowedError' && window.audioController) {
-                        window.audioController.showInitOverlay();
+                    // Check if this is due to autoplay restrictions
+                    if (err.name === 'NotAllowedError') {
+                        log('Autoplay restricted - need user interaction first');
                     }
                 });
         } catch (err) {
@@ -188,29 +164,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Initialize metrics animation
-    function initializeMetrics() {
-        log('Initializing metrics');
-        
-        // Animate metrics after a short delay
-        setTimeout(() => {
-            metricsElements.forEach(metric => {
-                // Get the current width from the style
-                const width = metric.style.width;
-                // Reset to 0 and then animate to the target width
-                metric.style.width = '0%';
-                setTimeout(() => {
-                    metric.style.width = width;
-                }, 300);
-            });
-        }, 800);
-    }
-    
     // Create floating particles effect
     function createParticles() {
         log('Creating background particles');
         
         const container = document.querySelector('.digital-world-bg');
+        if (!container) return;
+        
         const colors = ['var(--soft-pink)', 'var(--lavender-purple)', 'var(--pastel-turquoise)'];
         
         // Create 20 particles
@@ -362,10 +322,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({ 
                     text: text,
-                    voice_id: 'default',
-                    model_id: 'eleven_multilingual_v2'
+                    voice_id: "default",
+                    model_id: "eleven_multilingual_v2"
                 })
             });
+            
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
             
             const data = await response.json();
             
@@ -373,13 +337,67 @@ document.addEventListener('DOMContentLoaded', function() {
                 log(`Speech generated successfully: ${data.audio_url}`);
                 
                 // Play the generated speech audio
-                playAudio(data.audio_url);
+                playGeneratedSpeech(data.audio_url);
             } else {
                 throw new Error(data.error || 'Speech generation failed');
             }
         } catch (error) {
             log(`Speech generation error: ${error.message}`);
             inputStatus.textContent = `Speech error: ${error.message}`;
+        }
+    }
+    
+    // Play generated speech with special handling
+    function playGeneratedSpeech(audioUrl) {
+        log(`Playing generated speech: ${audioUrl}`);
+        
+        try {
+            // Create audio element
+            const audio = new Audio(audioUrl);
+            
+            // Set volume (0.8 default)
+            audio.volume = 0.8;
+            
+            // Add event listeners for debugging
+            audio.addEventListener('canplaythrough', () => {
+                log('Speech audio ready to play');
+            });
+            
+            audio.addEventListener('playing', () => {
+                log('Speech audio started playing');
+                inputStatus.textContent = 'Speaking...';
+            });
+            
+            audio.addEventListener('ended', () => {
+                log('Speech audio finished');
+                inputStatus.textContent = 'Ready for input';
+            });
+            
+            audio.addEventListener('error', (e) => {
+                log(`Speech audio error: ${e.type}`);
+                inputStatus.textContent = 'Speech playback error';
+            });
+            
+            // Play with error handling
+            audio.play()
+                .catch(error => {
+                    log(`Error playing speech: ${error.message}`);
+                    
+                    // Check if this is due to autoplay restrictions
+                    if (error.name === 'NotAllowedError') {
+                        log('Speech autoplay restricted - resuming audio context');
+                        
+                        // Try to resume audio context
+                        if (audioContext && audioContext.state === 'suspended') {
+                            audioContext.resume().then(() => {
+                                log('Audio context resumed, trying playback again');
+                                audio.play().catch(e => log(`Still cannot play: ${e.message}`));
+                            });
+                        }
+                    }
+                });
+        } catch (error) {
+            log(`Speech playback exception: ${error.message}`);
         }
     }
     
@@ -565,35 +583,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Check system status from API
-    function checkSystemStatus() {
-        log('Checking system status');
-        
-        fetch('/api/system/status')
-            .then(response => response.json())
-            .then(data => {
-                log('System status received');
-                
-                // Update status indicators
-                document.querySelector('#constitutional-alignment .status-value').textContent = data.constitutional_alignment;
-                
-                // Log API availability
-                if (data.voice_services === 'Available') {
-                    log('Voice services are available');
-                } else {
-                    log('Voice services are unavailable');
-                    inputStatus.textContent = 'Warning: Voice services unavailable';
-                }
-            })
-            .catch(error => {
-                log(`System status error: ${error.message}`);
-                inputStatus.textContent = 'Error contacting server';
-                
-                // Create a system notice
-                createGovernanceNotice('System connectivity issue detected. Some features may be unavailable.', 'warning');
-            });
-    }
-    
     // Text typing effect
     function typeText(element, text, speed = 30) {
         if (!element) return;
@@ -658,137 +647,5 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update position
         indicator.style.top = `${yPos}px`;
         indicator.style.left = `${xPos}px`;
-    }
-    
-    // Create governance notification
-    function createGovernanceNotice(message, type = 'info', duration = 30000) {
-        log(`Creating governance notice: ${message} (${type})`);
-        
-        // Get current notices count
-        let noticesCount = parseInt(document.querySelector('#governance-notices .status-value').textContent) || 0;
-        noticesCount++;
-        
-        // Update the count
-        document.querySelector('#governance-notices .status-value').textContent = noticesCount;
-        
-        // Play notification sound
-        playAudio('assets/audio/governance-alert.wav');
-        
-        // Get or create notification container
-        let notificationContainer = document.querySelector('.governance-notifications');
-        if (!notificationContainer) {
-            notificationContainer = document.createElement('div');
-            notificationContainer.classList.add('governance-notifications');
-            notificationContainer.style.position = 'fixed';
-            notificationContainer.style.top = '20px';
-            notificationContainer.style.right = '20px';
-            notificationContainer.style.zIndex = '1000';
-            notificationContainer.style.display = 'flex';
-            notificationContainer.style.flexDirection = 'column';
-            notificationContainer.style.gap = '10px';
-            notificationContainer.style.maxWidth = '300px';
-            document.body.appendChild(notificationContainer);
-        }
-        
-        // Create notification element
-        const notificationElement = document.createElement('div');
-        notificationElement.classList.add('governance-notification', type);
-        notificationElement.style.backgroundColor = 'var(--light-bg)';
-        notificationElement.style.borderRadius = '10px';
-        notificationElement.style.padding = '15px';
-        notificationElement.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.3)';
-        notificationElement.style.position = 'relative';
-        
-        // Set border color based on type
-        if (type === 'critical') {
-            notificationElement.style.borderLeft = '3px solid #FF6B6B';
-        } else if (type === 'warning') {
-            notificationElement.style.borderLeft = '3px solid #FFD166';
-        } else {
-            notificationElement.style.borderLeft = '3px solid var(--accent-turquoise)';
-        }
-        
-        // Add animation
-        notificationElement.style.animation = 'slideInFromRight 0.3s ease-out forwards';
-        
-        // Add content
-        const notificationHeader = document.createElement('div');
-        notificationHeader.style.display = 'flex';
-        notificationHeader.style.justifyContent = 'space-between';
-        notificationHeader.style.alignItems = 'center';
-        notificationHeader.style.marginBottom = '5px';
-        
-        const notificationTitle = document.createElement('div');
-        notificationTitle.style.fontWeight = 'bold';
-        notificationTitle.style.color = 'var(--soft-white)';
-        notificationTitle.textContent = type.charAt(0).toUpperCase() + type.slice(1);
-        
-        const notificationTimestamp = document.createElement('div');
-        notificationTimestamp.style.fontSize = '12px';
-        notificationTimestamp.style.opacity = '0.7';
-        notificationTimestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        notificationHeader.appendChild(notificationTitle);
-        notificationHeader.appendChild(notificationTimestamp);
-        
-        const notificationMessage = document.createElement('div');
-        notificationMessage.style.fontSize = '14px';
-        notificationMessage.style.color = 'var(--soft-white)';
-        notificationMessage.style.opacity = '0.9';
-        notificationMessage.textContent = message;
-        
-        const notificationClose = document.createElement('div');
-        notificationClose.textContent = '×';
-        notificationClose.style.position = 'absolute';
-        notificationClose.style.top = '10px';
-        notificationClose.style.right = '10px';
-        notificationClose.style.cursor = 'pointer';
-        notificationClose.style.opacity = '0.5';
-        notificationClose.style.fontSize = '16px';
-        
-        notificationClose.addEventListener('mouseenter', () => {
-            notificationClose.style.opacity = '1';
-        });
-        
-        notificationClose.addEventListener('mouseleave', () => {
-            notificationClose.style.opacity = '0.5';
-        });
-        
-        notificationClose.addEventListener('click', () => {
-            notificationElement.style.animation = 'slideOutToRight 0.3s ease-in forwards';
-            setTimeout(() => {
-                notificationElement.remove();
-                
-                // Update counter
-                noticesCount--;
-                document.querySelector('#governance-notices .status-value').textContent = noticesCount;
-            }, 300);
-        });
-        
-        notificationElement.appendChild(notificationHeader);
-        notificationElement.appendChild(notificationMessage);
-        notificationElement.appendChild(notificationClose);
-        
-        // Add to container
-        notificationContainer.appendChild(notificationElement);
-        
-        // Add auto-remove after duration
-        if (duration > 0) {
-            setTimeout(() => {
-                if (notificationElement.isConnected) {
-                    notificationElement.style.animation = 'slideOutToRight 0.3s ease-in forwards';
-                    setTimeout(() => {
-                        notificationElement.remove();
-                        
-                        // Update counter
-                        noticesCount--;
-                        document.querySelector('#governance-notices .status-value').textContent = noticesCount;
-                    }, 300);
-                }
-            }, duration);
-        }
-        
-        // Return the notification element
-        return notificationElement;
     }
 });

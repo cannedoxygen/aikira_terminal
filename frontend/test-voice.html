@@ -1,694 +1,272 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aikira Terminal - Voice Testing</title>
-<link rel="stylesheet" href="css/main.css">
-<link rel="stylesheet" href="css/aikira-theme.css">
-<link rel="stylesheet" href="css/terminal.css">
-<link rel="stylesheet" href="css/digital-effects.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
-<style>
-    /* Voice Test specific styles with improved responsiveness */
-    body {
-        overflow-y: auto; /* Allow scrolling */
-        height: 100%;
-    }
-    
-    .voice-test-container {
-        width: 100%;
-        max-width: 1200px;
-        margin: 20px auto;
-        padding: 20px;
-        background-color: var(--medium-bg);
-        border-radius: var(--radius-large);
-        box-shadow: var(--shadow-soft);
-        border: 1px solid var(--trans-light);
-        box-sizing: border-box;
-    }
-    
-    .test-header {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-    
-    .test-section {
-        margin-bottom: 30px;
-        padding: 20px;
-        background-color: var(--trans-medium);
-        border-radius: var(--radius-medium);
-    }
-    
-    .section-title {
-        color: var(--pastel-turquoise);
-        margin-bottom: 15px;
-        font-size: 18px;
-        border-bottom: 1px solid var(--trans-light);
-        padding-bottom: 8px;
-    }
-    
-    .voice-controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-    
-    .voice-button {
-        flex: 1;
-        min-width: 120px;
-    }
-    
-    .voice-settings {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-    
-    .setting-group {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .setting-label {
-        font-size: 14px;
-        color: var(--soft-white);
-    }
-    
-    .voice-visualizer {
-        height: 100px;
-        width: 100%;
-        background-color: var(--dark-bg);
-        border-radius: var(--radius-small);
-        overflow: hidden;
-        margin-bottom: 15px;
-        position: relative;
-    }
-    
-    .transcript-container {
-        background-color: var(--dark-bg);
-        border-radius: var(--radius-small);
-        padding: 15px;
-        margin-bottom: 15px;
-        min-height: 100px;
-        max-height: 200px;
-        overflow-y: auto;
-    }
-    
-    .transcript-text {
-        color: var(--soft-white);
-        font-family: var(--text-font);
-        white-space: pre-wrap;
-    }
-    
-    .response-container {
-        margin-top: 20px;
-        padding: 15px;
-        border: 1px solid var(--trans-light);
-        border-radius: var(--radius-small);
-        background-color: var(--trans-medium);
-    }
-    
-    .response-title {
-        color: var(--soft-pink);
-        margin-bottom: 10px;
-        font-size: 16px;
-    }
-    
-    .response-text {
-        color: var(--soft-white);
-        font-family: var(--text-font);
-        white-space: pre-wrap;
-        line-height: 1.5;
-    }
-    
-    .meter-container {
-        margin-bottom: 15px;
-    }
-    
-    .meter-label {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 5px;
-    }
-    
-    .meter-value {
-        font-size: 14px;
-        color: var(--accent-purple);
-    }
-    
-    .navigation-buttons {
-        display: flex;
-        justify-content: center;
-        margin-top: 30px;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
-    
-    .voice-wave {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 10px;
-    }
-    
-    .wave-bar {
-        flex: 1;
-        height: 5px;
-        background-color: var(--accent-turquoise);
-        margin: 0 1px;
-        border-radius: 1px;
-        transition: height 0.1s ease;
-    }
-    
-    .loading-indicator {
-        display: none;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        margin: 15px 0;
-    }
-    
-    .loading-spinner {
-        width: 20px;
-        height: 20px;
-        border: 2px solid var(--trans-light);
-        border-top: 2px solid var(--accent-purple);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-    
-    .loading-text {
-        color: var(--lavender-purple);
-        font-size: 14px;
-    }
-    
-    /* Improved responsive design */
-    @media (max-width: 992px) {
-        .voice-settings {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .voice-test-container {
-            margin: 10px;
-            padding: 15px;
-        }
-        
-        .test-section {
-            padding: 15px;
-        }
-        
-        .voice-controls {
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aikira Voice Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #12151a;
+            color: #FFFFFF;
+            margin: 0;
+            padding: 20px;
+            display: flex;
             flex-direction: column;
+            align-items: center;
         }
         
-        .voice-button {
+        .container {
+            max-width: 800px;
             width: 100%;
+            background-color: #1c2029;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
-        .voice-settings {
-            grid-template-columns: repeat(1, 1fr);
+        h1 {
+            color: #FFD6EC;
+            text-align: center;
         }
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-</style>
+        
+        button {
+            background-color: #D8B5FF;
+            border: none;
+            color: #12151a;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #b38aff;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 100px;
+            background-color: #272b36;
+            color: white;
+            border: 1px solid #A9EEE6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
+        #status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #272b36;
+        }
+        
+        .success {
+            color: #7DF9AA;
+        }
+        
+        .error {
+            color: #FF6B6B;
+        }
+        
+        .loading {
+            color: #FFD166;
+        }
+    </style>
 </head>
 <body>
-<div class="voice-test-container">
-    <!-- Header -->
-    <header class="test-header">
-        <h1>Aikira Voice Interface Testing</h1>
-        <p>Test the voice recognition and response capabilities</p>
-    </header>
-
-    <!-- Voice Recording Section -->
-    <section class="test-section">
-        <h2 class="section-title">Voice Input Testing</h2>
-        
-        <div class="voice-controls">
-            <button id="start-recording" class="button voice-button">Start Recording</button>
-            <button id="stop-recording" class="button voice-button" disabled>Stop Recording</button>
-            <button id="play-audio" class="button voice-button" disabled>Play Recorded Audio</button>
-        </div>
-        
-        <div class="voice-visualizer">
-            <canvas id="visualizer" width="100%" height="100"></canvas>
-            <div class="voice-wave" id="voice-wave"></div>
-        </div>
-        
-        <div class="meter-container">
-            <div class="meter-label">
-                <span>Input Level</span>
-                <span class="meter-value" id="level-value">0 dB</span>
-            </div>
-            <div class="aikira-progress">
-                <div class="aikira-progress-bar" id="level-meter" style="width: 0%"></div>
-            </div>
-        </div>
-        
-        <div class="loading-indicator" id="transcribing-indicator">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Transcribing audio...</div>
-        </div>
-        
-        <div class="transcript-container">
-            <div class="transcript-text" id="transcript-text">No transcription yet. Use the Start Recording button to begin.</div>
-        </div>
-    </section>
-
-    <!-- Voice Settings Section -->
-    <section class="test-section">
-        <h2 class="section-title">Voice Response Settings</h2>
-        
-        <div class="voice-settings">
-            <div class="setting-group">
-                <label class="setting-label" for="voice-select">Voice</label>
-                <select id="voice-select" class="aikira-select">
-                    <option value="default">Default Voice</option>
-                    <option value="alloy">Alloy</option>
-                    <option value="echo">Echo</option>
-                    <option value="fable">Fable</option>
-                    <option value="onyx">Onyx</option>
-                    <option value="nova">Nova</option>
-                    <option value="shimmer">Shimmer</option>
-                </select>
-            </div>
-            
-            <div class="setting-group">
-                <label class="setting-label" for="stability-slider">Stability</label>
-                <input type="range" id="stability-slider" min="0" max="100" value="75" class="aikira-slider">
-                <span class="slider-value" id="stability-value">75%</span>
-            </div>
-            
-            <div class="setting-group">
-                <label class="setting-label" for="similarity-slider">Similarity Boost</label>
-                <input type="range" id="similarity-slider" min="0" max="100" value="75" class="aikira-slider">
-                <span class="slider-value" id="similarity-value">75%</span>
-            </div>
-            
-            <div class="setting-group">
-                <label class="setting-label" for="style-slider">Style</label>
-                <input type="range" id="style-slider" min="0" max="100" value="50" class="aikira-slider">
-                <span class="slider-value" id="style-value">50%</span>
-            </div>
-        </div>
-        
-        <div class="response-container">
-            <h3 class="response-title">AI Response</h3>
-            <p class="response-text" id="response-text">Submit a voice recording to test the AI response system. The AI will analyze your input and generate an appropriate response using the voice settings selected above.</p>
-        </div>
-        
-        <div class="voice-controls">
-            <button id="generate-speech" class="button primary voice-button" disabled>Generate Speech</button>
-            <button id="play-response" class="button voice-button" disabled>Play Response</button>
-        </div>
-        
-        <div class="loading-indicator" id="generating-indicator">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Generating speech response...</div>
-        </div>
-    </section>
-
-    <!-- Navigation -->
-    <div class="navigation-buttons">
-        <button id="back-button" class="button">Back to Terminal</button>
-        <button id="main-button" class="button primary">Return to Main</button>
+    <h1>Aikira Voice Test</h1>
+    
+    <div class="container">
+        <h2>Step 1: Initialize Audio</h2>
+        <p>Browser security requires user interaction before audio can play. Click the button below to initialize audio.</p>
+        <button id="init-audio">Initialize Audio</button>
     </div>
-</div>
+    
+    <div class="container">
+        <h2>Step 2: Test Voice Generation</h2>
+        <p>Enter some text and generate speech to test if the Eleven Labs API is working correctly.</p>
+        <textarea id="speech-text">Hello, I am Aikira. I'm testing my voice capabilities to make sure everything is working correctly.</textarea>
+        <button id="generate-speech">Generate Speech</button>
+        <button id="play-audio" disabled>Play Audio</button>
+        
+        <div id="status">Status: Ready</div>
+    </div>
+    
+    <div class="container">
+        <h2>Step 3: Check API Connection</h2>
+        <p>Test your API connections to make sure your keys are properly configured.</p>
+        <button id="test-eleven-labs">Test Eleven Labs API</button>
+        <button id="back-to-main">Back to Main Interface</button>
+    </div>
 
-<!-- Audio Elements -->
-<audio id="startup-sound" src="assets/audio/startup.wav" preload="auto"></audio>
-<audio id="deliberation-sound" src="assets/audio/deliberation.wav" preload="auto"></audio>
-<audio id="proposal-submit-sound" src="assets/audio/proposal-submit.wav" preload="auto"></audio>
-<audio id="alert-sound" src="assets/audio/governance-alert.wav" preload="auto"></audio>
-
-<!-- Scripts -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // DOM elements
-        const startButton = document.getElementById('start-recording');
-        const stopButton = document.getElementById('stop-recording');
-        const playButton = document.getElementById('play-audio');
-        const generateButton = document.getElementById('generate-speech');
-        const playResponseButton = document.getElementById('play-response');
-        const backButton = document.getElementById('back-button');
-        const mainButton = document.getElementById('main-button');
-        
-        const visualizer = document.getElementById('visualizer');
-        const voiceWave = document.getElementById('voice-wave');
-        const levelMeter = document.getElementById('level-meter');
-        const levelValue = document.getElementById('level-value');
-        
-        const transcriptText = document.getElementById('transcript-text');
-        const responseText = document.getElementById('response-text');
-        
-        const transcribingIndicator = document.getElementById('transcribing-indicator');
-        const generatingIndicator = document.getElementById('generating-indicator');
-        
-        const voiceSelect = document.getElementById('voice-select');
-        const stabilitySlider = document.getElementById('stability-slider');
-        const similaritySlider = document.getElementById('similarity-slider');
-        const styleSlider = document.getElementById('style-slider');
-        
-        const stabilityValue = document.getElementById('stability-value');
-        const similarityValue = document.getElementById('similarity-value');
-        const styleValue = document.getElementById('style-value');
-        
-        // Audio elements
-        const startupSound = document.getElementById('startup-sound');
-        const deliberationSound = document.getElementById('deliberation-sound');
-        const proposalSubmitSound = document.getElementById('proposal-submit-sound');
-        const alertSound = document.getElementById('alert-sound');
-        
-        // Audio context and recording variables
+    <script>
+        // Global variables
         let audioContext;
-        let mediaRecorder;
-        let audioChunks = [];
-        let recordedAudioBlob;
-        let recordedAudio;
-        let audioAnalyser;
-        let audioSource;
-        let visualization;
-        let visualizationData;
-        let isRecording = false;
+        let currentAudioUrl;
+        let audioInitialized = false;
         
-        // Play startup sound
-        startupSound.volume = 0.5;
-        startupSound.play().catch(e => console.log('Audio autoplay prevented: User interaction needed.'));
+        // DOM elements
+        const initAudioBtn = document.getElementById('init-audio');
+        const generateSpeechBtn = document.getElementById('generate-speech');
+        const playAudioBtn = document.getElementById('play-audio');
+        const testElevenLabsBtn = document.getElementById('test-eleven-labs');
+        const backToMainBtn = document.getElementById('back-to-main');
+        const speechText = document.getElementById('speech-text');
+        const statusDiv = document.getElementById('status');
         
-        // Initialize audio on first user interaction
-        document.addEventListener('click', function() {
-            if (startupSound.paused) {
-                startupSound.play().catch(e => console.log('User interaction required for audio'));
-            }
-        }, { once: true });
-        
-        // Initialize wave visualization
-        createWaveBars();
-        
-        // Create wave bars for visualization
-        function createWaveBars() {
-            // Clear current bars
-            voiceWave.innerHTML = '';
-            
-            // Create 50 bars
-            for (let i = 0; i < 50; i++) {
-                const bar = document.createElement('div');
-                bar.classList.add('wave-bar');
-                voiceWave.appendChild(bar);
-            }
-        }
-        
-        // Fix canvas sizing
-        function resizeCanvas() {
-            if (visualizer) {
-                visualizer.width = visualizer.offsetWidth;
-                visualizer.height = visualizer.offsetHeight;
-            }
-        }
-        
-        // Call resize on load and window resize
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        
-        // Update sliders display values
-        stabilitySlider.addEventListener('input', () => {
-            stabilityValue.textContent = `${stabilitySlider.value}%`;
-        });
-        
-        similaritySlider.addEventListener('input', () => {
-            similarityValue.textContent = `${similaritySlider.value}%`;
-        });
-        
-        styleSlider.addEventListener('input', () => {
-            styleValue.textContent = `${styleSlider.value}%`;
-        });
-        
-        // Handle start recording button
-        startButton.addEventListener('click', async () => {
+        // Initialize audio context
+        initAudioBtn.addEventListener('click', function() {
             try {
-                // Initialize audio context if not already created
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                // Create audio context
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioContext();
+                
+                // Resume if suspended
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
                 }
                 
-                // Request microphone access
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Play a silent sound to initialize audio
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                gainNode.gain.value = 0.001; // Nearly silent
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
                 
-                // Set up media recorder
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                
-                // Set up audio analysis
-                audioSource = audioContext.createMediaStreamSource(stream);
-                audioAnalyser = audioContext.createAnalyser();
-                audioAnalyser.fftSize = 256;
-                
-                audioSource.connect(audioAnalyser);
-                
-                // Get data array for visualization
-                visualizationData = new Uint8Array(audioAnalyser.frequencyBinCount);
-                
-                // Start visualizing
-                visualization = requestAnimationFrame(visualize);
-                
-                // Record audio chunks
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
-                };
-                
-                // Handle recording stop
-                mediaRecorder.onstop = () => {
-                    // Create blob from chunks
-                    recordedAudioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    
-                    // Create audio element for playback
-                    recordedAudio = new Audio(URL.createObjectURL(recordedAudioBlob));
-                    
-                    // Update UI
-                    playButton.disabled = false;
-                    generateButton.disabled = false;
-                    
-                    // Stop visualization
-                    cancelAnimationFrame(visualization);
-                    resetVisualizer();
-                    
-                    // Play submit sound
-                    proposalSubmitSound.play().catch(e => console.log('Audio play error:', e));
-                    
-                    // Simulate transcription (in a real app, send to Whisper API)
-                    simulateTranscription();
-                };
-                
-                // Start recording
-                mediaRecorder.start();
-                isRecording = true;
-                
-                // Update UI
-                startButton.disabled = true;
-                stopButton.disabled = false;
-                
+                audioInitialized = true;
+                updateStatus('Audio initialized successfully', 'success');
+                initAudioBtn.disabled = true;
+                initAudioBtn.textContent = 'Audio Initialized';
             } catch (error) {
-                console.error('Error starting recording:', error);
-                alert('Could not access microphone. Please check your permissions.');
+                updateStatus('Error initializing audio: ' + error.message, 'error');
+                console.error('Audio init error:', error);
             }
         });
         
-        // Handle stop recording button
-        stopButton.addEventListener('click', () => {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
+        // Generate speech
+        generateSpeechBtn.addEventListener('click', async function() {
+            if (!audioInitialized) {
+                updateStatus('Please initialize audio first', 'error');
+                return;
+            }
+            
+            const text = speechText.value.trim();
+            if (!text) {
+                updateStatus('Please enter some text', 'error');
+                return;
+            }
+            
+            updateStatus('Generating speech...', 'loading');
+            
+            try {
+                const response = await fetch('/api/speech/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        voice_id: "default"
+                    })
+                });
                 
-                // Stop all tracks to release microphone
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                const data = await response.json();
                 
-                // Update UI
-                startButton.disabled = false;
-                stopButton.disabled = true;
+                if (data.success && data.audio_url) {
+                    currentAudioUrl = data.audio_url;
+                    playAudioBtn.disabled = false;
+                    updateStatus(`Speech generated successfully at: ${data.audio_url}`, 'success');
+                    console.log("Speech URL:", data.audio_url);
+                    
+                    // Auto play the audio
+                    playAudio();
+                } else {
+                    updateStatus(`Speech generation failed: ${data.error || 'Unknown error'}`, 'error');
+                    console.error("Speech generation error:", data.error);
+                }
+            } catch (error) {
+                updateStatus(`Error: ${error.message}`, 'error');
+                console.error("Fetch error:", error);
             }
         });
         
-        // Handle play recorded audio button
-        playButton.addEventListener('click', () => {
-            if (recordedAudio) {
-                recordedAudio.play();
+        // Play audio
+        playAudioBtn.addEventListener('click', playAudio);
+        
+        function playAudio() {
+            if (!currentAudioUrl) {
+                updateStatus('No audio to play', 'error');
+                return;
             }
-        });
-        
-        // Handle generate speech button
-        generateButton.addEventListener('click', () => {
-            // Show loading indicator
-            generatingIndicator.style.display = 'flex';
             
-            // Get voice settings
-            const settings = {
-                voice: voiceSelect.value,
-                stability: stabilitySlider.value / 100,
-                similarity_boost: similaritySlider.value / 100,
-                style: styleSlider.value / 100
-            };
-            
-            // Play deliberation sound
-            deliberationSound.play().catch(e => console.log('Audio play error:', e));
-            
-            // Simulate speech generation (in a real app, send to Eleven Labs API)
-            simulateSpeechGeneration(settings);
-        });
-        
-        // Handle play response button
-        playResponseButton.addEventListener('click', () => {
-            // Play a pre-recorded audio
-            deliberationSound.play().catch(e => console.log('Audio play error:', e));
-        });
-        
-        // Navigation buttons
-        backButton.addEventListener('click', () => {
-            window.location.href = 'terminal.html';
-        });
-        
-        mainButton.addEventListener('click', () => {
-            window.location.href = 'index.html';
-        });
-        
-        // Audio visualization function
-        function visualize() {
-            if (!audioAnalyser) return;
-            
-            // Get frequency data
-            audioAnalyser.getByteFrequencyData(visualizationData);
-            
-            // Update canvas visualization
-            const ctx = visualizer.getContext('2d');
-            const width = visualizer.width;
-            const height = visualizer.height;
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = 'rgba(18, 21, 26, 0.8)';
-            ctx.fillRect(0, 0, width, height);
-            
-            // Draw frequency bars
-            const barWidth = width / visualizationData.length;
-            
-            for (let i = 0; i < visualizationData.length; i++) {
-                const value = visualizationData[i];
-                const percent = value / 255;
-                const barHeight = height * percent;
+            try {
+                const audio = new Audio(currentAudioUrl);
                 
-                // Create gradient
-                const gradient = ctx.createLinearGradient(0, height, 0, height - barHeight);
-                gradient.addColorStop(0, 'rgba(169, 238, 230, 0.8)');
-                gradient.addColorStop(1, 'rgba(216, 181, 255, 0.6)');
+                audio.onplay = () => {
+                    updateStatus('Playing audio...', 'success');
+                };
                 
-                ctx.fillStyle = gradient;
-                ctx.fillRect(i * barWidth, height - barHeight, barWidth - 1, barHeight);
-            }
-            
-            // Update wave bars
-            const waveBars = voiceWave.querySelectorAll('.wave-bar');
-            const barCount = waveBars.length;
-            
-            // Simplified calculation for overall sound level (0-100)
-            let total = 0;
-            for (let i = 0; i < visualizationData.length; i++) {
-                total += visualizationData[i];
-            }
-            const avgLevel = total / visualizationData.length;
-            const levelPercent = Math.min(100, avgLevel / 2.55);
-            
-            // Update level meter
-            levelMeter.style.width = `${levelPercent}%`;
-            levelValue.textContent = `${Math.round(levelPercent)} %`;
-            
-            // Map frequency data to wave bars
-            const step = Math.floor(visualizationData.length / barCount) || 1;
-            
-            for (let i = 0; i < barCount; i++) {
-                const dataIndex = i * step;
-                const value = dataIndex < visualizationData.length ? visualizationData[dataIndex] : 0;
-                const percent = value / 255;
-                const height = Math.max(5, percent * 60); // Min height 5px, max 60px
+                audio.onended = () => {
+                    updateStatus('Audio playback complete', 'success');
+                };
                 
-                waveBars[i].style.height = `${height}px`;
-            }
-            
-            // Continue loop if still recording
-            if (isRecording) {
-                visualization = requestAnimationFrame(visualize);
+                audio.onerror = (e) => {
+                    updateStatus(`Audio playback error: ${e.type}`, 'error');
+                    console.error('Audio error:', e);
+                };
+                
+                audio.play().catch(error => {
+                    updateStatus(`Failed to play audio: ${error.message}`, 'error');
+                    console.error('Play error:', error);
+                    
+                    // If autoplay is blocked, remind user to initialize
+                    if (error.name === 'NotAllowedError') {
+                        updateStatus('Autoplay blocked. Try initializing audio again.', 'error');
+                    }
+                });
+            } catch (error) {
+                updateStatus(`Error playing audio: ${error.message}`, 'error');
+                console.error('Audio play error:', error);
             }
         }
         
-        // Reset visualizer
-        function resetVisualizer() {
-            // Reset wave bars
-            const waveBars = voiceWave.querySelectorAll('.wave-bar');
-            waveBars.forEach(bar => {
-                bar.style.height = '5px';
-            });
+        // Test Eleven Labs API
+        testElevenLabsBtn.addEventListener('click', async function() {
+            updateStatus('Testing Eleven Labs API connection...', 'loading');
             
-            // Reset level meter
-            levelMeter.style.width = '0%';
-            levelValue.textContent = '0 %';
-            
-            // Clear canvas
-            const ctx = visualizer.getContext('2d');
-            ctx.clearRect(0, 0, visualizer.width, visualizer.height);
-            ctx.fillStyle = 'rgba(18, 21, 26, 0.8)';
-            ctx.fillRect(0, 0, visualizer.width, visualizer.height);
-        }
+            try {
+                const response = await fetch('/api/speech/test');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateStatus(`Eleven Labs API connection successful. Found ${data.voices_count} voices.`, 'success');
+                } else {
+                    updateStatus(`API test failed: ${data.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                updateStatus(`Error testing API: ${error.message}`, 'error');
+                console.error('API test error:', error);
+            }
+        });
         
-        // Simulate transcription (replace with actual Whisper API call)
-        function simulateTranscription() {
-            // Show loading indicator
-            transcribingIndicator.style.display = 'flex';
-            
-            // Simulate API delay
-            setTimeout(() => {
-                // Simulated response
-                const simulatedText = "Propose a new governance approach that emphasizes transparent deliberation while maintaining protection for all participants.";
-                
-                // Update transcript
-                transcriptText.textContent = simulatedText;
-                
-                // Hide loading indicator
-                transcribingIndicator.style.display = 'none';
-            }, 2000);
-        }
+        // Back to main
+        backToMainBtn.addEventListener('click', function() {
+            window.location.href = '/';
+        });
         
-        // Simulate speech generation (replace with actual Eleven Labs API call)
-        function simulateSpeechGeneration(settings) {
-            // Simulate API delay
-            setTimeout(() => {
-                // Simulated response
-                const simulatedResponse = "After constitutional analysis, I've determined that your proposal aligns with our core principles. The transparent deliberation approach would enhance fairness in the decision-making process while your protection measures adequately safeguard participant interests. I recommend enhancing the consensus-building mechanisms to further strengthen the governance framework.";
-                
-                // Update response text
-                responseText.textContent = simulatedResponse;
-                
-                // Hide loading indicator
-                generatingIndicator.style.display = 'none';
-                
-                // Enable play button
-                playResponseButton.disabled = false;
-            }, 3000);
+        // Update status helper
+        function updateStatus(message, type) {
+            statusDiv.textContent = `Status: ${message}`;
+            statusDiv.className = type; // 'success', 'error', or 'loading'
+            console.log(`[${type}] ${message}`);
         }
-    });
-</script>
+    </script>
 </body>
 </html>

@@ -786,11 +786,11 @@
         </aside>
     </div>
 
-    <!-- Audio Elements -->
-    <audio id="startup-sound" src="assets/audio/startup.mp3" preload="auto"></audio>
-    <audio id="deliberation-sound" src="assets/audio/deliberation.mp3" preload="auto"></audio>
-    <audio id="proposal-submit-sound" src="assets/audio/proposal-submit.mp3" preload="auto"></audio>
-    <audio id="governance-alert-sound" src="assets/audio/governance-alert.mp3" preload="auto"></audio>
+    <!-- Audio Elements - Updated to use WAV format -->
+    <audio id="startup-sound" src="assets/audio/startup.wav" preload="auto"></audio>
+    <audio id="deliberation-sound" src="assets/audio/deliberation.wav" preload="auto"></audio>
+    <audio id="proposal-submit-sound" src="assets/audio/proposal-submit.wav" preload="auto"></audio>
+    <audio id="governance-alert-sound" src="assets/audio/governance-alert.wav" preload="auto"></audio>
 
     <!-- Scripts -->
     <script src="lib/three.min.js"></script>
@@ -1129,7 +1129,7 @@
                         animateActiveWaveform(true);
                         
                         // Play sound
-                        playAudio('assets/audio/proposal-submit.mp3');
+                        playAudio('assets/audio/proposal-submit.wav');
                         
                         // Actually start recording
                         startVoiceRecording();
@@ -1265,7 +1265,7 @@
             document.getElementById('proposal-text').value = '';
             
             // Play sound
-            playAudio('assets/audio/deliberation.mp3');
+            playAudio('assets/audio/deliberation.wav');
             
             // Send to API
             fetch('/api/proposal/evaluate', {
@@ -1300,7 +1300,7 @@
                     document.getElementById('input-status').textContent = 'Ready for input';
                     
                     // Play response audio
-                    playAudio('assets/audio/deliberation.mp3');
+                    playAudio('assets/audio/deliberation.wav');
                 } else {
                     throw new Error('Invalid response format');
                 }
@@ -1331,7 +1331,7 @@
             document.getElementById('input-status').textContent = 'Ready for input';
             
             // Play response audio
-            playAudio('assets/audio/deliberation.mp3');
+            playAudio('assets/audio/deliberation.wav');
         }
         
         // Create particles

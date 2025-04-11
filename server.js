@@ -14,6 +14,7 @@ const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const FormData = require('form-data');
 
+
 // Load environment variables
 dotenv.config();
 
@@ -21,7 +22,7 @@ dotenv.config();
 const app = express();
 
 // Define constants
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Apply middleware
@@ -339,7 +340,7 @@ app.post('/api/speech/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
-// Text-to-speech endpoint with Eleven Labs API
+// Enhanced text-to-speech endpoint with Eleven Labs API
 app.post('/api/speech/generate', async (req, res) => {
   try {
     const { text, voice_id, model_id, voice_settings } = req.body;
@@ -370,6 +371,8 @@ app.post('/api/speech/generate', async (req, res) => {
     };
     
     console.log(`Generating speech with Eleven Labs for text: ${text.substring(0, 50)}...`);
+    console.log(`Using voice ID: ${useVoiceId}`);
+    console.log(`Using model ID: ${useModelId}`);
     
     // Make API request to Eleven Labs
     const response = await axios({
@@ -414,6 +417,40 @@ app.post('/api/speech/generate', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Error generating speech. Please try again.',
+      message: error.message
+    });
+  }
+});
+
+// Simple test endpoint for Eleven Labs API
+app.get('/api/speech/test', async (req, res) => {
+  try {
+    const apiKey = process.env.ELEVEN_LABS_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'Eleven Labs API key not configured'
+      });
+    }
+    
+    // Make a simple request to the API to check if the key is valid
+    const response = await axios.get('https://api.elevenlabs.io/v1/voices', {
+      headers: {
+        'xi-api-key': apiKey
+      }
+    });
+    
+    return res.json({
+      success: true,
+      voices_count: response.data.voices.length,
+      message: 'Eleven Labs API key is valid'
+    });
+  } catch (error) {
+    console.error('Eleven Labs API test error:', error.response?.data || error.message);
+    
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to connect to Eleven Labs API',
       message: error.message
     });
   }
