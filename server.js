@@ -101,7 +101,10 @@ app.use('/downloads', express.static(downloadsDir));
 // Apply the API key middleware to relevant routes
 app.use('/api/openai', requireApiKeys);
 app.use('/api/speech', requireApiKeys);
-app.use('/api/proposal', require('./backend/controllers/proposal-controller'));
+
+// Import proposal controller
+const proposalController = require('./backend/controllers/proposal-controller');
+app.use('/api/proposal', proposalController);
 
 // OpenAI integration endpoint
 app.post('/api/openai/generate-response', async (req, res) => {
@@ -341,6 +344,112 @@ app.post('/api/speech/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
+// Text-to-speech endpoint with Eleven Labs API
+app.post('/api/speech/generate', async (req, res) => {
+  try {
+    const { text, voice_id, model_id, voice_settings } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        error: 'Text content is required'
+      });
+    }
+    
+    // Get Eleven Labs API key
+    const apiKey = process.env.ELEVEN_LABS_API_KEY;
+    if (!apiKey) {
+      throw new Error('Eleven Labs API key not configured. Please add to .env file.');
+    }
+    
+    console.log(`Generating speech with Eleven Labs for text: ${text.substring(0, 50)}...`);
+    
+    // Use default voice ID if not provided
+    const useVoiceId = voice_id || "default";
+    console.log(`Using voice ID: ${useVoiceId}`);
+    
+    // Use default model if not provided
+    const useModelId = model_id || 'eleven_multilingual_v2';
+    console.log(`Using model ID: ${useModelId}`);
+    
+    // Set default voice settings if not provided
+    const settings = voice_settings || {
+      stability: 0.75,
+      similarity_boost: 0.75,
+      style: 0.5,
+      use_speaker_boost: true
+    };
+    
+    // Make API request to Eleven Labs
+    const response = await axios({
+      method: 'post',
+      url: `https://api.elevenlabs.io/v1/text-to-speech/${useVoiceId}`,
+      data: {
+        text,
+        model_id: useModelId,
+        voice_settings: settings
+      },
+      headers: {
+        'Accept': 'audio/mpeg',
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      responseType: 'arraybuffer'
+    });
+    
+    console.log(`Eleven Labs API response received, size: ${response.data.length} bytes`);
+    
+    // Ensure the downloads directory exists
+    if (!fs.existsSync(downloadsDir)) {
+      fs.mkdirSync(downloadsDir, { recursive: true });
+      console.log(`Created downloads directory: ${downloadsDir}`);
+    }
+    
+    // Create a unique filename
+    const filename = `aikira_response_${Date.now()}.mp3`;
+    const filePath = path.join(downloadsDir, filename);
+    
+    // Save the audio file
+    fs.writeFileSync(filePath, Buffer.from(response.data));
+    console.log(`Speech file saved to: ${filePath}`);
+    
+    // Get the relative URL path
+    const fileUrl = `/downloads/${filename}`;
+    
+    // Return success with file URL
+    return res.status(200).json({
+      success: true,
+      audio_url: fileUrl, 
+      voice_id: useVoiceId,
+      model_id: useModelId
+    });
+    
+  } catch (error) {
+    console.error('Eleven Labs API error:', error.message);
+    
+    // Log detailed error information
+    if (error.response) {
+      console.error('Error status:', error.response.status);
+      console.error('Error headers:', error.response.headers);
+      
+      // For error details, handle possible binary response
+      if (error.response.data) {
+        if (error.response.data instanceof Buffer) {
+          console.error('Error data (Buffer):', error.response.data.toString('utf8').substring(0, 200));
+        } else {
+          console.error('Error data:', error.response.data);
+        }
+      }
+    }
+    
+    return res.status(500).json({
+      success: false,
+      error: 'Error generating speech',
+      message: error.message
+    });
+  }
+});
+
 // Helper function to get a valid voice ID from Eleven Labs
 async function getValidVoiceId(apiKey, requestedVoiceId) {
   try {
@@ -374,119 +483,6 @@ async function getValidVoiceId(apiKey, requestedVoiceId) {
     throw new Error('Could not get a valid voice ID from Eleven Labs');
   }
 }
-
-// Enhanced text-to-speech endpoint with Eleven Labs API
-app.post('/api/speech/generate', async (req, res) => {
-  try {
-    const { text, voice_id, model_id, voice_settings } = req.body;
-    
-    if (!text) {
-      return res.status(400).json({
-        success: false,
-        error: 'Text content is required'
-      });
-    }
-    
-    // Get Eleven Labs API key
-    const apiKey = process.env.ELEVEN_LABS_API_KEY;
-    if (!apiKey) {
-      throw new Error('Eleven Labs API key not configured. Please add to .env file.');
-    }
-    
-    console.log(`Using Eleven Labs API key: ${apiKey.substring(0, 5)}...`);
-    
-    // Get a valid voice ID
-    const requestedVoiceId = voice_id || process.env.DEFAULT_VOICE_ID;
-    const useVoiceId = await getValidVoiceId(apiKey, requestedVoiceId);
-    
-    // Use default model if not provided
-    const useModelId = model_id || 'eleven_multilingual_v2';
-    
-    // Set default voice settings if not provided
-    const settings = voice_settings || {
-      stability: parseFloat(process.env.VOICE_STABILITY) || 0.75,
-      similarity_boost: parseFloat(process.env.VOICE_SIMILARITY_BOOST) || 0.75,
-      style: parseFloat(process.env.VOICE_STYLE) || 0.5,
-      use_speaker_boost: process.env.VOICE_USE_SPEAKER_BOOST === 'true' || true
-    };
-    
-    console.log(`Generating speech with Eleven Labs for text: ${text.substring(0, 50)}...`);
-    console.log(`Using voice ID: ${useVoiceId}`);
-    console.log(`Using model ID: ${useModelId}`);
-    
-    // Make API request to Eleven Labs
-    const response = await axios({
-      method: 'post',
-      url: `https://api.elevenlabs.io/v1/text-to-speech/${useVoiceId}`,
-      data: {
-        text,
-        model_id: useModelId,
-        voice_settings: settings
-      },
-      headers: {
-        'Accept': 'audio/mpeg',
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json'
-      },
-      responseType: 'arraybuffer'
-    });
-    
-    console.log("Eleven Labs API response received, size:", response.data.length);
-    
-    // Ensure the downloads directory exists
-    if (!fs.existsSync(downloadsDir)) {
-      fs.mkdirSync(downloadsDir, { recursive: true });
-      console.log(`Created downloads directory: ${downloadsDir}`);
-    }
-    
-    // Create a unique filename
-    const filename = `aikira_response_${Date.now()}.mp3`;
-    const filePath = path.join(downloadsDir, filename);
-    
-    // Save the audio file
-    try {
-      fs.writeFileSync(filePath, Buffer.from(response.data));
-      console.log(`Speech file saved to: ${filePath}`);
-    } catch (fsError) {
-      console.error('Error saving audio file:', fsError);
-      throw new Error('Could not save audio file');
-    }
-    
-    // Get the relative URL path
-    const fileUrl = `/downloads/${filename}`;
-    
-    console.log(`Speech generated successfully: ${fileUrl}`);
-    
-    // Return success with file URL
-    res.status(200).json({
-      success: true,
-      audio_url: fileUrl, 
-      voice_id: useVoiceId,
-      model_id: useModelId
-    });
-    
-  } catch (error) {
-    console.error('Eleven Labs API error:', error.message);
-    
-    // Log more detailed error information
-    if (error.response) {
-      console.error('Error status:', error.response.status);
-      console.error('Error details:', {
-        status: error.response.status, 
-        statusText: error.response.statusText,
-        data: typeof error.response.data === 'object' ? 
-          JSON.stringify(error.response.data) : 
-          error.response.data?.toString('utf8', 0, 200) // Show first 200 chars if it's a buffer
-      });
-    }
-    
-    return res.status(500).json({
-      success: false,
-      error: 'Error generating speech. Please try again.',
-      message: error.message
-    });
-  }
-});
 
 // Simple test endpoint for Eleven Labs API
 app.get('/api/speech/test', async (req, res) => {

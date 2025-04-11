@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeApp() {
         console.log('Initializing Aikira Terminal');
         
+        // Create audio initialization overlay
+        createAudioInitOverlay();
+        
         // Create floating particles
         createParticles();
         
@@ -49,6 +52,120 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Aikira Terminal initialized');
     }
     
+    // Create audio initialization overlay
+    function createAudioInitOverlay() {
+        // Create overlay container
+        const overlay = document.createElement('div');
+        overlay.id = 'audio-init-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(18, 21, 26, 0.85)';
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.zIndex = '9999';
+        overlay.style.backdropFilter = 'blur(5px)';
+        
+        // Create button container
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.textAlign = 'center';
+        buttonContainer.style.padding = '30px';
+        buttonContainer.style.backgroundColor = 'var(--medium-bg)';
+        buttonContainer.style.borderRadius = '15px';
+        buttonContainer.style.border = '1px solid var(--trans-light)';
+        buttonContainer.style.boxShadow = '0 0 30px rgba(216, 181, 255, 0.3)';
+        buttonContainer.style.animation = 'fadeIn 0.5s ease-out forwards';
+        
+        // Create header
+        const header = document.createElement('h2');
+        header.textContent = 'Welcome to Aikira Terminal';
+        header.style.color = 'var(--soft-pink)';
+        header.style.marginBottom = '20px';
+        header.style.fontFamily = 'var(--display-font)';
+        
+        // Create message
+        const message = document.createElement('p');
+        message.textContent = 'Browser security requires user interaction before playing audio.';
+        message.style.color = 'var(--soft-white)';
+        message.style.marginBottom = '25px';
+        
+        // Create enable button
+        const enableButton = document.createElement('button');
+        enableButton.id = 'enable-audio-btn';
+        enableButton.textContent = 'Enable Audio';
+        enableButton.className = 'button primary';
+        enableButton.style.padding = '12px 25px';
+        enableButton.style.fontSize = '16px';
+        enableButton.style.marginBottom = '15px';
+        enableButton.style.background = 'linear-gradient(135deg, var(--accent-purple), var(--accent-turquoise))';
+        enableButton.style.border = 'none';
+        enableButton.style.borderRadius = '10px';
+        enableButton.style.color = 'var(--soft-white)';
+        enableButton.style.cursor = 'pointer';
+        
+        // Create secondary info
+        const secondaryInfo = document.createElement('p');
+        secondaryInfo.textContent = 'Click to initialize Aikira\'s voice capabilities';
+        secondaryInfo.style.color = 'var(--lavender-purple)';
+        secondaryInfo.style.fontSize = '14px';
+        secondaryInfo.style.opacity = '0.8';
+        
+        // When clicked, initialize audio and remove overlay
+        enableButton.addEventListener('click', function() {
+            // Initialize audio context
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    log('Audio context resumed');
+                });
+            }
+            
+            // Play a silent sound to initialize audio
+            const audio = new Audio();
+            audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+            audio.play().then(() => {
+                log('Audio initialized');
+                
+                // Play startup sound
+                playAudio('assets/audio/startup.wav');
+            }).catch(err => {
+                log(`Audio init error: ${err.message}`);
+            });
+            
+            // Remove overlay with animation
+            overlay.style.animation = 'fadeOut 0.5s forwards';
+            setTimeout(() => {
+                overlay.remove();
+            }, 500);
+        });
+        
+        // Assemble the container
+        buttonContainer.appendChild(header);
+        buttonContainer.appendChild(message);
+        buttonContainer.appendChild(enableButton);
+        buttonContainer.appendChild(secondaryInfo);
+        overlay.appendChild(buttonContainer);
+        
+        // Add to body
+        document.body.appendChild(overlay);
+        
+        // Add keyframe animations to document if needed
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
     // Initialize audio context
     function initializeAudio() {
         try {
@@ -60,14 +177,14 @@ document.addEventListener('DOMContentLoaded', function() {
             document.addEventListener('click', function() {
                 if (audioContext && audioContext.state === 'suspended') {
                     audioContext.resume().then(() => {
-                        console.log('Audio context resumed');
+                        log('Audio context resumed on user interaction');
                     });
                 }
             }, { once: true });
             
-            console.log('Audio context created: ' + audioContext.state);
+            log('Audio context created: ' + audioContext.state);
         } catch (error) {
-            console.error('Error creating audio context: ' + error.message);
+            log('Error creating audio context: ' + error.message);
         }
     }
     
@@ -273,13 +390,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Process proposal submission using OpenAI API
     async function processProposal(proposalText) {
-        log(`Processing proposal with OpenAI: ${proposalText.substring(0, 50)}${proposalText.length > 50 ? '...' : ''}`);
+        log(`Processing proposal: ${proposalText.substring(0, 50)}${proposalText.length > 50 ? '...' : ''}`);
         
         // Update status
-        inputStatus.textContent = 'Processing proposal with OpenAI...';
+        inputStatus.textContent = 'Processing proposal...';
         
         // Clear the input
         document.getElementById('proposal-text').value = '';
+        
+        // *** DO NOT PLAY ANY AUDIO HERE ***
         
         try {
             // Call proposal evaluation API
@@ -302,8 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const data = await response.json();
-            log('Proposal API response:', data);
-            log('Full response data structure:', JSON.stringify(data));
+            log('Proposal API response received');
             
             // Validate response
             if (!data.success) {
@@ -325,8 +443,111 @@ document.addEventListener('DOMContentLoaded', function() {
                     );
                 }
                 
-                // Generate and play speech
-                generateSpeech(data.result.response);
+                // ONLY focus on speech generation here
+                try {
+                    // Set status text
+                    inputStatus.textContent = 'Generating speech...';
+                    
+                    // Use direct approach to speech generation
+                    const speechResponse = await fetch('/api/speech/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            text: data.result.response,
+                            voice_id: "default",
+                            model_id: "eleven_multilingual_v2"
+                        })
+                    });
+                    
+                    log(`Speech API response status: ${speechResponse.status}`);
+                    
+                    if (!speechResponse.ok) {
+                        const speechErrorText = await speechResponse.text().catch(e => 'Could not read error response');
+                        log(`Speech API error response: ${speechErrorText}`);
+                        throw new Error(`Speech API error: ${speechResponse.status}`);
+                    }
+                    
+                    const speechData = await speechResponse.json();
+                    log(`Speech response received: ${JSON.stringify(speechData)}`);
+                    
+                    if (speechData.success && speechData.audio_url) {
+                        log(`Playing speech from URL: ${speechData.audio_url}`);
+                        
+                        // Verify file exists
+                        const fileCheckResponse = await fetch(speechData.audio_url, { method: 'HEAD' });
+                        if (!fileCheckResponse.ok) {
+                            log(`Speech file not found: ${fileCheckResponse.status}`);
+                            throw new Error(`Speech file not found: ${fileCheckResponse.status}`);
+                        }
+                        
+                        // Play the speech
+                        const audio = new Audio(speechData.audio_url);
+                        
+                        // Set volume
+                        const volumeSlider = document.getElementById('volume-slider');
+                        if (volumeSlider) {
+                            audio.volume = volumeSlider.value / 100;
+                        } else {
+                            audio.volume = 0.8; // Default volume
+                        }
+                        
+                        audio.onplay = () => {
+                            log('Speech audio playing');
+                            inputStatus.textContent = 'Speaking...';
+                            animateActiveWaveform(true);
+                        };
+                        
+                        audio.onended = () => {
+                            log('Speech audio completed');
+                            inputStatus.textContent = 'Ready for input';
+                            animateActiveWaveform(false);
+                        };
+                        
+                        audio.onerror = (e) => {
+                            log(`Speech audio error: ${e.type}`);
+                            console.error('Audio error details:', audio.error);
+                            inputStatus.textContent = 'Speech playback error';
+                            // Don't play deliberation here
+                        };
+                        
+                        // Try to play the speech
+                        try {
+                            await audio.play();
+                            log('Speech playback started successfully');
+                        } catch (playError) {
+                            log(`Speech play error: ${playError.message}`);
+                            
+                            // If autoplay is blocked, try to resume audio context
+                            if (playError.name === 'NotAllowedError') {
+                                log('Autoplay blocked - need user interaction');
+                                
+                                if (audioContext && audioContext.state === 'suspended') {
+                                    try {
+                                        await audioContext.resume();
+                                        log('Audio context resumed, trying again');
+                                        await audio.play();
+                                        log('Speech playback started after context resume');
+                                    } catch (resumeError) {
+                                        log(`Error after resume: ${resumeError.message}`);
+                                        throw resumeError;
+                                    }
+                                } else {
+                                    throw playError;
+                                }
+                            } else {
+                                throw playError;
+                            }
+                        }
+                    } else {
+                        throw new Error('Invalid speech response: ' + JSON.stringify(speechData));
+                    }
+                } catch (speechError) {
+                    log(`Speech error: ${speechError.message}`);
+                    // Don't play deliberation here either
+                    inputStatus.textContent = 'Speech generation failed';
+                }
                 
             } else {
                 throw new Error('Response missing expected structure');
@@ -339,122 +560,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show error in response area
             responseText.textContent = `I encountered an error processing your proposal. Please try again later. Error details: ${error.message}`;
             
-            // Play error sound
+            // Only play error sound here
             playAudio('assets/audio/governance-alert.wav');
-        }
-    }
-    
-    // Generate speech from text
-    async function generateSpeech(text) {
-        log(`Generating speech for text: ${text.substring(0, 50)}...`);
-        
-        try {
-            // Update status
-            inputStatus.textContent = 'Generating speech...';
-            
-            // Call the speech generation API
-            const response = await fetch('/api/speech/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    text: text,
-                    voice_id: "default",
-                    model_id: "eleven_multilingual_v2"
-                })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(`Speech generation error: ${response.status} - ${errorData.message || 'Unknown error'}`);
-            }
-            
-            const data = await response.json();
-            log('Speech generation response:', data);
-            
-            if (data.success && data.audio_url) {
-                log(`Speech generated successfully with URL: ${data.audio_url}`);
-                currentAudioUrl = data.audio_url;
-                
-                // Play the generated speech
-                playGeneratedSpeech(data.audio_url);
-            } else {
-                throw new Error(data.error || 'Speech generation failed without specific error');
-            }
-        } catch (error) {
-            log(`Speech generation error: ${error.message}`);
-            inputStatus.textContent = `Speech error: ${error.message}`;
-            
-            // Play error sound
-            playAudio('assets/audio/governance-alert.wav');
-        }
-    }
-    
-    // Play generated speech (similar to test-voice.html)
-    function playGeneratedSpeech(audioUrl) {
-        log(`Playing generated speech from URL: ${audioUrl}`);
-        inputStatus.textContent = 'Playing speech...';
-        
-        try {
-            const audio = new Audio(audioUrl);
-            
-            // Set volume
-            const volumeSlider = document.getElementById('volume-slider');
-            if (volumeSlider) {
-                audio.volume = volumeSlider.value / 100;
-            } else {
-                audio.volume = 0.8; // Default volume
-            }
-            
-            // Event handlers
-            audio.onplay = () => {
-                log('Speech playback started');
-                inputStatus.textContent = 'Speaking...';
-                // Start voice visualization
-                animateActiveWaveform(true);
-            };
-            
-            audio.onended = () => {
-                log('Speech playback finished');
-                inputStatus.textContent = 'Ready for input';
-                // Stop voice visualization
-                animateActiveWaveform(false);
-            };
-            
-            audio.onerror = (e) => {
-                log(`Speech playback error: ${e.type}`);
-                console.error('Audio error:', e);
-                inputStatus.textContent = 'Speech playback error';
-                animateActiveWaveform(false);
-            };
-            
-            // Play the audio
-            audio.play().catch(error => {
-                log(`Failed to play speech: ${error.message}`);
-                inputStatus.textContent = `Speech playback error: ${error.message}`;
-                
-                // If autoplay is blocked, try to resume audio context
-                if (error.name === 'NotAllowedError') {
-                    log('Autoplay blocked - need user interaction');
-                    inputStatus.textContent = 'Click to enable audio playback';
-                    
-                    // Try to resume audio context
-                    if (audioContext && audioContext.state === 'suspended') {
-                        audioContext.resume()
-                            .then(() => {
-                                log('Audio context resumed, trying again');
-                                return audio.play();
-                            })
-                            .catch(resumeErr => {
-                                log(`Error after resume: ${resumeErr.message}`);
-                            });
-                    }
-                }
-            });
-        } catch (error) {
-            log(`Error playing speech: ${error.message}`);
-            inputStatus.textContent = 'Speech playback error';
         }
     }
     
@@ -576,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success && data.text) {
                 log(`Transcription successful: ${data.text}`);
                 
-                // Process the transcribed text
+                // Process the transcribed text as a proposal
                 processProposal(data.text);
             } else {
                 throw new Error(data.error || 'Transcription failed - no text received');
@@ -602,10 +709,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctx = canvas.getContext('2d');
         
         if (isActive) {
+            // Cancel any existing animation
+            if (window.activeWaveformAnimationId) {
+                cancelAnimationFrame(window.activeWaveformAnimationId);
+            }
+            
             // Active visualization function
             const drawActiveWave = () => {
-                // Only continue if we're still supposed to be animating
-                if (!isActive && !document.querySelector('.voice-input-btn.active')) {
+                // Check if we should continue animating
+                if (!isActive && !document.querySelector('.voice-input-btn.active') && inputStatus.textContent !== 'Speaking...') {
                     cancelAnimationFrame(window.activeWaveformAnimationId);
                     return;
                 }
@@ -725,5 +837,105 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update position
         indicator.style.top = `${yPos}px`;
         indicator.style.left = `${xPos}px`;
+    }
+    
+    // Add a debugging test function to directly check speech generation
+    function testSpeechGeneration() {
+        log('Testing speech generation directly...');
+        
+        fetch('/api/speech/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                text: "This is a test of the Aikira speech generation system.",
+                voice_id: "default",
+                model_id: "eleven_multilingual_v2"
+            })
+        })
+        .then(response => {
+            log('Test speech status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            log('Test speech generation result:', data);
+            
+            if (data.success && data.audio_url) {
+                log('Test speech URL:', data.audio_url);
+                
+                // Try playing it
+                const audio = new Audio(data.audio_url);
+                audio.play().then(() => {
+                    log('Test audio playing successfully!');
+                }).catch(err => {
+                    log('Test audio play error:', err);
+                });
+            }
+        })
+        .catch(err => {
+            log('Test speech generation error:', err);
+        });
+    }
+    
+    // Add a test function to debug the Eleven Labs API directly
+    function testElevenLabsAPI() {
+        log('Testing Eleven Labs API directly...');
+        
+        fetch('/api/debug/eleven-labs')
+        .then(response => response.json())
+        .then(data => {
+            log('Eleven Labs test result:', data);
+            
+            if (data.success && data.test_audio_url) {
+                // Try playing the test audio
+                const audio = new Audio(data.test_audio_url);
+                audio.play()
+                    .then(() => log('Test audio playing'))
+                    .catch(err => log('Test audio play error:', err));
+            }
+        })
+        .catch(err => {
+            log('Eleven Labs test error:', err);
+        });
+    }
+    
+    // Add debug buttons
+    if (debugMode) {
+        // Test speech generation
+        const speechTestButton = document.createElement('button');
+        speechTestButton.textContent = 'Test Speech';
+        speechTestButton.style.position = 'fixed';
+        speechTestButton.style.bottom = '40px';
+        speechTestButton.style.left = '10px';
+        speechTestButton.style.zIndex = 1000;
+        speechTestButton.style.padding = '5px 10px';
+        speechTestButton.style.background = 'rgba(216, 181, 255, 0.3)';
+        speechTestButton.style.border = '1px solid var(--accent-purple)';
+        speechTestButton.style.borderRadius = '5px';
+        speechTestButton.style.color = 'var(--soft-white)';
+        speechTestButton.style.fontSize = '12px';
+        speechTestButton.style.opacity = '0.7';
+        speechTestButton.style.cursor = 'pointer';
+        speechTestButton.addEventListener('click', testSpeechGeneration);
+        document.body.appendChild(speechTestButton);
+        
+        // Test Eleven Labs API
+        const elevenLabsTestButton = document.createElement('button');
+        elevenLabsTestButton.textContent = 'Test ElevenLabs';
+        elevenLabsTestButton.style.position = 'fixed';
+        elevenLabsTestButton.style.bottom = '10px';
+        elevenLabsTestButton.style.left = '10px';
+        elevenLabsTestButton.style.zIndex = 1000;
+        elevenLabsTestButton.style.padding = '5px 10px';
+        elevenLabsTestButton.style.background = 'rgba(255, 214, 236, 0.3)';
+        elevenLabsTestButton.style.border = '1px solid var(--accent-pink)';
+        elevenLabsTestButton.style.borderRadius = '5px';
+        elevenLabsTestButton.style.color = 'var(--soft-white)';
+        elevenLabsTestButton.style.fontSize = '12px';
+        elevenLabsTestButton.style.opacity = '0.7';
+        elevenLabsTestButton.style.cursor = 'pointer';
+        elevenLabsTestButton.addEventListener('click', testElevenLabsAPI);
+        document.body.appendChild(elevenLabsTestButton);
     }
 });
