@@ -16,9 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const consensusValue = document.querySelector('.consensus-value');
     const consensusStatusValue = document.querySelector('#consensus-index .status-value');
     
-    // Debug mode - set to true for more logging
-    const debugMode = true;
-    
     // Audio context
     let audioContext = null;
     // Current audio URL for speech
@@ -118,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Initialize audio context
             if (audioContext && audioContext.state === 'suspended') {
                 audioContext.resume().then(() => {
-                    log('Audio context resumed');
+                    console.log('Audio context resumed');
                 });
             }
             
@@ -126,12 +123,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const audio = new Audio();
             audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
             audio.play().then(() => {
-                log('Audio initialized');
+                console.log('Audio initialized');
                 
                 // Play startup sound
                 playAudio('assets/audio/startup.wav');
             }).catch(err => {
-                log(`Audio init error: ${err.message}`);
+                console.log(`Audio init error: ${err.message}`);
             });
             
             // Remove overlay with animation
@@ -177,41 +174,20 @@ document.addEventListener('DOMContentLoaded', function() {
             document.addEventListener('click', function() {
                 if (audioContext && audioContext.state === 'suspended') {
                     audioContext.resume().then(() => {
-                        log('Audio context resumed on user interaction');
+                        console.log('Audio context resumed on user interaction');
                     });
                 }
             }, { once: true });
             
-            log('Audio context created: ' + audioContext.state);
+            console.log('Audio context created: ' + audioContext.state);
         } catch (error) {
-            log('Error creating audio context: ' + error.message);
-        }
-    }
-    
-    // Helper function to log messages to console
-    function log(message) {
-        if (!debugMode) return;
-        
-        console.log(`[Aikira] ${message}`);
-        
-        // Log to debug panel if it exists
-        const debugPanel = document.getElementById('debug-panel');
-        if (debugPanel) {
-            const entry = document.createElement('div');
-            entry.textContent = `[Aikira] ${message}`;
-            debugPanel.appendChild(entry);
-            debugPanel.scrollTop = debugPanel.scrollHeight;
-            
-            // Limit entries
-            if (debugPanel.children.length > 20) {
-                debugPanel.removeChild(debugPanel.firstChild);
-            }
+            console.log('Error creating audio context: ' + error.message);
         }
     }
     
     // Set up event listeners
     function setupEventListeners() {
-        log('Setting up event listeners');
+        console.log('Setting up event listeners');
         
         // Submit proposal button
         if (submitButton && proposalText) {
@@ -250,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Play audio with robust error handling
     function playAudio(src) {
-        log(`Playing audio: ${src}`);
+        console.log(`Playing audio: ${src}`);
         
         try {
             // First check if file exists
@@ -267,44 +243,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     audio.volume = 0.8;
                     
                     // Add event handlers
-                    audio.onplay = () => log(`Audio playing: ${src}`);
-                    audio.onerror = (e) => log(`Audio error: ${e.type}`);
+                    audio.onplay = () => console.log(`Audio playing: ${src}`);
+                    audio.onerror = (e) => console.log(`Audio error: ${e.type}`);
                     
                     // Play with error handling
                     audio.play()
-                        .then(() => log(`Audio playing: ${src}`))
+                        .then(() => console.log(`Audio playing: ${src}`))
                         .catch(err => {
-                            log(`Error playing audio: ${err.message}`);
+                            console.log(`Error playing audio: ${err.message}`);
                             
                             // Check if this is due to autoplay restrictions
                             if (err.name === 'NotAllowedError') {
-                                log('Autoplay restricted - need user interaction first');
+                                console.log('Autoplay restricted - need user interaction first');
                                 
                                 // Try to resume audio context
                                 if (audioContext && audioContext.state === 'suspended') {
                                     audioContext.resume()
                                         .then(() => {
-                                            log('Audio context resumed, trying playback again');
+                                            console.log('Audio context resumed, trying playback again');
                                             return audio.play();
                                         })
                                         .catch(resumeErr => {
-                                            log(`Error after resume: ${resumeErr.message}`);
+                                            console.log(`Error after resume: ${resumeErr.message}`);
                                         });
                                 }
                             }
                         });
                 })
                 .catch(error => {
-                    log(`Audio file check error: ${error.message}`);
+                    console.log(`Audio file check error: ${error.message}`);
                 });
         } catch (err) {
-            log(`Audio playback exception: ${err.message}`);
+            console.log(`Audio playback exception: ${err.message}`);
         }
     }
     
     // Create floating particles effect
     function createParticles() {
-        log('Creating background particles');
+        console.log('Creating background particles');
         
         const container = document.querySelector('.digital-world-bg');
         if (!container) return;
@@ -342,11 +318,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize waveform visualization
     function initializeWaveform() {
-        log('Initializing waveform visualization');
+        console.log('Initializing waveform visualization');
         
         const canvas = document.getElementById('voice-waveform');
         if (!canvas) {
-            log('Waveform canvas not found');
+            console.log('Waveform canvas not found');
             return;
         }
         
@@ -390,15 +366,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Process proposal submission using OpenAI API
     async function processProposal(proposalText) {
-        log(`Processing proposal: ${proposalText.substring(0, 50)}${proposalText.length > 50 ? '...' : ''}`);
+        console.log(`Processing proposal: ${proposalText.substring(0, 50)}${proposalText.length > 50 ? '...' : ''}`);
         
         // Update status
         inputStatus.textContent = 'Processing proposal...';
         
         // Clear the input
         document.getElementById('proposal-text').value = '';
-        
-        // *** DO NOT PLAY ANY AUDIO HERE ***
         
         try {
             // Call proposal evaluation API
@@ -411,17 +385,17 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Log response status
-            log(`Proposal API response status: ${response.status}`);
+            console.log(`Proposal API response status: ${response.status}`);
             
             if (!response.ok) {
                 // Try to extract error details
                 const errorText = await response.text();
-                log(`Proposal API error: ${errorText}`);
+                console.log(`Proposal API error: ${errorText}`);
                 throw new Error(`Proposal API error: ${response.status}`);
             }
             
             const data = await response.json();
-            log('Proposal API response received');
+            console.log('Proposal API response received');
             
             // Validate response
             if (!data.success) {
@@ -461,24 +435,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         })
                     });
                     
-                    log(`Speech API response status: ${speechResponse.status}`);
+                    console.log(`Speech API response status: ${speechResponse.status}`);
                     
                     if (!speechResponse.ok) {
                         const speechErrorText = await speechResponse.text().catch(e => 'Could not read error response');
-                        log(`Speech API error response: ${speechErrorText}`);
+                        console.log(`Speech API error response: ${speechErrorText}`);
                         throw new Error(`Speech API error: ${speechResponse.status}`);
                     }
                     
                     const speechData = await speechResponse.json();
-                    log(`Speech response received: ${JSON.stringify(speechData)}`);
+                    console.log(`Speech response received: ${JSON.stringify(speechData)}`);
                     
                     if (speechData.success && speechData.audio_url) {
-                        log(`Playing speech from URL: ${speechData.audio_url}`);
+                        console.log(`Playing speech from URL: ${speechData.audio_url}`);
                         
                         // Verify file exists
                         const fileCheckResponse = await fetch(speechData.audio_url, { method: 'HEAD' });
                         if (!fileCheckResponse.ok) {
-                            log(`Speech file not found: ${fileCheckResponse.status}`);
+                            console.log(`Speech file not found: ${fileCheckResponse.status}`);
                             throw new Error(`Speech file not found: ${fileCheckResponse.status}`);
                         }
                         
@@ -494,43 +468,42 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         audio.onplay = () => {
-                            log('Speech audio playing');
+                            console.log('Speech audio playing');
                             inputStatus.textContent = 'Speaking...';
                             animateActiveWaveform(true);
                         };
                         
                         audio.onended = () => {
-                            log('Speech audio completed');
+                            console.log('Speech audio completed');
                             inputStatus.textContent = 'Ready for input';
                             animateActiveWaveform(false);
                         };
                         
                         audio.onerror = (e) => {
-                            log(`Speech audio error: ${e.type}`);
+                            console.log(`Speech audio error: ${e.type}`);
                             console.error('Audio error details:', audio.error);
                             inputStatus.textContent = 'Speech playback error';
-                            // Don't play deliberation here
                         };
                         
                         // Try to play the speech
                         try {
                             await audio.play();
-                            log('Speech playback started successfully');
+                            console.log('Speech playback started successfully');
                         } catch (playError) {
-                            log(`Speech play error: ${playError.message}`);
+                            console.log(`Speech play error: ${playError.message}`);
                             
                             // If autoplay is blocked, try to resume audio context
                             if (playError.name === 'NotAllowedError') {
-                                log('Autoplay blocked - need user interaction');
+                                console.log('Autoplay blocked - need user interaction');
                                 
                                 if (audioContext && audioContext.state === 'suspended') {
                                     try {
                                         await audioContext.resume();
-                                        log('Audio context resumed, trying again');
+                                        console.log('Audio context resumed, trying again');
                                         await audio.play();
-                                        log('Speech playback started after context resume');
+                                        console.log('Speech playback started after context resume');
                                     } catch (resumeError) {
-                                        log(`Error after resume: ${resumeError.message}`);
+                                        console.log(`Error after resume: ${resumeError.message}`);
                                         throw resumeError;
                                     }
                                 } else {
@@ -544,8 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         throw new Error('Invalid speech response: ' + JSON.stringify(speechData));
                     }
                 } catch (speechError) {
-                    log(`Speech error: ${speechError.message}`);
-                    // Don't play deliberation here either
+                    console.log(`Speech error: ${speechError.message}`);
                     inputStatus.textContent = 'Speech generation failed';
                 }
                 
@@ -554,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
         } catch (error) {
-            log(`Proposal processing error: ${error.message}`);
+            console.log(`Proposal processing error: ${error.message}`);
             inputStatus.textContent = `Error: ${error.message}`;
             
             // Show error in response area
@@ -567,7 +539,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Start voice recording
     function startVoiceRecording() {
-        log('Starting voice recording');
+        console.log('Starting voice recording');
         
         inputStatus.textContent = 'Listening...';
         
@@ -578,7 +550,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Request microphone access
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    log('Microphone access granted');
+                    console.log('Microphone access granted');
                     
                     // Create media recorder
                     window.mediaRecorder = new MediaRecorder(stream);
@@ -591,11 +563,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Add stop handler
                     window.mediaRecorder.addEventListener('stop', () => {
-                        log('Recording stopped, processing audio...');
+                        console.log('Recording stopped, processing audio...');
                         
                         // Create blob from chunks
                         const audioBlob = new Blob(window.audioChunks, { type: 'audio/wav' });
-                        log('Audio blob created, size:', audioBlob.size);
+                        console.log('Audio blob created, size:', audioBlob.size);
                         
                         // Send to server for transcription
                         transcribeAudio(audioBlob);
@@ -606,18 +578,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Start recording
                     window.mediaRecorder.start();
-                    log('Recording started');
+                    console.log('Recording started');
                     
                     // Automatically stop after 10 seconds as safety
                     setTimeout(() => {
                         if (window.mediaRecorder && window.mediaRecorder.state === 'recording') {
-                            log('Auto-stopping recording after timeout');
+                            console.log('Auto-stopping recording after timeout');
                             stopVoiceRecording();
                         }
                     }, 10000);
                 })
                 .catch(error => {
-                    log(`Microphone access denied: ${error.message}`);
+                    console.log(`Microphone access denied: ${error.message}`);
                     inputStatus.textContent = 'Microphone access denied';
                     document.getElementById('voice-input-btn').classList.remove('active');
                     animateActiveWaveform(false);
@@ -626,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     playAudio('assets/audio/governance-alert.wav');
                 });
         } catch (error) {
-            log(`Voice recording error: ${error.message}`);
+            console.log(`Voice recording error: ${error.message}`);
             inputStatus.textContent = `Recording error: ${error.message}`;
             document.getElementById('voice-input-btn').classList.remove('active');
             animateActiveWaveform(false);
@@ -635,7 +607,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Stop voice recording and process the audio
     function stopVoiceRecording() {
-        log('Stopping voice recording');
+        console.log('Stopping voice recording');
         
         // Update status
         inputStatus.textContent = 'Processing voice input...';
@@ -645,17 +617,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Stop the recorder if it's active
         if (window.mediaRecorder && window.mediaRecorder.state === 'recording') {
-            log('Stopping active media recorder');
+            console.log('Stopping active media recorder');
             window.mediaRecorder.stop();
         } else {
-            log('No active recorder to stop');
+            console.log('No active recorder to stop');
             inputStatus.textContent = 'Ready for input';
         }
     }
     
     // Transcribe audio using server API
     async function transcribeAudio(audioBlob) {
-        log('Transcribing audio, blob size:', audioBlob.size);
+        console.log('Transcribing audio, blob size:', audioBlob.size);
         
         try {
             // Create form data for upload
@@ -663,25 +635,25 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('audio', audioBlob, 'recording.wav');
             
             // Send to server
-            log('Sending audio to transcription API...');
+            console.log('Sending audio to transcription API...');
             const response = await fetch('/api/speech/transcribe', {
                 method: 'POST',
                 body: formData
             });
             
-            log('Transcription API response status:', response.status);
+            console.log('Transcription API response status:', response.status);
             
             if (!response.ok) {
                 const errorText = await response.text();
-                log('Transcription API error response:', errorText);
+                console.log('Transcription API error response:', errorText);
                 throw new Error(`Server error: ${response.status} - ${errorText}`);
             }
             
             const data = await response.json();
-            log('Transcription API response data:', JSON.stringify(data));
+            console.log('Transcription API response data:', JSON.stringify(data));
             
             if (data.success && data.text) {
-                log(`Transcription successful: ${data.text}`);
+                console.log(`Transcription successful: ${data.text}`);
                 
                 // Process the transcribed text as a proposal
                 processProposal(data.text);
@@ -689,7 +661,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.error || 'Transcription failed - no text received');
             }
         } catch (error) {
-            log(`Transcription error: ${error.message}`);
+            console.log(`Transcription error: ${error.message}`);
             inputStatus.textContent = `Error: ${error.message}`;
             
             // Show error message
@@ -785,7 +757,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update metrics with received values
     function updateMetrics(fairness, value, protection, consensus) {
-        log(`Updating metrics - F:${fairness}, V:${value}, P:${protection}, C:${consensus}`);
+        console.log(`Updating metrics - F:${fairness}, V:${value}, P:${protection}, C:${consensus}`);
         
         // Update consensus value
         if (consensusValue) {
@@ -837,105 +809,5 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update position
         indicator.style.top = `${yPos}px`;
         indicator.style.left = `${xPos}px`;
-    }
-    
-    // Add a debugging test function to directly check speech generation
-    function testSpeechGeneration() {
-        log('Testing speech generation directly...');
-        
-        fetch('/api/speech/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                text: "This is a test of the Aikira speech generation system.",
-                voice_id: "default",
-                model_id: "eleven_multilingual_v2"
-            })
-        })
-        .then(response => {
-            log('Test speech status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            log('Test speech generation result:', data);
-            
-            if (data.success && data.audio_url) {
-                log('Test speech URL:', data.audio_url);
-                
-                // Try playing it
-                const audio = new Audio(data.audio_url);
-                audio.play().then(() => {
-                    log('Test audio playing successfully!');
-                }).catch(err => {
-                    log('Test audio play error:', err);
-                });
-            }
-        })
-        .catch(err => {
-            log('Test speech generation error:', err);
-        });
-    }
-    
-    // Add a test function to debug the Eleven Labs API directly
-    function testElevenLabsAPI() {
-        log('Testing Eleven Labs API directly...');
-        
-        fetch('/api/debug/eleven-labs')
-        .then(response => response.json())
-        .then(data => {
-            log('Eleven Labs test result:', data);
-            
-            if (data.success && data.test_audio_url) {
-                // Try playing the test audio
-                const audio = new Audio(data.test_audio_url);
-                audio.play()
-                    .then(() => log('Test audio playing'))
-                    .catch(err => log('Test audio play error:', err));
-            }
-        })
-        .catch(err => {
-            log('Eleven Labs test error:', err);
-        });
-    }
-    
-    // Add debug buttons
-    if (debugMode) {
-        // Test speech generation
-        const speechTestButton = document.createElement('button');
-        speechTestButton.textContent = 'Test Speech';
-        speechTestButton.style.position = 'fixed';
-        speechTestButton.style.bottom = '40px';
-        speechTestButton.style.left = '10px';
-        speechTestButton.style.zIndex = 1000;
-        speechTestButton.style.padding = '5px 10px';
-        speechTestButton.style.background = 'rgba(216, 181, 255, 0.3)';
-        speechTestButton.style.border = '1px solid var(--accent-purple)';
-        speechTestButton.style.borderRadius = '5px';
-        speechTestButton.style.color = 'var(--soft-white)';
-        speechTestButton.style.fontSize = '12px';
-        speechTestButton.style.opacity = '0.7';
-        speechTestButton.style.cursor = 'pointer';
-        speechTestButton.addEventListener('click', testSpeechGeneration);
-        document.body.appendChild(speechTestButton);
-        
-        // Test Eleven Labs API
-        const elevenLabsTestButton = document.createElement('button');
-        elevenLabsTestButton.textContent = 'Test ElevenLabs';
-        elevenLabsTestButton.style.position = 'fixed';
-        elevenLabsTestButton.style.bottom = '10px';
-        elevenLabsTestButton.style.left = '10px';
-        elevenLabsTestButton.style.zIndex = 1000;
-        elevenLabsTestButton.style.padding = '5px 10px';
-        elevenLabsTestButton.style.background = 'rgba(255, 214, 236, 0.3)';
-        elevenLabsTestButton.style.border = '1px solid var(--accent-pink)';
-        elevenLabsTestButton.style.borderRadius = '5px';
-        elevenLabsTestButton.style.color = 'var(--soft-white)';
-        elevenLabsTestButton.style.fontSize = '12px';
-        elevenLabsTestButton.style.opacity = '0.7';
-        elevenLabsTestButton.style.cursor = 'pointer';
-        elevenLabsTestButton.addEventListener('click', testElevenLabsAPI);
-        document.body.appendChild(elevenLabsTestButton);
     }
 });
