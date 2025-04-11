@@ -42,6 +42,9 @@ if (!fs.existsSync(downloadsDir)) {
   fs.mkdirSync(downloadsDir, { recursive: true });
 }
 
+// Serve generated audio files
+app.use('/downloads', express.static(downloadsDir));
+
 // OpenAI integration endpoint
 app.post('/api/openai/generate-response', async (req, res) => {
   try {
@@ -188,8 +191,8 @@ app.post('/api/speech/transcribe', (req, res) => {
   }, 1000); // Simulate processing delay
 });
 
-// Text-to-speech endpoint (with Eleven Labs API stub)
-app.post('/api/speech/generate', (req, res) => {
+// Text-to-speech endpoint with actual Eleven Labs API
+app.post('/api/speech/generate', async (req, res) => {
   const { text, voice_id, model_id } = req.body;
   
   if (!text) {
@@ -199,29 +202,84 @@ app.post('/api/speech/generate', (req, res) => {
     });
   }
   
-  // For testing, we'll serve a pre-recorded audio file
-  // In production, this would call Eleven Labs API
-  
-  // Create a unique filename for each request (in a real implementation)
-  const filename = `aikira_response_${Date.now()}.mp3`;
-  
-  // Use one of the existing audio files as a placeholder
-  const sampleAudios = [
-    '/assets/audio/deliberation.mp3',
-    '/assets/audio/proposal-submit.mp3',
-    '/assets/audio/startup.mp3'
-  ];
-  
-  const randomAudio = sampleAudios[Math.floor(Math.random() * sampleAudios.length)];
-  
-  setTimeout(() => {
+  try {
+    // Get Eleven Labs API key
+    const apiKey = process.env.ELEVEN_LABS_API_KEY;
+    if (!apiKey) {
+      throw new Error('Eleven Labs API key not configured');
+    }
+    
+    // Default voice settings
+    const voiceSettings = {
+      stability: 0.75,
+      similarity_boost: 0.75,
+      style: 0.5,
+      use_speaker_boost: true
+    };
+
+    // Use default voice ID if not provided
+    const useVoiceId = voice_id || process.env.DEFAULT_VOICE_ID || 'eleven_monolingual_v1';
+    const useModelId = model_id || 'eleven_multilingual_v2';
+    
+    console.log(`Generating speech with Eleven Labs for text: ${text.substring(0, 50)}...`);
+    
+    // Make API request to Eleven Labs
+    const response = await axios({
+      method: 'post',
+      url: `https://api.elevenlabs.io/v1/text-to-speech/${useVoiceId}`,
+      data: {
+        text,
+        model_id: useModelId,
+        voice_settings: voiceSettings
+      },
+      headers: {
+        'Accept': 'audio/mpeg',
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      responseType: 'arraybuffer'
+    });
+    
+    // Create a unique filename
+    const filename = `aikira_response_${Date.now()}.mp3`;
+    const filePath = path.join(downloadsDir, filename);
+    
+    // Save the audio file
+    fs.writeFileSync(filePath, Buffer.from(response.data));
+    
+    // Get the relative URL path
+    const fileUrl = `/downloads/${filename}`;
+    
+    console.log(`Speech generated successfully: ${fileUrl}`);
+    
+    // Return success with file URL
     res.json({
       success: true,
-      audio_url: randomAudio, // Return path to sample audio
+      audio_url: fileUrl, 
+      voice_id: useVoiceId,
+      model_id: useModelId
+    });
+    
+  } catch (error) {
+    console.error('Eleven Labs API error:', error.response?.data || error.message);
+    
+    // Fall back to sample audio for errors
+    const sampleAudios = [
+      '/assets/audio/deliberation.wav', // Changed to .wav as requested
+      '/assets/audio/proposal-submit.wav',
+      '/assets/audio/startup.wav'
+    ];
+    
+    const randomAudio = sampleAudios[Math.floor(Math.random() * sampleAudios.length)];
+    
+    res.json({
+      success: false,
+      error: error.message || 'Error generating speech',
+      audio_url: randomAudio, // Fallback audio
       voice_id: voice_id || 'default',
       model_id: model_id || 'eleven_multilingual_v2'
     });
-  }, 1000); // Simulate processing delay
+  }
 });
 
 // System status endpoint
@@ -231,7 +289,7 @@ app.get('/api/system/status', (req, res) => {
     version: '1.0.0',
     environment: NODE_ENV,
     constitutional_alignment: 'Active',
-    voice_services: process.env.OPENAI_API_KEY ? 'Available' : 'Unavailable',
+    voice_services: process.env.ELEVEN_LABS_API_KEY ? 'Available' : 'Unavailable',
     timestamp: new Date().toISOString()
   });
 });
@@ -308,6 +366,19 @@ app.listen(PORT, () => {
   `);
 
   console.log(`Visit: http://localhost:${PORT}`);
+  
+  // Log API key status
+  if (process.env.ELEVEN_LABS_API_KEY) {
+    console.log('✓ Eleven Labs API key detected');
+  } else {
+    console.log('✗ Eleven Labs API key not found - voice synthesis will use fallback sounds');
+  }
+  
+  if (process.env.OPENAI_API_KEY) {
+    console.log('✓ OpenAI API key detected');
+  } else {
+    console.log('✗ OpenAI API key not found - AI responses will use fallback templates');
+  }
 });
 
 // Handle uncaught exceptions

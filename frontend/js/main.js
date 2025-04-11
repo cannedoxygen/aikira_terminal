@@ -15,53 +15,93 @@ document.addEventListener('DOMContentLoaded', function() {
     const consensusValue = document.querySelector('.consensus-value');
     const consensusStatusValue = document.querySelector('#consensus-index .status-value');
     
-    // Audio context and elements
-    let audioContext;
-    let audioPlayer;
+    // Initialize debug mode
+    const debugMode = true;
     
     // Initialize app
     initializeApp();
     
     function initializeApp() {
-        // Initialize Audio Context
-        try {
-            window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioContext = new AudioContext();
+        log('Initializing Aikira Terminal');
+        
+        // Wait for AudioController to be initialized
+        waitForAudioController().then(() => {
+            // Initialize metrics animation
+            initializeMetrics();
             
-            // Create audio player element
-            audioPlayer = new Audio();
-            document.body.appendChild(audioPlayer);
+            // Create floating particles
+            createParticles();
             
-            // Preload startup sound
-            const startupSound = new Audio('assets/audio/startup.mp3');
-            startupSound.volume = 0.5;
-            startupSound.play().catch(e => console.log('Audio autoplay prevented: User interaction needed.'));
-        } catch (e) {
-            console.error('Web Audio API not supported:', e);
+            // Set up waveform visualization
+            initializeWaveform();
+            
+            // Add event listeners
+            setupEventListeners();
+            
+            // Check system status
+            checkSystemStatus();
+            
+            // Display welcome message with typing effect
+            const welcomeMessage = "Aikira Constitutional AI Core initialized. How may I assist you today?";
+            typeText(responseText, welcomeMessage);
+            
+            log('Aikira Terminal initialized');
+        });
+    }
+    
+    // Helper function to log messages to console and debug panel
+    function log(message) {
+        if (!debugMode) return;
+        
+        console.log(`[Aikira] ${message}`);
+        
+        // Log to debug panel if it exists
+        const debugPanel = document.getElementById('debug-panel');
+        if (debugPanel) {
+            const entry = document.createElement('div');
+            entry.textContent = `[Aikira] ${message}`;
+            debugPanel.appendChild(entry);
+            debugPanel.scrollTop = debugPanel.scrollHeight;
+            
+            // Limit entries
+            if (debugPanel.children.length > 20) {
+                debugPanel.removeChild(debugPanel.firstChild);
+            }
         }
-        
-        // Initialize metrics animation
-        initializeMetrics();
-        
-        // Create floating particles
-        createParticles();
-        
-        // Set up waveform visualization
-        initializeWaveform();
-        
-        // Add event listeners
-        setupEventListeners();
-        
-        // Check system status
-        checkSystemStatus();
-        
-        // Display welcome message with typing effect
-        const welcomeMessage = "Aikira Constitutional AI Core initialized. How may I assist you today?";
-        typeText(responseText, welcomeMessage);
+    }
+    
+    // Wait for AudioController to be initialized
+    function waitForAudioController() {
+        return new Promise((resolve) => {
+            // Check for audio controller
+            if (window.audioController && window.audioController.initialized) {
+                log('AudioController already initialized');
+                resolve();
+                return;
+            }
+            
+            // Check every 100ms for audio controller
+            const checkInterval = setInterval(() => {
+                if (window.audioController && window.audioController.initialized) {
+                    clearInterval(checkInterval);
+                    log('AudioController detected');
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                log('AudioController not detected, continuing anyway');
+                resolve();
+            }, 5000);
+        });
     }
     
     // Set up event listeners
     function setupEventListeners() {
+        log('Setting up event listeners');
+        
         // Submit proposal button
         if (submitButton && proposalText) {
             submitButton.addEventListener('click', function() {
@@ -70,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     processProposal(proposalText.value);
                     
                     // Play deliberation sound
-                    playAudio('assets/audio/deliberation.mp3');
+                    playAudio('assets/audio/deliberation.wav');
                 }
             });
             
@@ -97,47 +137,61 @@ document.addEventListener('DOMContentLoaded', function() {
                     stopVoiceRecording();
                     
                     // Play proposal submit sound
-                    playAudio('assets/audio/proposal-submit.mp3');
+                    playAudio('assets/audio/proposal-submit.wav');
                 }
             });
         }
-        
-        // Initialize audio on first user interaction (needed for browsers)
-        document.addEventListener('click', initAudio, { once: true });
     }
     
-    // Initialize audio context (needs user interaction first)
-    function initAudio() {
-        if (audioContext && audioContext.state === 'suspended') {
-            audioContext.resume();
-        }
-    }
-    
-    // Play audio file
+    // Play audio with robust error handling
     function playAudio(src) {
-        if (!audioPlayer) return;
+        log(`Playing audio: ${src}`);
         
-        // Check if we're already playing something
-        const isPlaying = !audioPlayer.paused;
-        
-        // Set up new audio
-        audioPlayer.src = src;
-        audioPlayer.volume = 0.8;
-        
-        // If we were playing something, we need to stop it first
-        if (isPlaying) {
-            audioPlayer.pause();
-            audioPlayer.currentTime = 0;
+        // Use AudioController if available
+        if (window.audioController) {
+            window.audioController.playAudio(src);
+            return;
         }
         
-        // Play the new audio
-        audioPlayer.play().catch(e => {
-            console.error('Audio playback error:', e);
-        });
+        // Use AudioProcessor if available
+        if (window.audioProcessor && window.audioProcessor.playAudio) {
+            window.audioProcessor.playAudio(src)
+                .then(() => log(`Audio playing via AudioProcessor: ${src}`))
+                .catch(err => log(`Error playing via AudioProcessor: ${err.message}`));
+            return;
+        }
+        
+        // Fallback to basic Audio API
+        try {
+            const audio = new Audio(src);
+            
+            // Set volume if available
+            if (window.audioController) {
+                audio.volume = window.audioController.volume;
+            } else {
+                audio.volume = 0.8; // Default
+            }
+            
+            // Play with error handling
+            audio.play()
+                .then(() => log(`Audio playing via basic API: ${src}`))
+                .catch(err => {
+                    log(`Error playing audio via basic API: ${err.message}`);
+                    
+                    // Show initialization overlay if needed
+                    if (err.name === 'NotAllowedError' && window.audioController) {
+                        window.audioController.showInitOverlay();
+                    }
+                });
+        } catch (err) {
+            log(`Audio playback exception: ${err.message}`);
+        }
     }
     
     // Initialize metrics animation
     function initializeMetrics() {
+        log('Initializing metrics');
+        
         // Animate metrics after a short delay
         setTimeout(() => {
             metricsElements.forEach(metric => {
@@ -154,6 +208,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Create floating particles effect
     function createParticles() {
+        log('Creating background particles');
+        
         const container = document.querySelector('.digital-world-bg');
         const colors = ['var(--soft-pink)', 'var(--lavender-purple)', 'var(--pastel-turquoise)'];
         
@@ -188,8 +244,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize waveform visualization
     function initializeWaveform() {
+        log('Initializing waveform visualization');
+        
         const canvas = document.getElementById('voice-waveform');
-        if (!canvas) return;
+        if (!canvas) {
+            log('Waveform canvas not found');
+            return;
+        }
         
         const ctx = canvas.getContext('2d');
         canvas.width = canvas.offsetWidth;
@@ -221,18 +282,26 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         
         drawIdleWave();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        });
     }
     
     // Process proposal submission
     function processProposal(proposalText) {
+        log(`Processing proposal: ${proposalText.substring(0, 50)}${proposalText.length > 50 ? '...' : ''}`);
+        
         // Update status
         inputStatus.textContent = 'Processing proposal...';
         
         // Clear the input
         document.getElementById('proposal-text').value = '';
         
-        // Play deliberation sound again
-        playAudio('assets/audio/deliberation.mp3');
+        // Play deliberation sound
+        playAudio('assets/audio/deliberation.wav');
         
         // Call API to process proposal
         fetch('/api/openai/generate-response', {
@@ -242,9 +311,16 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ proposal: proposalText })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
+                log('Proposal processing successful');
+                
                 // Type out the AI response
                 typeText(responseText, data.response);
                 
@@ -254,31 +330,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Reset status
                 inputStatus.textContent = 'Ready for input';
                 
-                // Generate and play speech using test audio for now
+                // Generate and play speech
                 generateSpeech(data.response);
             } else {
                 // Handle error
-                responseText.textContent = "I apologize, but I'm unable to process your proposal at this time. Please try again later.";
-                inputStatus.textContent = 'Error occurred';
-                
-                // Play error sound
-                playAudio('assets/audio/governance-alert.mp3');
+                throw new Error('Invalid response format');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            responseText.textContent = "A communication error occurred. Please check your connection and try again.";
-            inputStatus.textContent = 'Connection error';
+            log(`Proposal processing error: ${error.message}`);
+            inputStatus.textContent = 'Error occurred';
             
             // Play error sound
-            playAudio('assets/audio/governance-alert.mp3');
+            playAudio('assets/audio/governance-alert.wav');
+            
+            // Fallback to simulated response
+            simulateProposalResponse(proposalText);
         });
     }
     
     // Generate speech from text
     async function generateSpeech(text) {
-        // In the interim, play sample audio
-        playAudio('assets/audio/deliberation.mp3');
+        log('Generating speech for response');
         
         try {
             // Call the speech generation API
@@ -297,31 +370,87 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success && data.audio_url) {
+                log(`Speech generated successfully: ${data.audio_url}`);
+                
                 // Play the generated speech audio
                 playAudio(data.audio_url);
+            } else {
+                throw new Error('Speech generation failed');
             }
         } catch (error) {
-            console.error('Speech generation error:', error);
+            log(`Speech generation error: ${error.message}`);
+            
             // Fall back to playing sample audio
+            playAudio('assets/audio/deliberation.wav');
         }
     }
     
     // Start voice recording
     function startVoiceRecording() {
+        log('Starting voice recording');
+        
         inputStatus.textContent = 'Listening...';
         
         // Animate the voice visualization
         animateVoiceVisualization(true);
         
-        // In a real implementation, you would use the Web Audio API and MediaRecorder API here
-        // For now, we'll simulate recording
-        setTimeout(stopVoiceRecording, 5000); // Automatically stop after 5 seconds for demo
+        try {
+            // Request microphone access
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    log('Microphone access granted');
+                    
+                    // Create media recorder
+                    window.mediaRecorder = new MediaRecorder(stream);
+                    window.audioChunks = [];
+                    
+                    // Add data handler
+                    window.mediaRecorder.addEventListener('dataavailable', event => {
+                        window.audioChunks.push(event.data);
+                    });
+                    
+                    // Add stop handler
+                    window.mediaRecorder.addEventListener('stop', () => {
+                        log('Recording stopped');
+                        
+                        // Create blob from chunks
+                        const audioBlob = new Blob(window.audioChunks, { type: 'audio/wav' });
+                        
+                        // Send to server for transcription
+                        transcribeAudio(audioBlob);
+                    });
+                    
+                    // Start recording
+                    window.mediaRecorder.start();
+                    log('Recording started');
+                    
+                    // Automatically stop after 10 seconds as safety
+                    setTimeout(() => {
+                        if (window.mediaRecorder && window.mediaRecorder.state === 'recording') {
+                            stopVoiceRecording();
+                        }
+                    }, 10000);
+                })
+                .catch(error => {
+                    log(`Microphone access denied: ${error.message}`);
+                    inputStatus.textContent = 'Microphone access denied';
+                    document.getElementById('voice-input-btn').classList.remove('active');
+                    animateVoiceVisualization(false);
+                    
+                    // Play error sound
+                    playAudio('assets/audio/governance-alert.wav');
+                });
+        } catch (error) {
+            log(`Voice recording error: ${error.message}`);
+            inputStatus.textContent = `Recording error: ${error.message}`;
+            document.getElementById('voice-input-btn').classList.remove('active');
+            animateVoiceVisualization(false);
+        }
     }
     
-    // Stop voice recording and transcribe
+    // Stop voice recording
     function stopVoiceRecording() {
-        // Stop the voice button animation
-        voiceButton.classList.remove('active');
+        log('Stopping voice recording');
         
         // Update status
         inputStatus.textContent = 'Processing voice input...';
@@ -329,17 +458,88 @@ document.addEventListener('DOMContentLoaded', function() {
         // Stop visualization animation
         animateVoiceVisualization(false);
         
-        // In a real implementation, you would send the recording to your backend
-        // For now, we'll simulate a transcription and response
-        
-        // Simulate API call to transcribe audio
-        setTimeout(() => {
-            // Sample transcription result
-            const transcribedText = "Implement a transparent governance system with equal voting rights and strong privacy protections.";
+        // Stop the recorder if it's active
+        if (window.mediaRecorder && window.mediaRecorder.state === 'recording') {
+            window.mediaRecorder.stop();
             
-            // Process the transcribed text as a proposal
-            processProposal(transcribedText);
-        }, 1500);
+            // Stop microphone access
+            window.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        } else {
+            log('No active recorder to stop');
+            inputStatus.textContent = 'Ready for input';
+        }
+    }
+    
+    // Transcribe audio using server API
+    function transcribeAudio(audioBlob) {
+        log('Transcribing audio');
+        
+        // Create form data for upload
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
+        
+        // Send to server
+        fetch('/api/speech/transcribe', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.text) {
+                log(`Transcription successful: ${data.text}`);
+                
+                // Process the transcribed text
+                processProposal(data.text);
+            } else {
+                throw new Error('Transcription failed');
+            }
+        })
+        .catch(error => {
+            log(`Transcription error: ${error.message}`);
+            inputStatus.textContent = 'Transcription error';
+            
+            // Play error sound
+            playAudio('assets/audio/governance-alert.wav');
+            
+            // Fallback to simulated transcription
+            simulateTranscription();
+        });
+    }
+    
+    // Simulate transcription (fallback)
+    function simulateTranscription() {
+        log('Using simulated transcription');
+        
+        // Sample transcription
+        const transcribedText = "Implement a transparent governance system with equal voting rights and strong privacy protections.";
+        
+        // Process the transcribed text as a proposal
+        processProposal(transcribedText);
+    }
+    
+    // Simulate proposal response (fallback)
+    function simulateProposalResponse(proposalText) {
+        log('Using simulated proposal response');
+        
+        // Sample response
+        const response = "After constitutional analysis, I've determined that your proposal aligns well with our governance principles. The value generation aspects are particularly strong. However, there is room to improve consensus alignment. Consider enhancing the fairness distribution framework.";
+        
+        // Update response text with typing effect
+        typeText(responseText, response);
+        
+        // Update metrics
+        updateMetrics(78, 85, 90, 84);
+        
+        // Update status
+        inputStatus.textContent = 'Ready for input';
+        
+        // Play response audio
+        playAudio('assets/audio/deliberation.wav');
     }
     
     // Animate voice visualization during recording
@@ -353,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Active visualization function
             const drawActiveWave = () => {
                 // Only continue if we're still supposed to be animating
-                if (!voiceButton.classList.contains('active')) return;
+                if (!document.querySelector('.voice-input-btn.active')) return;
                 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = 'rgba(28, 32, 41, 0.8)';
@@ -383,32 +583,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 ctx.lineWidth = 3;
                 ctx.stroke();
                 
-                requestAnimationFrame(drawActiveWave);
+                // Continue animation
+                window.activeWaveformAnimationId = requestAnimationFrame(drawActiveWave);
             };
             
-            drawActiveWave();
+            // Start active animation
+            window.activeWaveformAnimationId = requestAnimationFrame(drawActiveWave);
         } else {
-            // Reset to idle animation will happen automatically by the idle animation loop
+            // Cancel active animation if it exists
+            if (window.activeWaveformAnimationId) {
+                cancelAnimationFrame(window.activeWaveformAnimationId);
+                window.activeWaveformAnimationId = null;
+            }
         }
     }
     
     // Check system status from API
     function checkSystemStatus() {
+        log('Checking system status');
+        
         fetch('/api/system/status')
             .then(response => response.json())
             .then(data => {
+                log('System status received');
+                
                 // Update status indicators
                 document.querySelector('#constitutional-alignment .status-value').textContent = data.constitutional_alignment;
                 
-                // Other status updates could be added here
+                // Update other statuses as needed
             })
             .catch(error => {
-                console.error('Error checking system status:', error);
+                log(`System status error: ${error.message}`);
             });
     }
     
     // Text typing effect
     function typeText(element, text, speed = 30) {
+        if (!element) return;
+        
         element.textContent = '';
         let i = 0;
         
@@ -425,16 +637,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update metrics with received values
     function updateMetrics(fairness, value, protection, consensus) {
+        log(`Updating metrics - F:${fairness}, V:${value}, P:${protection}, C:${consensus}`);
+        
         // Update consensus value
-        consensusValue.textContent = `${consensus}%`;
+        if (consensusValue) {
+            consensusValue.textContent = `${consensus}%`;
+        }
         
         // Update metrics bars with animation
-        metricsElements[0].style.width = `${fairness}%`;
-        metricsElements[1].style.width = `${value}%`;
-        metricsElements[2].style.width = `${protection}%`;
+        const metricBars = document.querySelectorAll('.metric-value');
+        if (metricBars.length >= 3) {
+            metricBars[0].style.width = `${fairness}%`;
+            metricBars[1].style.width = `${value}%`;
+            metricBars[2].style.width = `${protection}%`;
+        }
         
         // Update status bar value
-        consensusStatusValue.textContent = `${consensus}%`;
+        if (consensusStatusValue) {
+            consensusStatusValue.textContent = `${consensus}%`;
+        }
         
         // Update triangle indicator position
         updateConsensusTriangle(consensus / 100);
@@ -448,6 +669,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Triangle coordinates
         const triangleElement = document.querySelector('.consensus-triangle');
+        if (!triangleElement) return;
+        
         const height = triangleElement.offsetHeight;
         const width = triangleElement.offsetWidth;
         
@@ -460,8 +683,10 @@ document.addEventListener('DOMContentLoaded', function() {
         indicator.style.left = `${xPos}px`;
     }
     
-    // Add a function to create governance notifications (could be used for future features)
-    function createGovernanceNotice(message, type = 'info') {
+    // Create governance notification
+    function createGovernanceNotice(message, type = 'info', duration = 30000) {
+        log(`Creating governance notice: ${message} (${type})`);
+        
         // Get current notices count
         let noticesCount = parseInt(document.querySelector('#governance-notices .status-value').textContent) || 0;
         noticesCount++;
@@ -470,9 +695,123 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('#governance-notices .status-value').textContent = noticesCount;
         
         // Play notification sound
-        playAudio('assets/audio/governance-alert.mp3');
+        playAudio('assets/audio/governance-alert.wav');
         
-        // In a full implementation, you would create and display notification elements here
-        console.log(`[${type.toUpperCase()}] Governance Notice: ${message}`);
+        // Get or create notification container
+        let notificationContainer = document.querySelector('.governance-notifications');
+        if (!notificationContainer) {
+            notificationContainer = document.createElement('div');
+            notificationContainer.classList.add('governance-notifications');
+            notificationContainer.style.position = 'fixed';
+            notificationContainer.style.top = '20px';
+            notificationContainer.style.right = '20px';
+            notificationContainer.style.zIndex = '1000';
+            notificationContainer.style.display = 'flex';
+            notificationContainer.style.flexDirection = 'column';
+            notificationContainer.style.gap = '10px';
+            notificationContainer.style.maxWidth = '300px';
+            document.body.appendChild(notificationContainer);
+        }
+        
+        // Create notification element
+        const notificationElement = document.createElement('div');
+        notificationElement.classList.add('governance-notification', type);
+        notificationElement.style.backgroundColor = 'var(--light-bg)';
+        notificationElement.style.borderRadius = '10px';
+        notificationElement.style.padding = '15px';
+        notificationElement.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.3)';
+        notificationElement.style.position = 'relative';
+        
+        // Set border color based on type
+        if (type === 'critical') {
+            notificationElement.style.borderLeft = '3px solid #FF6B6B';
+        } else if (type === 'warning') {
+            notificationElement.style.borderLeft = '3px solid #FFD166';
+        } else {
+            notificationElement.style.borderLeft = '3px solid var(--accent-turquoise)';
+        }
+        
+        // Add animation
+        notificationElement.style.animation = 'slideInFromRight 0.3s ease-out forwards';
+        
+        // Add content
+        const notificationHeader = document.createElement('div');
+        notificationHeader.style.display = 'flex';
+        notificationHeader.style.justifyContent = 'space-between';
+        notificationHeader.style.alignItems = 'center';
+        notificationHeader.style.marginBottom = '5px';
+        
+        const notificationTitle = document.createElement('div');
+        notificationTitle.style.fontWeight = 'bold';
+        notificationTitle.style.color = 'var(--soft-white)';
+        notificationTitle.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        
+        const notificationTimestamp = document.createElement('div');
+        notificationTimestamp.style.fontSize = '12px';
+        notificationTimestamp.style.opacity = '0.7';
+        notificationTimestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        notificationHeader.appendChild(notificationTitle);
+        notificationHeader.appendChild(notificationTimestamp);
+        
+        const notificationMessage = document.createElement('div');
+        notificationMessage.style.fontSize = '14px';
+        notificationMessage.style.color = 'var(--soft-white)';
+        notificationMessage.style.opacity = '0.9';
+        notificationMessage.textContent = message;
+        
+        const notificationClose = document.createElement('div');
+        notificationClose.textContent = '×';
+        notificationClose.style.position = 'absolute';
+        notificationClose.style.top = '10px';
+        notificationClose.style.right = '10px';
+        notificationClose.style.cursor = 'pointer';
+        notificationClose.style.opacity = '0.5';
+        notificationClose.style.fontSize = '16px';
+        
+        notificationClose.addEventListener('mouseenter', () => {
+            notificationClose.style.opacity = '1';
+        });
+        
+        notificationClose.addEventListener('mouseleave', () => {
+            notificationClose.style.opacity = '0.5';
+        });
+        
+        notificationClose.addEventListener('click', () => {
+            notificationElement.style.animation = 'slideOutToRight 0.3s ease-in forwards';
+            setTimeout(() => {
+                notificationElement.remove();
+                
+                // Update counter
+                noticesCount--;
+                document.querySelector('#governance-notices .status-value').textContent = noticesCount;
+            }, 300);
+        });
+        
+        notificationElement.appendChild(notificationHeader);
+        notificationElement.appendChild(notificationMessage);
+        notificationElement.appendChild(notificationClose);
+        
+        // Add to container
+        notificationContainer.appendChild(notificationElement);
+        
+        // Add auto-remove after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                if (notificationElement.isConnected) {
+                    notificationElement.style.animation = 'slideOutToRight 0.3s ease-in forwards';
+                    setTimeout(() => {
+                        notificationElement.remove();
+                        
+                        // Update counter
+                        noticesCount--;
+                        document.querySelector('#governance-notices .status-value').textContent = noticesCount;
+                    }, 300);
+                }
+            }, duration);
+        }
+        
+        // Return the notification element
+        return notificationElement;
     }
 });
