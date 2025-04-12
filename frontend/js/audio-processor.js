@@ -168,7 +168,7 @@ class AudioProcessor {
             await this.stopRecording();
         }
         
-        this.updateStatus('Starting voice recording...');
+        this.updateStatus('Listening to your voice...');
         
         try {
             const constraints = {
@@ -179,45 +179,75 @@ class AudioProcessor {
                 }
             };
             
+            console.log('Requesting microphone access...');
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             this.mediaStream = stream;
             
+            // Set up MediaRecorder with appropriate options
             let options = {};
             
             if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
                 options = { mimeType: 'audio/webm;codecs=opus' };
+                console.log('Using audio/webm;codecs=opus');
             } else if (MediaRecorder.isTypeSupported('audio/webm')) {
                 options = { mimeType: 'audio/webm' };
+                console.log('Using audio/webm');
             } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
                 options = { mimeType: 'audio/mp4' };
+                console.log('Using audio/mp4');
             }
             
             try {
+                console.log('Creating MediaRecorder with options:', options);
                 this.mediaRecorder = new MediaRecorder(stream, options);
             } catch (e) {
                 console.warn('MediaRecorder creation with options failed:', e);
+                console.log('Creating MediaRecorder without specific options');
                 this.mediaRecorder = new MediaRecorder(stream);
             }
             
+            console.log('MediaRecorder created:', this.mediaRecorder.state);
+            
+            // Reset audio chunks
             this.audioChunks = [];
             
+            // Set up data handler
             this.mediaRecorder.ondataavailable = (event) => {
+                console.log('Got data chunk, size:', event.data.size);
                 if (event.data.size > 0) {
                     this.audioChunks.push(event.data);
                 }
             };
             
+            // Set up error handler
+            this.mediaRecorder.onerror = (event) => {
+                console.error('MediaRecorder error:', event.error);
+                this.updateStatus(`Recording error: ${event.error.message}`);
+            };
+            
+            // Connect to analyser node for visualization
             const micSource = this.audioContext.createMediaStreamSource(stream);
             micSource.connect(this.analyser);
             this.sourceNode = micSource;
             
+            // Start recording - request data every second
+            console.log('Starting MediaRecorder...');
             this.mediaRecorder.start(1000);
+            console.log('MediaRecorder started:', this.mediaRecorder.state);
+            
             this.isRecording = true;
+            this.updateStatus('Listening to your voice...');
             
-            this.updateStatus('Recording active');
+            // Start timer for animation
+            if (typeof window.animateActiveWaveform === 'function') {
+                window.animateActiveWaveform(true);
+            }
             
+            // Set a safety timeout to automatically stop recording after 15 seconds
+            // This is a backup in case the regular stop mechanism fails
             this.recordingTimeout = setTimeout(() => {
                 if (this.isRecording) {
+                    console.log('Safety timeout: auto-stopping recording after 15s');
                     this.stopRecording();
                 }
             }, 15000);
@@ -226,6 +256,13 @@ class AudioProcessor {
         } catch (error) {
             console.error('Error starting recording:', error);
             this.updateStatus(`Recording error: ${error.message}`);
+            
+            // Ensure the button is reset
+            const voiceBtn = document.getElementById('voice-input-btn');
+            if (voiceBtn) {
+                voiceBtn.classList.remove('active');
+            }
+            
             throw error;
         }
     }
@@ -444,7 +481,7 @@ class AudioProcessor {
                     .catch(error => {
                         console.error('Audio play error:', error);
                         
-                        if (error.name === 'NotAllowedError') {
+                        if (error.name === 'NotAllowedError' && audioContext) {
                             this.updateStatus('Autoplay blocked. Click to enable audio.');
                             
                             const clickHandler = async () => {
@@ -597,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.generateSpeech = (text, options) => audioProcessor.generateSpeech(text, options);
     window.processProposal = (text) => audioProcessor.processProposal(text);
     
-    // Set up voice button functionality
+    // Set up voice button functionality - UPDATED FOR BETTER RECORDING
     const voiceButton = document.getElementById('voice-input-btn');
     if (voiceButton) {
         voiceButton.addEventListener('click', async function() {
@@ -605,6 +642,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isActive = voiceButton.classList.contains('active');
                 
                 if (isActive) {
+                    // User clicked to stop recording
+                    console.log('Stopping voice recording...');
                     voiceButton.classList.remove('active');
                     const audioBlob = await audioProcessor.stopRecording();
                     
@@ -630,14 +669,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 } else {
+                    // User clicked to start recording
+                    console.log('Starting voice recording...');
                     voiceButton.classList.add('active');
-                    await audioProcessor.startRecording();
                     
+                    // Update status immediately
+                    audioProcessor.updateStatus('Listening...');
+                    
+                    // Start recording with a slight delay to ensure UI updates
                     setTimeout(async () => {
-                        if (voiceButton.classList.contains('active')) {
-                            voiceButton.click();
+                        try {
+                            await audioProcessor.startRecording();
+                            
+                            // Set a timer to automatically stop recording after 5 seconds
+                            setTimeout(() => {
+                                if (voiceButton.classList.contains('active')) {
+                                    console.log('Auto-stopping recording after timeout');
+                                    voiceButton.click(); // Trigger the stop recording action
+                                }
+                            }, 5000);
+                        } catch (err) {
+                            console.error('Error starting recording:', err);
+                            voiceButton.classList.remove('active');
+                            audioProcessor.updateStatus(`Error: ${err.message}`);
                         }
-                    }, 5000);
+                    }, 100);
                 }
             } catch (error) {
                 console.error('Voice button error:', error);

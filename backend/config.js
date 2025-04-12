@@ -28,7 +28,7 @@ const ELEVEN_LABS_CONFIG = {
   apiKey: process.env.ELEVEN_LABS_API_KEY,
   apiUrl: 'https://api.elevenlabs.io/v1',
   defaultVoiceId: process.env.DEFAULT_VOICE_ID || 'default',
-  defaultModelId: 'eleven_multilingual_v2',
+  defaultModelId: 'eleven_multilingual_v1',
   voiceSettings: {
     stability: parseFloat(process.env.VOICE_STABILITY) || 0.75,
     similarityBoost: parseFloat(process.env.VOICE_SIMILARITY_BOOST) || 0.75,

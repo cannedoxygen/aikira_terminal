@@ -16,6 +16,7 @@ const FormData = require('form-data');
 
 
 // Load environment variables
+require('dotenv').config();
 dotenv.config();
 
 // Create Express app
@@ -105,40 +106,6 @@ app.use('/api/speech', requireApiKeys);
 // Import proposal controller
 const proposalController = require('./backend/controllers/proposal-controller');
 app.use('/api/proposal', proposalController);
-
-// Helper function to get a valid voice ID from Eleven Labs
-async function getValidVoiceId(apiKey, requestedVoiceId) {
-  try {
-    // Get available voices
-    const voicesResponse = await axios.get('https://api.elevenlabs.io/v1/voices', {
-      headers: {
-        'xi-api-key': apiKey
-      }
-    });
-    
-    if (voicesResponse.data.voices && voicesResponse.data.voices.length > 0) {
-      // If a specific voice ID was requested, check if it exists
-      if (requestedVoiceId && requestedVoiceId !== 'default') {
-        const voiceExists = voicesResponse.data.voices.some(voice => voice.voice_id === requestedVoiceId);
-        if (voiceExists) {
-          console.log(`Using requested voice ID: ${requestedVoiceId}`);
-          return requestedVoiceId;
-        }
-        console.log(`Requested voice ID ${requestedVoiceId} not found, using first available voice`);
-      }
-      
-      // Otherwise, use the first available voice
-      const firstVoiceId = voicesResponse.data.voices[0].voice_id;
-      console.log(`Using first available voice: ${firstVoiceId} (${voicesResponse.data.voices[0].name})`);
-      return firstVoiceId;
-    } else {
-      throw new Error('No voices found in your Eleven Labs account');
-    }
-  } catch (error) {
-    console.error('Error getting valid voice ID:', error.message);
-    throw new Error('Could not get a valid voice ID from Eleven Labs');
-  }
-}
 
 // OpenAI integration endpoint
 app.post('/api/openai/generate-response', async (req, res) => {
@@ -378,6 +345,8 @@ app.post('/api/speech/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
+// This fixed endpoint should replace the existing speech generation endpoint in server.js
+
 // Text-to-speech endpoint with Eleven Labs API
 app.post('/api/speech/generate', async (req, res) => {
   try {
@@ -390,21 +359,48 @@ app.post('/api/speech/generate', async (req, res) => {
       });
     }
     
-    // Get Eleven Labs API key
+    // Get Eleven Labs API key directly from environment
     const apiKey = process.env.ELEVEN_LABS_API_KEY;
     if (!apiKey) {
       throw new Error('Eleven Labs API key not configured. Please add to .env file.');
     }
     
-    console.log(`Generating speech with Eleven Labs for text: ${text.substring(0, 50)}...`);
+    console.log(`Generating speech with Eleven Labs for text: "${text.substring(0, 30)}..."`);
     
-    // Get a valid voice ID
-    const useVoiceId = await getValidVoiceId(apiKey, voice_id);
-    console.log(`Using voice ID: ${useVoiceId}`);
+    // First, get available voices to ensure we use a valid voice ID
+    console.log('Fetching available voices...');
+    let validVoiceId;
+    
+    try {
+      const voicesResponse = await axios.get('https://api.elevenlabs.io/v1/voices', {
+        headers: {
+          'xi-api-key': apiKey
+        }
+      });
+      
+      // Use the requested voice ID if it exists, otherwise use the first available voice
+      if (voice_id && voicesResponse.data.voices.some(v => v.voice_id === voice_id)) {
+        validVoiceId = voice_id;
+      } else {
+        // Default to first voice if available, otherwise use a standard voice ID
+        validVoiceId = voicesResponse.data.voices.length > 0 
+          ? voicesResponse.data.voices[0].voice_id 
+          : "OYTbf65OHHFELVut7v1H"; // Fallback to a standard voice ID
+      }
+      
+      console.log(`Using voice ID: ${validVoiceId}`);
+    } catch (error) {
+      console.error('Error fetching voices:', error);
+      // Fallback to standard voice ID
+      validVoiceId = "OYTbf65OHHFELVut7v1H";
+      console.log(`Falling back to standard voice ID: ${validVoiceId}`);
+    }
+    
+    // Use the validated voice ID
+    const useVoiceId = validVoiceId;
     
     // Use default model if not provided
-    const useModelId = model_id || 'eleven_multilingual_v2';
-    console.log(`Using model ID: ${useModelId}`);
+    const useModelId = model_id || 'eleven_monolingual_v1';
     
     // Set default voice settings if not provided
     const settings = voice_settings || {
@@ -414,7 +410,8 @@ app.post('/api/speech/generate', async (req, res) => {
       use_speaker_boost: true
     };
     
-    // Make API request to Eleven Labs
+    // Make the API request to Eleven Labs
+    console.log(`Making API request to Eleven Labs with voice ID: ${useVoiceId}`);
     const response = await axios({
       method: 'post',
       url: `https://api.elevenlabs.io/v1/text-to-speech/${useVoiceId}`,
@@ -428,12 +425,14 @@ app.post('/api/speech/generate', async (req, res) => {
         'xi-api-key': apiKey,
         'Content-Type': 'application/json'
       },
-      responseType: 'arraybuffer'
+      responseType: 'arraybuffer',
+      timeout: 30000 // 30 second timeout
     });
     
-    console.log(`Eleven Labs API response received, size: ${response.data.length} bytes`);
+    console.log(`Response received from Eleven Labs, size: ${response.data.length} bytes`);
     
-    // Ensure the downloads directory exists
+    // Create directories if they don't exist
+    const downloadsDir = path.join(__dirname, 'downloads');
     if (!fs.existsSync(downloadsDir)) {
       fs.mkdirSync(downloadsDir, { recursive: true });
       console.log(`Created downloads directory: ${downloadsDir}`);
@@ -449,17 +448,18 @@ app.post('/api/speech/generate', async (req, res) => {
     
     // Get the relative URL path
     const fileUrl = `/downloads/${filename}`;
+    console.log(`File URL: ${fileUrl}`);
     
-    // Return success with file URL
+    // Return success response
     return res.status(200).json({
       success: true,
-      audio_url: fileUrl, 
+      audio_url: fileUrl,
       voice_id: useVoiceId,
       model_id: useModelId
     });
     
   } catch (error) {
-    console.error('Eleven Labs API error:', error.message);
+    console.error('Eleven Labs API error:', error);
     
     // Log detailed error information
     if (error.response) {
@@ -479,7 +479,7 @@ app.post('/api/speech/generate', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Error generating speech',
-      message: error.message
+      message: error.message || 'Unknown error'
     });
   }
 });
@@ -497,8 +497,20 @@ app.get('/api/debug/eleven-labs', async (req, res) => {
     
     console.log(`Testing Eleven Labs API with key: ${apiKey.substring(0, 5)}...`);
     
-    // Get a valid voice ID
-    const voiceId = await getValidVoiceId(apiKey, "default");
+    // Simple test API call to get voices
+    const voicesResponse = await axios.get(
+      'https://api.elevenlabs.io/v1/voices',
+      {
+        headers: {
+          'xi-api-key': apiKey
+        }
+      }
+    );
+    
+    // Use first available voice ID for testing
+    const voiceId = voicesResponse.data.voices.length > 0 ? 
+      voicesResponse.data.voices[0].voice_id : 
+      "eleven_monolingual_v1";
     
     // Test by generating a short audio clip
     const testText = "This is a test of the Aikira speech system.";
@@ -509,7 +521,7 @@ app.get('/api/debug/eleven-labs', async (req, res) => {
       url: `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
       data: {
         text: testText,
-        model_id: 'eleven_multilingual_v2'
+        model_id: 'eleven_multilingual_v1'
       },
       headers: {
         'Accept': 'audio/mpeg',
@@ -527,7 +539,8 @@ app.get('/api/debug/eleven-labs', async (req, res) => {
     return res.json({
       success: true,
       message: 'Eleven Labs API test successful',
-      test_audio_url: `/downloads/${filename}`
+      test_audio_url: `/downloads/${filename}`,
+      voices_count: voicesResponse.data.voices.length
     });
   } catch (error) {
     console.error('Eleven Labs debug test error:', error);
@@ -552,7 +565,7 @@ app.get('/api/speech/test', async (req, res) => {
     
     console.log(`Testing Eleven Labs API with key: ${apiKey.substring(0, 5)}...`);
     
-    // Make a simple request to the API to check if the key is valid
+    // Make a simple request to test the API
     const response = await axios.get('https://api.elevenlabs.io/v1/voices', {
       headers: {
         'xi-api-key': apiKey
