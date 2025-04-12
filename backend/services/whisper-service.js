@@ -41,8 +41,12 @@ async function transcribeAudio(filePath, language = null, prompt = null) {
     
     // Create form data
     const formData = new FormData();
-    formData.append('file', fs.createReadStream(filePath));
+    
+    // IMPORTANT: Ensure we're using the correct model name "whisper-1"
     formData.append('model', 'whisper-1');
+    
+    // Add audio file to form data
+    formData.append('file', fs.createReadStream(filePath));
     
     // Add optional parameters if provided
     if (language) {
@@ -52,6 +56,8 @@ async function transcribeAudio(filePath, language = null, prompt = null) {
     if (prompt) {
       formData.append('prompt', prompt);
     }
+    
+    console.log('Sending request to Whisper API with model: whisper-1');
     
     // Make API request
     const response = await axios.post(
@@ -65,6 +71,7 @@ async function transcribeAudio(filePath, language = null, prompt = null) {
       }
     );
     
+    console.log('Whisper API response received successfully');
     return response.data;
   } catch (error) {
     console.error('Whisper API error:', error.response?.data || error.message);
@@ -89,8 +96,12 @@ async function translateAudio(filePath, prompt = null) {
     
     // Create form data
     const formData = new FormData();
-    formData.append('file', fs.createReadStream(filePath));
+    
+    // IMPORTANT: Ensure we're using the correct model name "whisper-1"
     formData.append('model', 'whisper-1');
+    
+    // Add audio file
+    formData.append('file', fs.createReadStream(filePath));
     
     // Add prompt if provided
     if (prompt) {
