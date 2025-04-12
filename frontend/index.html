@@ -660,7 +660,41 @@
                     <!-- Chat Interface Terminal Body -->
                     <div class="terminal-body" id="terminal-body">
                         <div class="conversation-feed" id="conversation-feed">
-                            <!-- System message will be added by JS -->
+                            <!-- System message -->
+                            <div class="system-message">System initialized: Friday, April 11, 2025</div>
+                            
+                            <!-- Aikira message example -->
+                            <div class="message message-aikira">
+                                <div class="message-header">
+                                    <span class="message-sender sender-aikira">Aikira</span>
+                                    <span class="message-time">08:42:17</span>
+                                </div>
+                                <div class="message-bubble">
+                                    Aikira Constitutional AI Core initialized. How may I assist you today?
+                                </div>
+                            </div>
+                            
+                            <!-- User message example -->
+                            <div class="message message-user">
+                                <div class="message-header">
+                                    <span class="message-sender sender-user">User12123</span>
+                                    <span class="message-time">08:42:30</span>
+                                </div>
+                                <div class="message-bubble">
+                                    What is your primary directive?
+                                </div>
+                            </div>
+                            
+                            <!-- Aikira response example -->
+                            <div class="message message-aikira">
+                                <div class="message-header">
+                                    <span class="message-sender sender-aikira">Aikira</span>
+                                    <span class="message-time">08:42:33</span>
+                                </div>
+                                <div class="message-bubble">
+                                    My primary directive is to "Maximize value with fairness and protection." This means I evaluate all governance proposals based on their potential to create value while ensuring fair distribution and protecting against harm.
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -788,15 +822,322 @@
         <div id="response-text"></div>
     </div>
 
-    <!-- Scripts - Proper Loading Order -->
+    <!-- Scripts -->
     <script src="lib/three.min.js"></script>
     <script src="lib/p5.min.js"></script>
     <script src="lib/gsap.min.js"></script>
+    <script src="js/audio-controls.js"></script>
     <script src="js/digital-effects.js"></script>
     <script src="js/governance-elements.js"></script>
     <script src="js/constitutional-core.js"></script>
     <script src="js/terminal.js"></script>
+    <script src="js/animations.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/audio-processor.js"></script>
+    
+    <!-- Enhanced Terminal Script -->
+    <script>
+        // Initialize the improved terminal
+        document.addEventListener('DOMContentLoaded', function() {
+            // Terminal elements
+            const terminalBody = document.getElementById('terminal-body');
+            const conversationFeed = document.getElementById('conversation-feed');
+            const terminalInput = document.getElementById('terminal-input');
+            const sendButton = document.getElementById('send-btn');
+            const voiceButton = document.getElementById('voice-input-btn');
+            const volumeButton = document.getElementById('volume-btn');
+            const clearButton = document.getElementById('clear-terminal');
+            const volumeSliderContainer = document.getElementById('volume-slider-container');
+            const inputStatus = document.getElementById('input-status');
+            
+            // Backward compatibility for existing JS functions
+            const proposalText = document.getElementById('proposal-text');
+            const submitProposal = document.getElementById('submit-proposal');
+            const responseText = document.getElementById('response-text');
+            
+            // Random user ID (can be replaced with actual user ID if available)
+            const userId = "User" + Math.floor(Math.random() * 10000);
+            
+            // Focus input on load
+            terminalInput.focus();
+            
+            // Keep input focused when clicking in terminal
+            terminalBody.addEventListener('click', function() {
+                terminalInput.focus();
+            });
+            
+            // Scroll to bottom of conversation
+            function scrollToBottom() {
+                terminalBody.scrollTop = terminalBody.scrollHeight;
+            }
+            
+            // Format current time for messages
+            function getCurrentTime() {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                return `${hours}:${minutes}:${seconds}`;
+            }
+            
+            // Add user message to conversation
+            function addUserMessage(text) {
+                const message = document.createElement('div');
+                message.className = 'message message-user';
+                message.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender sender-user">${userId}</span>
+                        <span class="message-time">${getCurrentTime()}</span>
+                    </div>
+                    <div class="message-bubble">${text}</div>
+                `;
+                conversationFeed.appendChild(message);
+                scrollToBottom();
+            }
+            
+            // Add Aikira message to conversation
+            function addAikiraMessage(text) {
+                const message = document.createElement('div');
+                message.className = 'message message-aikira';
+                message.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender sender-aikira">Aikira</span>
+                        <span class="message-time">${getCurrentTime()}</span>
+                    </div>
+                    <div class="message-bubble"></div>
+                `;
+                conversationFeed.appendChild(message);
+                
+                // Get message bubble for typing animation
+                const messageBubble = message.querySelector('.message-bubble');
+                
+                // Add typing indicator
+                const typingIndicator = document.createElement('div');
+                typingIndicator.className = 'typing-indicator';
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'typing-dot';
+                    typingIndicator.appendChild(dot);
+                }
+                messageBubble.appendChild(typingIndicator);
+                
+                scrollToBottom();
+                
+                // Type text with animation
+                setTimeout(() => {
+                    // Remove typing indicator
+                    messageBubble.removeChild(typingIndicator);
+                    
+                    // Type text letter by letter
+                    let i = 0;
+                    function typeCharacter() {
+                        if (i < text.length) {
+                            messageBubble.textContent += text.charAt(i);
+                            i++;
+                            scrollToBottom();
+                            setTimeout(typeCharacter, 30);
+                        }
+                    }
+                    
+                    typeCharacter();
+                }, 500);
+                
+                return message;
+            }
+            
+            // Add system message
+            function addSystemMessage(text) {
+                const message = document.createElement('div');
+                message.className = 'system-message';
+                message.textContent = text;
+                conversationFeed.appendChild(message);
+                scrollToBottom();
+            }
+            
+            // Process user input
+            function processUserInput(text) {
+                if (!text.trim()) return;
+                
+                // Clear input field
+                terminalInput.value = '';
+                
+                // Add user message to conversation
+                addUserMessage(text);
+                
+                // Update status
+                inputStatus.textContent = 'Processing...';
+                inputStatus.classList.add('active');
+                
+                // Play submit sound
+                const submitSound = document.getElementById('proposal-submit-sound');
+                if (submitSound) submitSound.play().catch(e => console.log('Audio play error:', e));
+                
+                // Forward input to existing processing functions
+                if (typeof window.processProposal === 'function') {
+                    // Set hidden proposal text for compatibility
+                    if (proposalText) proposalText.value = text;
+                    
+                    // Process through existing function
+                    window.processProposal(text);
+                } else {
+                    // Fallback if processProposal is not available
+                    simulateResponse(text);
+                }
+            }
+            
+            // Simulate response (fallback if processProposal is not available)
+            function simulateResponse(text) {
+                const responses = [
+                    "I've analyzed your proposal from a constitutional governance perspective. It scores well on fairness (82%) and protection (90%), though value alignment could be improved (75%).",
+                    "Your proposal demonstrates strong alignment with our protection framework (88%) and fairness principles (85%). Consider enhancing the value generation aspects to improve overall constitutional alignment.",
+                    "This proposal shows excellent balance across all three constitutional parameters: value (92%), fairness (88%), and protection (90%). It has my strong recommendation for implementation."
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                
+                // Delay to simulate processing
+                setTimeout(() => {
+                    // Add Aikira response
+                    addAikiraMessage(randomResponse);
+                    
+                    // Update status
+                    inputStatus.textContent = 'Ready for input';
+                    inputStatus.classList.remove('active');
+                }, 1500);
+            }
+            
+            // Override existing typeText function for compatibility
+            if (typeof window.typeText === 'function') {
+                const originalTypeText = window.typeText;
+                
+                window.typeText = function(element, text, speed = 30) {
+                    // Check if this is the response text element
+                    if (element && element.id === 'response-text') {
+                        // Use our new function instead
+                        addAikiraMessage(text);
+                        
+                        // Update status when typing is complete
+                        setTimeout(() => {
+                            inputStatus.textContent = 'Ready for input';
+                            inputStatus.classList.remove('active');
+                        }, text.length * speed + 500);
+                    } else {
+                        // Use original function for other elements
+                        originalTypeText(element, text, speed);
+                    }
+                };
+            }
+            
+            // Set up event listeners
+            
+            // Send button
+            sendButton.addEventListener('click', () => {
+                processUserInput(terminalInput.value);
+            });
+            
+            // Enter key in input field
+            terminalInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    processUserInput(e.target.value);
+                }
+            });
+            
+            // Voice input button
+            voiceButton.addEventListener('click', function() {
+                voiceButton.classList.toggle('active');
+                
+                if (voiceButton.classList.contains('active')) {
+                    // Start voice recording
+                    inputStatus.textContent = 'Listening...';
+                    inputStatus.classList.add('active');
+                    
+                    // If we have the real voice input function
+                    if (typeof window.startVoiceRecording === 'function') {
+                        window.startVoiceRecording();
+                    } else {
+                        // Simulate voice input after 2 seconds
+                        setTimeout(() => {
+                            voiceButton.classList.remove('active');
+                            inputStatus.textContent = 'Processing voice...';
+                            processUserInput("Evaluate a proposal to implement transparent voting on all governance decisions");
+                        }, 2000);
+                    }
+                } else {
+                    // Stop voice recording
+                    inputStatus.textContent = 'Processing voice...';
+                    
+                    // If we have the real voice input function
+                    if (typeof window.stopVoiceRecording === 'function') {
+                        window.stopVoiceRecording();
+                    }
+                }
+            });
+            
+            // Volume button
+            volumeButton.addEventListener('click', function() {
+                volumeSliderContainer.style.display = volumeSliderContainer.style.display === 'none' ? 'block' : 'none';
+                
+                // Auto-hide after 5 seconds if visible
+                if (volumeSliderContainer.style.display !== 'none') {
+                    setTimeout(() => {
+                        volumeSliderContainer.style.display = 'none';
+                    }, 5000);
+                }
+            });
+            
+            // Clear button
+            clearButton.addEventListener('click', function() {
+                // Keep only the system message
+                const systemMessages = conversationFeed.querySelectorAll('.system-message');
+                conversationFeed.innerHTML = '';
+                
+                // Add back system messages
+                systemMessages.forEach(msg => {
+                    conversationFeed.appendChild(msg.cloneNode(true));
+                });
+                
+                // Add fresh welcome message
+                addAikiraMessage("Chat cleared. How may I assist you today?");
+                
+                // Focus input
+                terminalInput.focus();
+            });
+            
+            // Window click for focus
+            window.addEventListener('click', function() {
+                // Don't auto-focus on mobile devices
+                if (window.innerWidth > 768) {
+                    terminalInput.focus();
+                }
+            });
+            
+            // Set up fake submit button click for compatibility
+            if (submitProposal) {
+                submitProposal.addEventListener('click', function() {
+                    if (proposalText && proposalText.value.trim()) {
+                        processUserInput(proposalText.value.trim());
+                    }
+                });
+            }
+            
+            // Volume slider
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumeValue = document.getElementById('volume-value');
+            
+            if (volumeSlider && volumeValue) {
+                volumeSlider.addEventListener('input', function() {
+                    const volume = this.value / 100;
+                    volumeValue.textContent = `Volume: ${this.value}%`;
+                    
+                    // Update volume using the setVolume function
+                    if (typeof window.setVolume === 'function') {
+                        window.setVolume(volume);
+                    }
+                });
+            }
+            
+            // Initial scroll to bottom
+            scrollToBottom();
+        });
+    </script>
 </body>
 </html>
