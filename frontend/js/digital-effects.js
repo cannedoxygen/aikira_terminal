@@ -1,11 +1,16 @@
 /**
  * Aikira Terminal - Digital Effects
- * Manages all visual effects for the digital world background
+ * Manages visual effects for the digital world background
  */
 
 class DigitalWorld {
     constructor() {
         this.canvas = document.getElementById('background-canvas');
+        if (!this.canvas) {
+            console.warn('Background canvas not found');
+            return;
+        }
+        
         this.ctx = this.canvas.getContext('2d');
         this.width = this.canvas.width = this.canvas.offsetWidth;
         this.height = this.canvas.height = this.canvas.offsetHeight;
@@ -84,6 +89,7 @@ class DigitalWorld {
     }
     
     resize() {
+        if (!this.canvas) return;
         this.width = this.canvas.width = this.canvas.offsetWidth;
         this.height = this.canvas.height = this.canvas.offsetHeight;
     }
@@ -99,6 +105,8 @@ class DigitalWorld {
     }
     
     drawGrid() {
+        if (!this.ctx) return;
+        
         this.ctx.strokeStyle = `rgba(255, 255, 255, ${this.gridOpacity})`;
         this.ctx.lineWidth = 0.5;
         
@@ -120,6 +128,8 @@ class DigitalWorld {
     }
     
     drawDataParticles() {
+        if (!this.ctx) return;
+        
         this.dataParticles.forEach(particle => {
             // Update position
             particle.x += particle.speedX;
@@ -144,6 +154,8 @@ class DigitalWorld {
     }
     
     drawNeuralNetwork() {
+        if (!this.ctx) return;
+        
         const now = Date.now();
         
         // Update and draw nodes
@@ -218,6 +230,8 @@ class DigitalWorld {
     }
     
     animate() {
+        if (!this.ctx) return;
+        
         // Clear canvas
         this.ctx.fillStyle = this.colors.background;
         this.ctx.fillRect(0, 0, this.width, this.height);
@@ -236,6 +250,11 @@ class DigitalWorld {
 class SoundVisualizer {
     constructor() {
         this.canvas = document.getElementById('voice-waveform');
+        if (!this.canvas) {
+            console.warn('Voice waveform canvas not found');
+            return;
+        }
+        
         this.ctx = this.canvas.getContext('2d');
         this.width = this.canvas.width = this.canvas.offsetWidth;
         this.height = this.canvas.height = this.canvas.offsetHeight;
@@ -257,16 +276,18 @@ class SoundVisualizer {
     }
     
     init() {
+        if (!this.ctx) return;
         // Draw initial state
-        this.drawInactiveState();
+        this.drawIdleWave();
     }
     
     resize() {
+        if (!this.canvas) return;
         this.width = this.canvas.width = this.canvas.offsetWidth;
         this.height = this.canvas.height = this.canvas.offsetHeight;
         
         if (!this.isActive) {
-            this.drawInactiveState();
+            this.drawIdleWave();
         }
     }
     
@@ -280,44 +301,43 @@ class SoundVisualizer {
     
     disconnect() {
         this.isActive = false;
-        this.drawInactiveState();
+        this.drawIdleWave();
     }
     
-    drawInactiveState() {
+    drawIdleWave() {
+        if (!this.ctx) return;
+        
         this.ctx.clearRect(0, 0, this.width, this.height);
+        this.ctx.fillStyle = 'rgba(28, 32, 41, 0.8)';
+        this.ctx.fillRect(0, 0, this.width, this.height);
         
-        // Draw center line
-        this.ctx.strokeStyle = 'rgba(216, 181, 255, 0.3)';
-        this.ctx.lineWidth = 2;
+        const centerY = this.height / 2;
+        
         this.ctx.beginPath();
-        this.ctx.moveTo(0, this.height / 2);
-        this.ctx.lineTo(this.width, this.height / 2);
-        this.ctx.stroke();
+        this.ctx.moveTo(0, centerY);
         
-        // Draw small oscillation to indicate standby
-        this.ctx.strokeStyle = 'rgba(169, 238, 230, 0.4)';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        
+        // Draw a gentle sine wave
         for (let x = 0; x < this.width; x++) {
-            const y = this.height / 2 + Math.sin(x * 0.05) * 5;
-            
-            if (x === 0) {
-                this.ctx.moveTo(x, y);
-            } else {
-                this.ctx.lineTo(x, y);
-            }
+            const amplitude = 5 + Math.sin(Date.now() * 0.001) * 2;
+            const y = centerY + Math.sin(x * 0.05 + Date.now() * 0.001) * amplitude;
+            this.ctx.lineTo(x, y);
         }
         
+        this.ctx.strokeStyle = 'rgba(169, 238, 230, 0.6)';
+        this.ctx.lineWidth = 2;
         this.ctx.stroke();
+        
+        requestAnimationFrame(() => this.drawIdleWave());
     }
     
     visualize() {
-        if (!this.isActive) return;
+        if (!this.isActive || !this.ctx || !this.analyser) return;
         
         this.analyser.getByteTimeDomainData(this.dataArray);
         
         this.ctx.clearRect(0, 0, this.width, this.height);
+        this.ctx.fillStyle = 'rgba(28, 32, 41, 0.8)';
+        this.ctx.fillRect(0, 0, this.width, this.height);
         
         // Draw waveform
         this.ctx.lineWidth = 2;
@@ -372,7 +392,7 @@ class SoundVisualizer {
         this.ctx.stroke();
         
         // Continue animation
-        requestAnimationFrame(this.visualize.bind(this));
+        requestAnimationFrame(() => this.visualize());
     }
 }
 

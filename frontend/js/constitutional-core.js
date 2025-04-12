@@ -34,8 +34,6 @@ class ConstitutionalCore {
     
     /**
      * Evaluates a proposal against constitutional parameters
-     * @param {string} proposalText - The text of the proposal
-     * @returns {Object} Evaluation results
      */
     evaluateProposal(proposalText) {
         // In a real implementation, this would use NLP/ML to evaluate the proposal
@@ -113,8 +111,6 @@ class ConstitutionalCore {
     
     /**
      * Calculates variance among scores to determine consensus
-     * @param {Array} scores - Array of scores
-     * @returns {number} Variance value
      */
     calculateVariance(scores) {
         const mean = scores.reduce((sum, score) => sum + score, 0) / scores.length;
@@ -124,11 +120,6 @@ class ConstitutionalCore {
     
     /**
      * Generates recommendations based on proposal evaluation
-     * @param {number} valueScore - Value score
-     * @param {number} fairnessScore - Fairness score
-     * @param {number} protectionScore - Protection score
-     * @param {boolean} approved - Whether proposal is approved
-     * @returns {Array} Array of recommendation strings
      */
     generateRecommendations(valueScore, fairnessScore, protectionScore, approved) {
         const recommendations = [];
@@ -172,9 +163,6 @@ class ConstitutionalCore {
     
     /**
      * Updates metric bars in the UI
-     * @param {number} valueScore - Value score
-     * @param {number} fairnessScore - Fairness score
-     * @param {number} protectionScore - Protection score
      */
     updateMetricBars(valueScore, fairnessScore, protectionScore) {
         const metricBars = document.querySelectorAll('.metric-value');
@@ -206,7 +194,6 @@ class ConstitutionalCore {
     
     /**
      * Updates the consensus graph with new data
-     * @param {number} consensusIndex - Consensus index (0-1)
      */
     updateConsensusGraph(consensusIndex) {
         if (!this.consensusCtx) return;
@@ -232,9 +219,9 @@ class ConstitutionalCore {
         
         // Create gradient
         const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, 'rgba(255, 214, 236, 0.7)'); // Pink
-        gradient.addColorStop(0.5, 'rgba(216, 181, 255, 0.7)'); // Purple
-        gradient.addColorStop(1, 'rgba(169, 238, 230, 0.7)'); // Turquoise
+        gradient.addColorStop(0, 'rgba(255, 214, 236, 0.7)');
+        gradient.addColorStop(0.5, 'rgba(216, 181, 255, 0.7)');
+        gradient.addColorStop(1, 'rgba(169, 238, 230, 0.7)');
         
         ctx.fillStyle = gradient;
         ctx.fill();
@@ -274,21 +261,26 @@ class ConstitutionalCore {
     }
     
     /**
-     * Starts a subtle animation cycle to indicate the constitutional core is operational
+     * Starts a subtle animation cycle to indicate the core is operational
      */
     startCalibrationCycle() {
-        // Create subtle pulsing effect on principles
-        const principles = document.querySelectorAll('.principle');
-        
-        principles.forEach((principle, index) => {
-            gsap.to(principle, {
-                opacity: 0.7,
-                duration: 2,
-                repeat: -1,
-                yoyo: true,
-                delay: index * 0.5
-            });
-        });
+        // Check if GSAP is available
+        if (typeof gsap !== 'undefined') {
+            // Create subtle pulsing effect on principles
+            const principles = document.querySelectorAll('.principle');
+            
+            if (principles.length > 0) {
+                principles.forEach((principle, index) => {
+                    gsap.to(principle, {
+                        opacity: 0.7,
+                        duration: 2,
+                        repeat: -1,
+                        yoyo: true,
+                        delay: index * 0.5
+                    });
+                });
+            }
+        }
         
         // Simulate occasional recalibration
         setInterval(() => {
@@ -320,20 +312,22 @@ class ConstitutionalCore {
         // Update parameter
         this.constitutionalParameters[randomKey] = newValue;
         
-        // Visual feedback of recalibration
+        // Visual feedback of recalibration - FIX: Check for element first
         const hexDisplay = document.querySelector('.hexagonal-display');
-        hexDisplay.classList.add('recalibrating');
-        
-        // Add recalibration particles
-        this.addRecalibrationParticles();
+        if (hexDisplay) {
+            hexDisplay.classList.add('recalibrating');
+            
+            // Add recalibration particles
+            this.addRecalibrationParticles();
+            
+            // Remove class after animation completes
+            setTimeout(() => {
+                hexDisplay.classList.remove('recalibrating');
+            }, 1000);
+        }
         
         // Update consensus graph
         this.updateConsensusGraph(0.85 + (Math.random() * 0.1));
-        
-        // Remove class after animation completes
-        setTimeout(() => {
-            hexDisplay.classList.remove('recalibrating');
-        }, 1000);
     }
     
     /**
@@ -341,6 +335,7 @@ class ConstitutionalCore {
      */
     addRecalibrationParticles() {
         const container = document.querySelector('.terminal-container');
+        if (!container) return;
         
         // Create particles
         for (let i = 0; i < 10; i++) {
@@ -362,7 +357,9 @@ class ConstitutionalCore {
             
             // Remove after animation completes
             setTimeout(() => {
-                particle.remove();
+                if (particle.parentNode) {
+                    particle.remove();
+                }
             }, 6000);
         }
     }

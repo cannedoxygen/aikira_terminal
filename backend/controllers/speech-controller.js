@@ -9,6 +9,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const axios = require('axios'); // Make sure axios is imported
 
 const whisperService = require('../services/whisper-service');
 const elevenLabsService = require('../services/eleven-labs-service');
@@ -118,6 +119,17 @@ router.post('/generate', async (req, res) => {
       });
     }
     
+    // Check if Eleven Labs API key is configured
+    const apiKey = process.env.ELEVEN_LABS_API_KEY;
+    if (!apiKey) {
+      throw new Error('Eleven Labs API key not configured. Please add to .env file.');
+    }
+    
+    console.log(`Generating speech for text: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
+    
+    // Get a valid voice ID
+    let voiceId = voice_id || process.env.DEFAULT_VOICE_ID || 'default';
+    
     // Set default voice settings if not provided
     const settings = voice_settings || {
       stability: 0.75,
@@ -126,39 +138,56 @@ router.post('/generate', async (req, res) => {
       use_speaker_boost: true
     };
     
-    // Use default voice and model if not specified
-    const voiceId = voice_id || process.env.DEFAULT_VOICE_ID || 'default';
+    // Use default model if not provided
     const modelId = model_id || 'eleven_multilingual_v2';
     
-    // Generate speech
-    const audioData = await elevenLabsService.generateSpeech(text, voiceId, modelId, settings);
-    
-    // Create unique filename
-    const filename = `${uuidv4()}.mp3`;
-    const downloadDir = path.join(__dirname, '../../downloads');
-    const filePath = path.join(downloadDir, filename);
-    
-    // Create the downloads directory if it doesn't exist
-    if (!fs.existsSync(downloadDir)) {
-      fs.mkdirSync(downloadDir, { recursive: true });
+    try {
+      // Generate speech using the service
+      const audioData = await elevenLabsService.generateSpeech(text, voiceId, modelId, settings);
+      
+      // Create unique filename
+      const filename = `aikira_response_${Date.now()}.mp3`;
+      const downloadDir = path.join(__dirname, '../../downloads');
+      const filePath = path.join(downloadDir, filename);
+      
+      // Create the downloads directory if it doesn't exist
+      if (!fs.existsSync(downloadDir)) {
+        fs.mkdirSync(downloadDir, { recursive: true });
+      }
+      
+      // Save the audio file
+      fs.writeFileSync(filePath, audioData);
+      
+      // Get the relative URL path
+      const fileUrl = `/downloads/${filename}`;
+      
+      // Return JSON response with the file URL
+      return res.status(200).json({
+        success: true,
+        audio_url: fileUrl,
+        voice_id: voiceId,
+        model_id: modelId
+      });
+    } catch (error) {
+      console.error('Eleven Labs API error:', error);
+      
+      // Log detailed error information
+      if (error.response) {
+        console.error('Error status:', error.response.status);
+        console.error('Error headers:', error.response.headers);
+        
+        // For error details, handle possible binary response
+        if (error.response.data) {
+          if (error.response.data instanceof Buffer) {
+            console.error('Error data (Buffer):', error.response.data.toString('utf8').substring(0, 200));
+          } else {
+            console.error('Error data:', error.response.data);
+          }
+        }
+      }
+      
+      throw new Error(`Eleven Labs API error: ${error.message}`);
     }
-    
-    // Save the audio file
-    fs.writeFileSync(filePath, audioData);
-    
-    // Set response headers for audio streaming
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-    
-    // Stream the file to the client
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
-    
-    // Clean up the file after sending
-    fileStream.on('end', () => {
-      fs.unlinkSync(filePath);
-    });
-    
   } catch (error) {
     console.error('Speech generation error:', error);
     return res.status(500).json({
@@ -206,6 +235,38 @@ router.get('/models', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: error.message || 'Error retrieving models'
+    });
+  }
+});
+
+/**
+ * Simple test endpoint for Eleven Labs API
+ * GET /api/speech/test
+ */
+router.get('/test', async (req, res) => {
+  try {
+    const apiKey = process.env.ELEVEN_LABS_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'Eleven Labs API key not configured'
+      });
+    }
+    
+    // Make a simple request to test the API
+    const voices = await elevenLabsService.getVoices();
+    
+    return res.json({
+      success: true,
+      voices_count: voices.length,
+      message: 'Eleven Labs API connection successful'
+    });
+  } catch (error) {
+    console.error('API test error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to connect to Eleven Labs API',
+      message: error.message
     });
   }
 });
