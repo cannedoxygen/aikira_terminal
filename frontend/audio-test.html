@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Audio Test</title>
+  <style>
+    body { background: #1c2029; color: white; font-family: Arial; padding: 20px; }
+    button { padding: 10px 20px; margin: 10px; }
+    .file-list { background: rgba(0,0,0,0.3); padding: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Aikira Audio Test</h1>
+  
+  <h2>Play Latest File</h2>
+  <button onclick="playLatest()">Play Latest Audio File</button>
+  
+  <h2>Play Specific File</h2>
+  <input type="text" id="audioFile" placeholder="Enter file path, e.g., aikira_response_1744424027950.mp3" style="width: 400px;">
+  <button onclick="playSpecific()">Play This File</button>
+  
+  <h2>Direct Audio Element</h2>
+  <audio id="player" controls style="width: 100%;"></audio>
+  
+  <div class="file-list" id="fileList">Loading available audio files...</div>
+  
+  <script>
+    // Play the latest audio file
+    function playLatest() {
+      fetch('/api/system/status')
+        .then(res => res.json())
+        .then(data => {
+          console.log('System online, attempting to find latest audio file');
+          listFiles();
+        });
+    }
+    
+    // Play a specific file
+    function playSpecific() {
+      const filename = document.getElementById('audioFile').value;
+      if (!filename) {
+        alert('Please enter a filename');
+        return;
+      }
+      
+      const path = `/downloads/${filename}`;
+      playFile(path);
+    }
+    
+    // Play a file with direct audio element
+    function playFile(path) {
+      console.log('Playing:', path);
+      const player = document.getElementById('player');
+      player.src = path;
+      player.volume = 1.0;
+      player.play()
+        .then(() => console.log('Playback started'))
+        .catch(err => {
+          console.error('Play error:', err);
+          alert('Error playing file: ' + err.message);
+        });
+    }
+    
+    // Try to list recent files
+    function listFiles() {
+      document.getElementById('fileList').innerHTML = 
+        'Checking the downloads directory for recent files...<br>' +
+        'Try one of these recent files from your server logs:<br>' +
+        '<button onclick="playFile(\'/downloads/aikira_response_1744424027950.mp3\')">Play 1744424027950.mp3</button> ' +
+        '<button onclick="playFile(\'/downloads/aikira_response_1744424240416.mp3\')">Play 1744424240416.mp3</button> ' +
+        '<button onclick="playFile(\'/downloads/aikira_response_1744424254947.mp3\')">Play 1744424254947.mp3</button>';
+    }
+    
+    // Initialize
+    window.onload = function() {
+      listFiles();
+    };
+  </script>
+</body>
+</html>
