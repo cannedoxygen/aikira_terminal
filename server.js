@@ -690,9 +690,10 @@ setInterval(() => {
   });
 }, 60 * 60 * 1000); // Run every hour
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`
+// Start the server when run directly (e.g., local development)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`
   ╔═══════════════════════════════════════════╗
   ║                                           ║
   ║      AIKIRA TERMINAL SERVER               ║
@@ -704,21 +705,22 @@ app.listen(PORT, () => {
   ╚═══════════════════════════════════════════╝
   `);
 
-  console.log(`Visit: http://localhost:${PORT}`);
-  
-  // Log API key status
-  if (process.env.ELEVEN_LABS_API_KEY) {
-    console.log('✓ Eleven Labs API key detected');
-  } else {
-    console.log('✗ Eleven Labs API key not found - voice synthesis unavailable');
-  }
-  
-  if (process.env.OPENAI_API_KEY) {
-    console.log('✓ OpenAI API key detected');
-  } else {
-    console.log('✗ OpenAI API key not found - AI responses unavailable');
-  }
-});
+    console.log(`Visit: http://localhost:${PORT}`);
+
+    // Log API key status
+    console.log(process.env.ELEVEN_LABS_API_KEY
+      ? '✓ Eleven Labs API key detected'  
+      : '✗ Eleven Labs API key not found - voice synthesis unavailable'
+    );
+    console.log(process.env.OPENAI_API_KEY
+      ? '✓ OpenAI API key detected'   
+      : '✗ OpenAI API key not found - AI responses unavailable'
+    );
+  });
+}
+
+// Export the Express app for serverless environments (e.g., Vercel Functions)
+module.exports = app;
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
