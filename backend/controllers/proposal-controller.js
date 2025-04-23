@@ -49,7 +49,7 @@ router.post('/evaluate', async (req, res) => {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-4', // Using GPT-4 for best responses
+        model: 'gpt-3.5-turbo', // Using GPT-3.5-turbo for broader availability
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: proposal }
@@ -97,6 +97,7 @@ router.post('/evaluate', async (req, res) => {
     
   } catch (error) {
     console.error('OpenAI API error:', error.response?.data || error.message);
+    console.error(error.stack);
     
     // Return detailed error information
     return res.status(500).json({

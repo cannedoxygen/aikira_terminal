@@ -323,4 +323,53 @@ class ApiClient {
 // Initialize API client when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.apiClient = new ApiClient();
+    // Define the core processProposal function for terminal input
+    window.processProposal = async (text) => {
+        try {
+            console.log('processProposal called with:', text);
+            // Add user message to chat feed
+            if (typeof window.addUserMessageToConversation === 'function') {
+                window.addUserMessageToConversation(text);
+            }
+            // Echo user input in the terminal UI (typewriter)
+            if (window.terminalInterface) {
+                window.terminalInterface.displayText(text, true);
+            }
+            // Send to OpenAI for a response
+            const openaiResp = await window.apiClient.request('/api/openai/generate-response', {
+                method: 'POST',
+                body: JSON.stringify({ proposal: text })
+            });
+            if (!openaiResp.success) {
+                throw new Error(openaiResp.error || openaiResp.message);
+            }
+            const aiText = openaiResp.response || openaiResp.result?.response;
+            // Add Aikira's response to chat feed
+            if (typeof window.addAikiraMessageToConversation === 'function') {
+                window.addAikiraMessageToConversation(aiText);
+            }
+            // Also type out the AI's response in terminal UI
+            if (window.terminalInterface) {
+                await window.terminalInterface.typeText(aiText, 30, true);
+            }
+            // Fetch the speech audio from Eleven Labs
+            const ttsResp = await window.apiClient.request('/api/speech/generate', {
+                method: 'POST',
+                body: JSON.stringify({ text: aiText })
+            });
+            if (!ttsResp.success) {
+                throw new Error(ttsResp.error);
+            }
+            // Play back the generated audio
+            const audioUrl = ttsResp.audio_url;
+            const audio = new Audio(audioUrl);
+            audio.volume = (window.currentVolume != null ? window.currentVolume : 1);
+            await audio.play();
+        } catch (error) {
+            console.error('processProposal error:', error);
+            if (window.terminalInterface) {
+                window.terminalInterface.displayText(`Error: ${error.message}`, false);
+            }
+        }
+    };
 });

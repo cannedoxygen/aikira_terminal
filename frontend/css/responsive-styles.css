@@ -1,0 +1,732 @@
+/* Aikira Terminal - Responsive Styles
+ * Improved mobile experience for Aikira Terminal
+ * Add this to your existing CSS files or include separately
+ */
+
+/* Base styles */
+:root {
+    /* Primary Pastel Palette */
+    --soft-pink: #FFD6EC;
+    --lavender-purple: #D8B5FF;
+    --pastel-turquoise: #A9EEE6;
+    --soft-white: #FFFFFF;
+
+    /* Background Colors */
+    --dark-bg: #12151a;
+    --medium-bg: #1c2029;
+    --light-bg: #272b36;
+
+    /* Accent Colors (More Vibrant) */
+    --accent-pink: #ff9ee5;
+    --accent-purple: #b38aff;
+    --accent-turquoise: #7adbcf;
+
+    /* Transparency Values */
+    --trans-light: rgba(255, 255, 255, 0.1);
+    --trans-medium: rgba(255, 255, 255, 0.05);
+    --trans-dark: rgba(0, 0, 0, 0.3);
+}
+
+/* Global responsive adjustments */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--text-font);
+    background-color: var(--dark-bg);
+    color: var(--soft-white);
+    line-height: 1.5;
+    overflow-x: hidden;
+    min-height: 100vh;
+    min-height: -webkit-fill-available; /* Fix for iOS */
+}
+
+html {
+    height: -webkit-fill-available; /* Fix for iOS */
+}
+
+/* Terminal Layout */
+.aikira-container {
+    display: grid;
+    /* adjust rows to occupy header then flexible content area */
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr minmax(0, 300px);
+    /* fixed height to fill viewport, allowing fr units to work */
+    height: 100vh;
+    padding: 20px;
+    gap: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Header styling */
+.aikira-header {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: var(--medium-bg);
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(216, 181, 255, 0.2);
+    border: 1px solid var(--trans-light);
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.terminal-title {
+    font-family: var(--display-font);
+    color: var(--soft-pink);
+    font-size: 20px;
+    text-shadow: 0 0 10px rgba(255, 214, 236, 0.6);
+    letter-spacing: 2px;
+    white-space: nowrap;
+}
+
+.status-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.status-item {
+    text-align: center;
+    min-width: 100px;
+}
+
+.status-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--pastel-turquoise);
+    margin-bottom: 2px;
+}
+
+.status-value {
+    font-size: 12px;
+    color: var(--soft-white);
+    background: var(--trans-medium);
+    padding: 3px 6px;
+    border-radius: 4px;
+    border-bottom: 2px solid var(--accent-turquoise);
+}
+
+/* Terminal Chat Interface */
+.terminal-display {
+    background-color: rgba(28, 32, 41, 0.9);
+    border: 1px solid var(--accent-purple);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(216, 181, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.terminal-header {
+    background-color: rgba(39, 43, 54, 0.9);
+    padding: 8px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--accent-purple);
+    z-index: 5;
+}
+
+.terminal-body {
+    flex: 1;
+    padding: 15px;
+    overflow-y: visible;
+    position: relative;
+    z-index: 2;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-purple) var(--medium-bg);
+}
+
+/* Custom scrollbar */
+.terminal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.terminal-body::-webkit-scrollbar-track {
+    background: rgba(28, 32, 41, 0.5);
+    border-radius: 3px;
+}
+
+.terminal-body::-webkit-scrollbar-thumb {
+    background-color: rgba(216, 181, 255, 0.3);
+    border-radius: 3px;
+}
+
+/* Input area styling */
+.terminal-input-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background-color: rgba(39, 43, 54, 0.95);
+    border-top: 1px solid var(--trans-light);
+    position: relative;
+    z-index: 5;
+}
+
+.terminal-input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background-color: rgba(28, 32, 41, 0.8);
+    border: 1px solid var(--trans-light);
+    border-radius: 8px;
+    padding: 0 5px;
+    transition: all 0.2s ease;
+}
+
+.terminal-input-wrapper:focus-within {
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 8px rgba(216, 181, 255, 0.3);
+}
+
+.terminal-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--soft-white);
+    font-family: var(--text-font);
+    font-size: 16px;
+    padding: 12px;
+    min-height: 24px;
+    outline: none;
+    width: 100%;
+}
+
+.terminal-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* Button styling */
+.terminal-input-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.terminal-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(216, 181, 255, 0.15);
+    color: var(--soft-white);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    gap: 6px;
+    height: 40px;
+    min-width: 44px; /* Minimum recommended touch target size */
+}
+
+.terminal-btn:hover {
+    background-color: rgba(216, 181, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.terminal-btn.active {
+    background-color: rgba(255, 158, 229, 0.3);
+}
+
+.terminal-btn.send-btn {
+    background-color: rgba(169, 238, 230, 0.2);
+}
+
+.terminal-btn.send-btn:hover {
+    background-color: rgba(169, 238, 230, 0.3);
+}
+
+/* Message bubbles */
+.conversation-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+}
+
+.message-aikira {
+    align-self: flex-start;
+}
+
+.message-user {
+    align-self: flex-end;
+}
+
+.message-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    gap: 8px;
+}
+
+.message-sender {
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.sender-aikira {
+    color: var(--accent-pink);
+}
+
+.sender-user {
+    color: var(--accent-turquoise);
+}
+
+.message-time {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.message-bubble {
+    padding: 12px 15px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--soft-white);
+    word-wrap: break-word;
+    max-width: 100%;
+    width: fit-content;
+}
+
+.message-aikira .message-bubble {
+    background-color: rgba(216, 181, 255, 0.2);
+    border-top-left-radius: 2px;
+}
+
+.message-user .message-bubble {
+    background-color: rgba(169, 238, 230, 0.2);
+    border-top-right-radius: 2px;
+    align-self: flex-end;
+}
+
+/* System message */
+.system-message {
+    text-align: center;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+    margin: 10px 0;
+}
+
+/* Typing indicator */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 3px;
+    margin-left: 10px;
+}
+
+.typing-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--accent-pink);
+    opacity: 0.8;
+    animation: typingPulse 1.5s infinite;
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typingPulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 0.8; transform: scale(1); }
+}
+
+/* Status indicator */
+.status-indicator-bar {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 50;
+}
+
+#input-status {
+    background-color: rgba(28, 32, 41, 0.8);
+    color: var(--accent-turquoise);
+    padding: 5px 15px;
+    font-size: 12px;
+    border-radius: 15px;
+    border: 1px solid var(--trans-light);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+#input-status.active {
+    background-color: rgba(216, 181, 255, 0.2);
+    opacity: 1;
+}
+
+/* Volume slider */
+.volume-slider-container {
+    position: absolute;
+    bottom: 65px;
+    right: 15px;
+    background-color: var(--medium-bg);
+    border: 1px solid var(--trans-light);
+    border-radius: 8px;
+    padding: 10px;
+    z-index: 100;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.2s ease-out;
+}
+
+#volume-slider {
+    width: 150px;
+    height: 5px;
+    -webkit-appearance: none;
+    background: var(--trans-light);
+    border-radius: 5px;
+    outline: none;
+}
+
+#volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent-purple);
+    cursor: pointer;
+}
+
+#volume-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent-purple);
+    cursor: pointer;
+}
+
+.volume-value {
+    text-align: center;
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--soft-white);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInFromRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.notification-enter {
+    animation: slideInFromRight 0.3s ease-out forwards;
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 1200px) {
+    .aikira-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+        padding: 15px;
+        gap: 15px;
+        /* allow container to grow beyond viewport height for mobile scrolling */
+        min-height: 100vh;
+        /* override fixed height to allow growth with content */
+        height: auto;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .governance-panels {
+        /* allow panels to expand with content */
+        grid-column: 1;
+        grid-row: 3;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        /* max-height: 300px; */
+        /* overflow-y: auto; */
+    }
+}
+
+/* Tablet devices */
+@media (max-width: 768px) {
+    .aikira-header {
+        flex-direction: column;
+        padding: 10px;
+    }
+    
+    .terminal-title {
+        font-size: 18px;
+        margin-bottom: 5px;
+    }
+    
+    .status-bar {
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    
+    .status-item {
+        min-width: 80px;
+        margin: 2px;
+    }
+    
+    .terminal-layout {
+        width: 95%;
+        margin: 1rem auto;
+    }
+    
+    .terminal-input-area {
+        padding: 12px;
+    }
+    
+    .terminal-input {
+        font-size: 16px;
+        min-height: 24px;
+    }
+    
+    .terminal-input-buttons {
+        flex-wrap: nowrap;
+    }
+    
+    .terminal-btn {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .governance-panels {
+        /* allow panels to expand with content */
+        /* max-height: 250px; */
+    }
+}
+
+/* Mobile devices */
+@media (max-width: 480px) {
+    .aikira-container {
+        /* Full-width single-column layout on mobile */
+        grid-template-columns: 1fr;
+        /* Maintain header, content, and panels rows */
+        grid-template-rows: auto 1fr auto;
+        padding: 10px;
+        gap: 10px;
+        /* Fixed mobile viewport height */
+        height: 100vh;
+        /* Ensure fill on iOS devices */
+        min-height: -webkit-fill-available;
+    }
+    
+    .terminal-layout {
+        width: 100%;
+        margin: 0;
+    }
+    
+    .status-bar {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 5px;
+    }
+    
+    .status-item {
+        min-width: 0;
+        width: 100%;
+    }
+    
+    .terminal-title {
+        font-size: 16px;
+    }
+    /* Mobile logo sizing */
+    .core-logo {
+        height: 30px;
+        width: auto;
+    }
+    
+    /* Improved input area for mobile */
+    .terminal-input-area {
+        padding: 10px;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .terminal-input-wrapper {
+        width: 100%;
+    }
+    
+    .terminal-input {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 12px;
+        min-height: 44px; /* Minimum tap target size */
+    }
+    
+    .terminal-input-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .terminal-btn {
+        flex: 1;
+        padding: 10px 8px;
+        min-height: 44px;
+        font-size: 14px;
+    }
+    
+    .btn-icon {
+        margin-right: 4px;
+    }
+    
+    /* Adjust message bubbles for mobile */
+    .message {
+        max-width: 90%;
+    }
+    
+    .message-bubble {
+        padding: 10px 12px;
+        font-size: 15px; /* Slightly larger for readability */
+    }
+    
+    .governance-panels {
+        grid-template-columns: 1fr;
+        /* remove height constraint to display all features in a scrollable page */
+        max-height: none;
+    }
+    
+    /* Volume slider adjustment */
+    .volume-slider-container {
+        right: 10px;
+        bottom: 60px;
+        width: 80%;
+        max-width: 200px;
+    }
+    /* Ensure chat panel is sufficiently tall on mobile */
+    .terminal-display {
+        overflow: hidden;
+        /* Increase chat card height for better visibility on small screens */
+        height: 60vh;
+    }
+    .terminal-body {
+        flex: 1;
+        overflow-y: auto; /* enable scrolling for chat content */
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 320px) {
+    .aikira-header {
+        padding: 8px;
+    }
+    
+    .terminal-title {
+        font-size: 14px;
+    }
+    
+    .status-bar {
+        grid-template-columns: 1fr;
+    }
+    
+    .terminal-input {
+        font-size: 16px;
+        min-height: 44px;
+    }
+    
+    .terminal-btn {
+        padding: 8px 6px;
+        font-size: 12px;
+        min-width: 0;
+    }
+    
+    .btn-icon {
+        margin-right: 2px;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+    .aikira-container {
+        grid-template-rows: auto 1fr;
+        grid-template-columns: 1fr 300px;
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    .governance-panels {
+        grid-column: 2;
+        grid-row: 2;
+        max-height: none;
+        height: 100%;
+        overflow-y: auto;
+    }
+    
+    .terminal-input-area {
+        flex-direction: row;
+        padding: 8px;
+    }
+    
+    .terminal-input {
+        min-height: 36px;
+    }
+    
+    .terminal-btn {
+        height: 36px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Already dark theme, no changes needed */
+    }
+}
+
+/* Reduce animations if user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Accessibility improvements */
+.terminal-input:focus,
+.terminal-btn:focus {
+    outline: 2px solid var(--accent-purple);
+    outline-offset: 2px;
+}
+
+/* Fix for iOS vh issue */
+@supports (-webkit-touch-callout: none) {
+    .aikira-container {
+        height: -webkit-fill-available;
+    }
+}

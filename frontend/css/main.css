@@ -44,8 +44,11 @@ body {
     background-color: var(--dark-bg);
     color: var(--soft-white);
     font-family: var(--text-font);
-    overflow: hidden;
-    height: 100vh;
+    /* Allow vertical scrolling when content overflows viewport */
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* Ensure minimum height covers full viewport */
+    min-height: 100vh;
     position: relative;
 }
 
@@ -53,7 +56,9 @@ body {
     display: grid;
     grid-template-rows: auto 1fr;
     grid-template-columns: 1fr 300px;
-    height: 100vh;
+    /* Container fills at least viewport height and grows with content */
+    min-height: 100vh;
+    height: auto;
     padding: 20px;
     gap: 20px;
 }

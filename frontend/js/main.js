@@ -58,6 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }));
         
         console.log('Aikira Terminal initialized');
+        // Expose the terminal interface globally for processProposal to use
+        if (typeof TerminalInterface === 'function') {
+            window.terminalInterface = new TerminalInterface();
+        }
     }
     
     // Clear conversation feed at startup
@@ -83,57 +87,33 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupEventListeners() {
         console.log('Setting up event listeners');
         
-        // Submit proposal button
-        if (submitButton && proposalText) {
-            submitButton.addEventListener('click', function() {
-                if (proposalText.value.trim()) {
-                    // Send proposal to API (using function from audio-controls.js)
-                    if (typeof window.processProposal === 'function') {
-                        window.processProposal(proposalText.value);
-                    } else {
-                        processProposalFallback(proposalText.value);
-                    }
-                }
-            });
-            
-            // Submit on Enter key (with Shift+Enter for new line)
-            proposalText.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    submitButton.click();
-                }
-            });
-        }
         
-        // New terminal input and send button
-        if (terminalInput && sendButton) {
-            // Send button click
-            sendButton.addEventListener('click', function() {
-                if (terminalInput.value.trim()) {
-                    const text = terminalInput.value;
+        // Terminal input & send button: replace old button to clear inline handlers
+        if (terminalInput) {
+            let localSend = document.getElementById('send-btn');
+            if (localSend) {
+                // Clone to strip away legacy event listeners
+                const freshSend = localSend.cloneNode(true);
+                localSend.parentNode.replaceChild(freshSend, localSend);
+                localSend = freshSend;
+                console.log('Binding fresh send-btn to processProposal');
+                localSend.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const text = terminalInput.value.trim();
+                    if (!text) return;
                     terminalInput.value = '';
-                    
-                    // Update hidden proposal text for compatibility
-                    if (proposalText) {
-                        proposalText.value = text;
-                    }
-                    
-                    // Process the input
                     if (typeof window.processProposal === 'function') {
                         window.processProposal(text);
-                    } else {
-                        processProposalFallback(text);
                     }
-                }
-            });
-            
-            // Enter key in input
-            terminalInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendButton.click();
-                }
-            });
+                });
+                // Allow Enter key to trigger click
+                terminalInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        localSend.click();
+                    }
+                });
+            }
         }
         
         // Voice input button
@@ -541,6 +521,26 @@ document.addEventListener('DOMContentLoaded', function() {
     function startVoiceRecording() {
         console.log('Starting voice recording with improved handling');
         
+        // Check for microphone and MediaRecorder support
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.error('Microphone access not supported in this browser');
+            inputStatus.textContent = 'Microphone access not supported';
+            setTimeout(() => {
+                inputStatus.textContent = 'Ready for input';
+                inputStatus.classList.remove('active');
+            }, 2000);
+            return;
+        }
+        if (typeof MediaRecorder === 'undefined') {
+            console.error('MediaRecorder API not supported');
+            inputStatus.textContent = 'Voice recording not supported';
+            setTimeout(() => {
+                inputStatus.textContent = 'Ready for input';
+                inputStatus.classList.remove('active');
+            }, 2000);
+            return;
+        }
+        
         // Update status
         inputStatus.textContent = 'Listening...';
         inputStatus.classList.add('active');
@@ -548,11 +548,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Animate the voice visualization
         animateActiveWaveform(true);
         
-        try {
-            // Request microphone access
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    console.log('Microphone access granted');
+        // Request microphone access
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                console.log('Microphone access granted');
                     
                     // Create media recorder with specific MIME type for better compatibility
                     let options = {};
@@ -569,16 +568,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log('Using audio/mp4');
                     }
                     
+                    // Create MediaRecorder with robust fallback
+                    let recorder = null;
                     try {
-                        window.mediaRecorder = new MediaRecorder(stream, options);
-                        console.log('Created MediaRecorder', window.mediaRecorder);
-                        console.log('MediaRecorder state:', window.mediaRecorder.state);
-                        console.log('MediaRecorder mimeType:', window.mediaRecorder.mimeType);
-                    } catch (e) {
-                        console.log('MediaRecorder error:', e);
-                        console.log('Trying without specific MIME type');
-                        window.mediaRecorder = new MediaRecorder(stream);
+                        recorder = new MediaRecorder(stream, options);
+                        console.log('Created MediaRecorder with options', recorder);
+                    } catch (e1) {
+                        console.warn('MediaRecorder with options failed:', e1);
+                        try {
+                            recorder = new MediaRecorder(stream);
+                            console.log('Created MediaRecorder without options', recorder);
+                        } catch (e2) {
+                            console.error('MediaRecorder not supported (error):', e2);
+                            inputStatus.textContent = 'Voice recording not supported';
+                            setTimeout(() => {
+                                inputStatus.textContent = 'Ready for input';
+                                inputStatus.classList.remove('active');
+                            }, 2000);
+                            return;
+                        }
                     }
+                    window.mediaRecorder = recorder;
                     
                     window.audioChunks = [];
                     
@@ -667,13 +677,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('voice-input-btn').classList.remove('active');
                     animateActiveWaveform(false);
                 });
-        } catch (error) {
-            console.error(`Voice recording error: ${error.message}`);
-            inputStatus.textContent = `Recording error: ${error.message}`;
-            inputStatus.classList.remove('active');
-            document.getElementById('voice-input-btn').classList.remove('active');
-            animateActiveWaveform(false);
-        }
     }
     
     // IMPROVED: Stop voice recording and process the audio

@@ -31,11 +31,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware to ensure API keys are configured
+// Middleware to ensure both OpenAI and Eleven Labs API keys are configured.
+// Used for speech-related endpoints that require both services.
 function requireApiKeys(req, res, next) {
   const openaiKey = process.env.OPENAI_API_KEY;
   const elevenLabsKey = process.env.ELEVEN_LABS_API_KEY;
-  
+
   if (!openaiKey || !elevenLabsKey) {
     return res.status(500).json({
       success: false,
@@ -43,7 +44,20 @@ function requireApiKeys(req, res, next) {
       message: 'Please configure OPENAI_API_KEY and ELEVEN_LABS_API_KEY in your .env file.'
     });
   }
-  
+  next();
+}
+
+// Middleware to ensure only OpenAI API key is configured.
+// Used for endpoints that require only OpenAI (e.g., generate-response).
+function requireOpenAiKey(req, res, next) {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey) {
+    return res.status(500).json({
+      success: false,
+      error: 'OpenAI API key not configured',
+      message: 'Please configure OPENAI_API_KEY in your .env file.'
+    });
+  }
   next();
 }
 
@@ -99,9 +113,12 @@ app.use(express.static(path.join(__dirname, 'frontend')));
 // Explicitly serve generated audio files from downloads directory
 app.use('/downloads', express.static(downloadsDir));
 
-// Apply the API key middleware to relevant routes
-app.use('/api/openai', requireApiKeys);
+// Protect OpenAI endpoints (only require OpenAI key) and Eleven Labs speech endpoints (require both keys)
+app.use('/api/openai', requireOpenAiKey);
 app.use('/api/speech', requireApiKeys);
+// Mount Eleven Labs speech controller routes
+const speechController = require('./backend/controllers/speech-controller');
+app.use('/api/speech', speechController);
 
 // Import proposal controller
 const proposalController = require('./backend/controllers/proposal-controller');
@@ -142,7 +159,7 @@ app.post('/api/openai/generate-response', async (req, res) => {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-4', // Using GPT-4 for best responses, or gpt-3.5-turbo for cheaper option
+        model: 'gpt-3.5-turbo', // Using GPT-3.5-turbo for broader availability
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: proposal }
@@ -173,6 +190,7 @@ app.post('/api/openai/generate-response', async (req, res) => {
     
   } catch (error) {
     console.error('OpenAI API error:', error.response?.data || error.message);
+    console.error(error.stack);
     
     return res.status(500).json({
       success: false, 

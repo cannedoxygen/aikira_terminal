@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="css/digital-effects.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/governance-grid.css">
+    <!-- Responsive styles for mobile and tablets -->
+    <link rel="stylesheet" href="css/responsive-styles.css">
     <!-- Text Terminal Style -->
     <style>
         /* Scrolling Banner Styles */
@@ -92,9 +94,11 @@
             box-shadow: 0 0 20px rgba(216, 181, 255, 0.3);
             display: flex;
             flex-direction: column;
-            height: 400px;
+            /* Allow terminal to expand with content */
+            height: auto;
             position: relative;
-            overflow: hidden;
+            /* Enable overflow visible to show all messages */
+            overflow: visible;
         }
         
         .terminal-header {
@@ -815,12 +819,7 @@
         </div>
     </div>
 
-    <!-- Include hidden elements for backward compatibility with existing JS -->
-    <div style="display: none;">
-        <textarea id="proposal-text"></textarea>
-        <button id="submit-proposal"></button>
-        <div id="response-text"></div>
-    </div>
+    <!-- Legacy proposal-text fallback removed - using unified terminal-input instead -->
 
     <!-- Scripts -->
     <script src="lib/three.min.js"></script>
@@ -832,6 +831,8 @@
     <script src="js/constitutional-core.js"></script>
     <script src="js/terminal.js"></script>
     <script src="js/animations.js"></script>
+    <!-- Load API client to define window.processProposal -->
+    <script src="js/api-client.js"></script>
     <script src="js/main.js"></script>
     
     <!-- Enhanced Terminal Script -->

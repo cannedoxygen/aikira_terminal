@@ -112,6 +112,12 @@ This project uses modern web standards and is designed to be extended with addit
 1. Frontend changes can be made in the appropriate CSS/JS files
 2. Backend API integrations can be added in the services directory
 3. New visualizations can be created in the digital-effects.js file
+4. When deploying to Vercel, local `.env` files are not used. Instead, set the required environment variables in your Vercel project settings under Settings → Environment Variables, or via the Vercel CLI. Example:
+   ```bash
+   vercel env add OPENAI_API_KEY production
+   vercel env add ELEVEN_LABS_API_KEY production
+   ```
+   Then trigger a new deployment so that these variables are available to your serverless functions.
 
 ## License
 
