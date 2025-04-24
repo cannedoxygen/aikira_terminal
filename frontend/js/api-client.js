@@ -135,29 +135,12 @@ class ApiClient {
      * @returns {Promise} - Promise resolving to audio blob
      */
     async generateSpeech(text, options = {}) {
-        // Default voice options
-        const defaultOptions = {
-            voice_id: '21m00Tcm4TlvDq8ikWAM', // Rachel
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: {
-                stability: 0.75,
-                similarity_boost: 0.75,
-                style: 0.5, 
-                use_speaker_boost: true
-            }
-        };
-        
-        // Merge with provided options
-        const speechOptions = {
-            ...defaultOptions,
-            ...options,
-            text
-        };
-        
+        // Build payload: include only text and any provided overrides
+        const payload = { text, ...options };
         try {
             return await this.request('/api/speech/generate', {
                 method: 'POST',
-                body: JSON.stringify(speechOptions)
+                body: JSON.stringify(payload)
             });
         } catch (error) {
             console.error('Speech generation error:', error);
