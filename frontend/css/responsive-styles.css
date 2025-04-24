@@ -148,13 +148,16 @@ html {
     z-index: 5;
 }
 
+/* Terminal body: scrollable area */
 .terminal-body {
-    flex: 1;
-    /* Prevent terminal body from expanding: allow scroll within fixed height */
-    max-height: calc(100vh - 160px);
+    flex: 1;                /* fill available space */
+    height: 0;              /* force flex to determine height */
+    min-height: 0;          /* allow shrinking */
+    display: flex;
+    flex-direction: column;
     padding: 15px;
-    /* Enable vertical scrolling for chat content */
-    overflow-y: auto;
+    overflow-y: auto;       /* enable scrolling */
+    scroll-behavior: smooth;
     position: relative;
     z-index: 2;
     scrollbar-width: thin;
