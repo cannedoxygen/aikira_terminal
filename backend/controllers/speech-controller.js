@@ -143,51 +143,21 @@ router.post('/generate', async (req, res) => {
     const modelId = model_id || 'eleven_multilingual_v2';
     
     try {
-      // Generate speech using the service
+      // Generate speech using the service (binary MPEG data)
       const audioData = await elevenLabsService.generateSpeech(text, voiceId, modelId, settings);
-      
-      // Create unique filename
-      const filename = `aikira_response_${Date.now()}.mp3`;
-      const downloadDir = path.join(os.tmpdir(), 'downloads');
-      const filePath = path.join(downloadDir, filename);
-      
-      // Create the downloads directory if it doesn't exist
-      if (!fs.existsSync(downloadDir)) {
-        fs.mkdirSync(downloadDir, { recursive: true });
-      }
-      
-      // Save the audio file
-      fs.writeFileSync(filePath, audioData);
-      
-      // Get the relative URL path
-      const fileUrl = `/downloads/${filename}`;
-      
-      // Return JSON response with the file URL
-      return res.status(200).json({
-        success: true,
-        audio_url: fileUrl,
-        voice_id: voiceId,
-        model_id: modelId
+      // Stream the MP3 directly in the response
+      res.set({
+        'Content-Type': 'audio/mpeg',
+        'Cache-Control': 'public, max-age=0, must-revalidate'
       });
+      return res.send(audioData);
     } catch (error) {
-      console.error('Eleven Labs API error:', error);
-      
-      // Log detailed error information
-      if (error.response) {
-        console.error('Error status:', error.response.status);
-        console.error('Error headers:', error.response.headers);
-        
-        // For error details, handle possible binary response
-        if (error.response.data) {
-          if (error.response.data instanceof Buffer) {
-            console.error('Error data (Buffer):', error.response.data.toString('utf8').substring(0, 200));
-          } else {
-            console.error('Error data:', error.response.data);
-          }
-        }
-      }
-      
-      throw new Error(`Eleven Labs API error: ${error.message}`);
+      console.error('Eleven Labs API error:', error.response?.data || error.message);
+      return res.status(500).json({
+        success: false,
+        error: 'Error generating speech',
+        message: error.message
+      });
     }
   } catch (error) {
     console.error('Speech generation error:', error);
