@@ -948,37 +948,10 @@ document.addEventListener('DOMContentLoaded', function() {
         message.appendChild(header);
         message.appendChild(bubble);
         
-        // Add to feed
+        // Add full message to feed and scroll into view
         conversationFeed.appendChild(message);
-        
-        // Scroll new message into view
-        setTimeout(() => {
-            message.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 0);
-        
-        // Type text with animation
-        setTimeout(() => {
-            // Remove typing indicator
-            bubble.removeChild(typingIndicator);
-            
-            // Type text letter by letter
-            let i = 0;
-            function typeCharacter() {
-                if (i < text.length) {
-                    bubble.textContent += text.charAt(i);
-                    i++;
-                    
-                    // Scroll to bottom as typing occurs
-                    if (terminalBody) {
-                        terminalBody.scrollTop = terminalBody.scrollHeight;
-                    }
-                    
-                    setTimeout(typeCharacter, 30);
-                }
-            }
-            
-            typeCharacter();
-        }, 500);
+        bubble.textContent = text;
+        message.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
     
     // Add user message to conversation feed
