@@ -352,16 +352,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.terminalInterface) {
                 await window.terminalInterface.typeText(aiText, 30, true);
             }
-            // Fetch the speech audio from Eleven Labs
-            const ttsResp = await window.apiClient.request('/api/speech/generate', {
-                method: 'POST',
-                body: JSON.stringify({ text: aiText })
-            });
-            if (!ttsResp.success) {
-                throw new Error(ttsResp.error);
-            }
-            // Play back the generated audio
-            const audioUrl = ttsResp.audio_url;
+            // Generate speech audio via Eleven Labs and play it
+            // Returns an audio Blob
+            const audioBlob = await window.apiClient.generateSpeech(aiText);
+            // Create a URL for the Blob and play it
+            const audioUrl = URL.createObjectURL(audioBlob);
             const audio = new Audio(audioUrl);
             audio.volume = (window.currentVolume != null ? window.currentVolume : 1);
             await audio.play();
