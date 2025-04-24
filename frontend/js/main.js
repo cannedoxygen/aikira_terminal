@@ -951,11 +951,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add to feed
         conversationFeed.appendChild(message);
         
-        // Scroll to bottom
-        const terminalBody = document.getElementById('terminal-body');
-        if (terminalBody) {
-            terminalBody.scrollTop = terminalBody.scrollHeight;
-        }
+        // Scroll new message into view
+        setTimeout(() => {
+            message.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 0);
         
         // Type text with animation
         setTimeout(() => {
@@ -1012,11 +1011,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add to feed
         conversationFeed.appendChild(message);
         
-        // Scroll to bottom
-        const terminalBody = document.getElementById('terminal-body');
-        if (terminalBody) {
-            terminalBody.scrollTop = terminalBody.scrollHeight;
-        }
+        // Scroll new message into view
+        setTimeout(() => {
+            message.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 0);
     }
     
     // Update metrics with received values
