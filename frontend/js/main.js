@@ -934,7 +934,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
         
-        // Add typing indicator
+        // Add typing indicator – three animated dots
         const typingIndicator = document.createElement('div');
         typingIndicator.className = 'typing-indicator';
         for (let i = 0; i < 3; i++) {
@@ -948,10 +948,36 @@ document.addEventListener('DOMContentLoaded', function() {
         message.appendChild(header);
         message.appendChild(bubble);
         
-        // Add full message to feed and scroll into view
+        // Insert the message in the feed first so that it is present while typing
         conversationFeed.appendChild(message);
-        bubble.textContent = text;
+
+        // Ensure the newest message is visible
         message.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+        // After a short delay, replace the typing indicator with the actual text,
+        // typed out character-by-character for the "typewriter" effect.
+        setTimeout(() => {
+            // Remove dots
+            if (typingIndicator.parentNode) {
+                typingIndicator.parentNode.removeChild(typingIndicator);
+            }
+
+            // Start typewriter animation
+            let i = 0;
+            const typeSpeed = 30; // ms per character – keep in sync with other areas
+
+            const typeNext = () => {
+                if (i < text.length) {
+                    bubble.textContent += text.charAt(i);
+                    i++;
+                    // Keep the newest content in view
+                    message.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    setTimeout(typeNext, typeSpeed);
+                }
+            };
+
+            typeNext();
+        }, 300); // allow indicator to show briefly before typing begins
     }
     
     // Add user message to conversation feed
