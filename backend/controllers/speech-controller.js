@@ -128,8 +128,13 @@ router.post('/generate', async (req, res) => {
     
     console.log(`Generating speech for text: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`);
     
-    // Get a valid voice ID
-    let voiceId = voice_id || process.env.DEFAULT_VOICE_ID || 'default';
+    // Determine voice ID, falling back to environment or a known default
+    const fallbackVoice = process.env.DEFAULT_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'; // Rachel
+    let voiceId = voice_id || fallbackVoice;
+    // Ensure voiceId is not the placeholder 'default'
+    if (!voiceId || voiceId === 'default') {
+      voiceId = fallbackVoice;
+    }
     
     // Set default voice settings if not provided
     const settings = voice_settings || {

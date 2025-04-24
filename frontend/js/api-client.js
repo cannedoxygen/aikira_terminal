@@ -137,7 +137,7 @@ class ApiClient {
     async generateSpeech(text, options = {}) {
         // Default voice options
         const defaultOptions = {
-            voice_id: 'default', // Use default voice
+            voice_id: '21m00Tcm4TlvDq8ikWAM', // Rachel
             model_id: 'eleven_multilingual_v2',
             voice_settings: {
                 stability: 0.75,
