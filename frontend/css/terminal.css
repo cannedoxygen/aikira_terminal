@@ -493,6 +493,11 @@
     box-shadow: 0 2px 0 var(--trans-dark);
 }
 
+/* Spacing between header and scrolling system banner */
+.info-banner {
+    margin-top: 15px;
+}
+
 /* ------------------------------------------------------------------ */
 /* Layout overrides                                                   */
 /* ------------------------------------------------------------------ */
@@ -501,8 +506,13 @@
    screens the responsive stylesheet was forcing a 95% width which
    visually shrank the terminal after the page finished loading. */
 .terminal-layout {
+    /* Fill available vertical space so the chat never collapses */
     width: 100% !important;
     margin: 0 auto !important;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0; /* allow children to shrink and scroll */
 }
 
 /* Make sure the main chat display stretches to fill its parent so its
@@ -511,6 +521,7 @@
     width: 100%;
     height: 100%;
     flex: 1 1 auto;
+    min-height: 0; /* needed when parent is flex to keep scrollable area */
 }
 
 .terminal-container {
@@ -521,5 +532,7 @@
    in zero height on some browsers. Guard against that by enforcing a
    reasonable minimum height for the scrollable area. */
 .terminal-body {
-    min-height: 300px;
+    flex: 1 1 auto;
+    min-height: 300px; /* guarantees visible area yet remains in flex context */
+    overflow-y: auto;
 }
