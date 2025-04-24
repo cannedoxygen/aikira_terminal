@@ -150,6 +150,8 @@ html {
 
 .terminal-body {
     flex: 1;
+    /* Prevent terminal body from expanding: allow scroll within fixed height */
+    max-height: calc(100vh - 160px);
     padding: 15px;
     /* Enable vertical scrolling for chat content */
     overflow-y: auto;
