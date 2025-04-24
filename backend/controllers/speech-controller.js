@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
@@ -15,10 +16,10 @@ const whisperService = require('../services/whisper-service');
 const elevenLabsService = require('../services/eleven-labs-service');
 const audioProcessor = require('../utils/audio-processor');
 
-// Configure multer for file uploads
+// Configure multer for file uploads using temp directory
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads');
+    const uploadDir = path.join(os.tmpdir(), 'uploads');
     
     // Create the uploads directory if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
@@ -147,7 +148,7 @@ router.post('/generate', async (req, res) => {
       
       // Create unique filename
       const filename = `aikira_response_${Date.now()}.mp3`;
-      const downloadDir = path.join(__dirname, '../../downloads');
+      const downloadDir = path.join(os.tmpdir(), 'downloads');
       const filePath = path.join(downloadDir, filename);
       
       // Create the downloads directory if it doesn't exist

@@ -6,6 +6,7 @@
 // Import dependencies
 const express = require('express');
 const path = require('path');
+const os = require('os');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const axios = require('axios');
@@ -65,12 +66,11 @@ function requireOpenAiKey(req, res, next) {
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, 'uploads');
-    
+    // Use OS temp directory in serverless environment
+    const uploadDir = path.join(os.tmpdir(), 'uploads');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
-    
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
@@ -96,9 +96,9 @@ const upload = multer({
   }
 });
 
-// Create necessary directories
-const uploadsDir = path.join(__dirname, 'uploads');
-const downloadsDir = path.join(__dirname, 'downloads');
+// Create necessary directories in the temp directory for serverless
+const uploadsDir = path.join(os.tmpdir(), 'uploads');
+const downloadsDir = path.join(os.tmpdir(), 'downloads');
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -111,7 +111,7 @@ if (!fs.existsSync(downloadsDir)) {
 // Serve static files from the frontend directory
 app.use(express.static(path.join(__dirname, 'frontend')));
 
-// Explicitly serve generated audio files from downloads directory
+// Serve generated audio files from temp downloads directory (note: ephemeral)
 app.use('/downloads', express.static(downloadsDir));
 
 // Protect OpenAI endpoints (only require OpenAI key) and Eleven Labs speech endpoints (require both keys)
