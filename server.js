@@ -51,6 +51,7 @@ function requireApiKeys(req, res, next) {
 // Used for endpoints that require only OpenAI (e.g., generate-response).
 function requireOpenAiKey(req, res, next) {
   const openaiKey = process.env.OPENAI_API_KEY;
+  console.log(`requireOpenAiKey middleware invoked. OPENAI_API_KEY present? ${!!openaiKey}`);
   if (!openaiKey) {
     return res.status(500).json({
       success: false,
@@ -126,6 +127,8 @@ app.use('/api/proposal', proposalController);
 
 // OpenAI integration endpoint
 app.post('/api/openai/generate-response', async (req, res) => {
+  console.log('generate-response handler invoked, NODE_ENV=', process.env.NODE_ENV);
+  console.log('Request body:', req.body);
   try {
     const { proposal } = req.body;
     
